@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Loginail · Choix</title>
+<link rel="stylesheet" href="polices.css">
+<style>
+:root{--noir:#1E1C1B;--creme:#F6F3EF;--greige:#CFC6BC;--gris:#8a8076;--muted:#6B625C;--ligne:rgba(30,28,27,.12)}
+*{box-sizing:border-box}
+body{margin:0;background:#E7E2DC;font-family:Jost,sans-serif;color:var(--noir);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+img{display:block}
+.entete{text-align:center;padding:22px 16px 6px}
+.entete h1{font:400 30px Italiana,serif;margin:0 0 14px}
+.bascule{display:inline-flex;background:#fff;border-radius:999px;padding:4px;gap:4px;box-shadow:0 1px 0 rgba(30,28,27,.06)}
+.bascule button{border:0;background:none;border-radius:999px;padding:10px 18px;font-size:13px;letter-spacing:.06em}
+.bascule button.on{background:var(--noir);color:var(--creme)}
+.explique{max-width:760px;margin:14px auto 0;font-size:13.5px;line-height:1.55;color:#5d554e}
+.partie{display:none}.partie.on{display:block}
+.rangee{display:flex;justify-content:safe center;align-items:flex-start;gap:28px;padding:16px 16px 40px;overflow-x:auto}
+.col{display:flex;flex-direction:column;align-items:center;gap:10px;width:calc(412px * var(--z,1))}
+.code{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:#5d554e;white-space:nowrap}
+.code b{color:var(--noir);font-weight:500;margin-right:6px;font-size:15px}
+.mot{font-size:13px;line-height:1.5;color:#5d554e;text-align:center;max-width:340px}
+.mot em{font-style:normal;color:var(--noir);font-weight:500}
+.tel{zoom:var(--z,1);width:412px;height:866px;border-radius:64px;background:#0d0d0d;padding:11px;position:relative;box-shadow:0 0 0 2px #2a2a2a inset,0 30px 60px -20px rgba(30,28,27,.45);flex:none}
+.ecran{width:390px;height:844px;border-radius:53px;overflow:hidden;position:relative;background:var(--creme)}
+.ile{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:118px;height:34px;background:#000;border-radius:20px;z-index:60}
+.defile{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
+.defile::-webkit-scrollbar{display:none}
+
+/* ---------- le site n°1 : prestations en tiroirs ---------- */
+.s-haut{height:250px;position:relative;background:#cfc6bc center/cover}
+.s-haut::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.45))}
+.s-haut h2{position:absolute;left:26px;right:26px;bottom:22px;margin:0;z-index:1;color:#fff;font:400 40px/1 Italiana,serif}
+.sec{padding:46px 26px 8px}
+.ti{display:flex;align-items:center;gap:14px;margin-bottom:22px;font-weight:300;font-size:16px;letter-spacing:.32em;text-transform:uppercase}
+.ti::before{content:"";width:26px;height:1px;background:currentColor;flex:none}
+.pl{border-bottom:1px solid rgba(128,120,112,.2);cursor:pointer}
+.pl1{display:flex;align-items:baseline;gap:14px;padding:14px 0}
+.pl1 b{flex:1;font-weight:300;font-size:18px;line-height:1.25}
+.pl1 b small{display:block;font-size:12px;color:var(--gris);letter-spacing:.04em;margin-top:3px}
+.pl1 .pp{font-size:15px;white-space:nowrap}
+.plus{max-height:0;overflow:hidden;transition:max-height .45s cubic-bezier(.2,.7,.2,1),padding .45s}
+.pl.ouvert .plus{max-height:80px;padding-bottom:14px}
+.plus button{width:100%;height:42px;border-radius:24px;border:0;background:var(--noir);color:var(--creme);font-size:10px;letter-spacing:.24em;text-transform:uppercase}
+.suite-ph{height:230px;background:#cfc6bc center/cover;border-radius:2px}
+.fin{height:60px}
+.tir{border-bottom:1px solid rgba(128,120,112,.28)}
+.tir>button{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;padding:20px 0;text-align:left}
+.tir>button b{font-weight:400;font-size:15px;letter-spacing:.2em;text-transform:uppercase;flex:1}
+.tir>button small{font-size:12px;color:var(--gris);letter-spacing:.03em;white-space:nowrap}
+.tir>button i{width:14px;height:14px;position:relative;flex:none}
+.tir>button i::before,.tir>button i::after{content:"";position:absolute;left:0;right:0;top:6.5px;height:1px;background:var(--noir);transition:transform .35s}
+.tir>button i::after{transform:rotate(90deg)}
+.tir.ouv>button i::after{transform:rotate(0)}
+.tir-c{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s cubic-bezier(.2,.7,.2,1)}
+.tir.ouv .tir-c{grid-template-rows:1fr}
+.tir-c>div{overflow:hidden}
+.tir-c .pl:last-child{border-bottom:0;margin-bottom:8px}
+
+/* ---------- photos : plein écran, comme son vrai site ---------- */
+input[type=file]{display:none}
+.plein{position:absolute;inset:0;background:#cfc6bc;user-select:none}
+.piste{position:absolute;inset:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;overscroll-behavior-x:contain;cursor:grab}
+.piste::-webkit-scrollbar{display:none}
+.piste:active{cursor:grabbing}
+.diapo{flex:none;width:100%;height:100%;scroll-snap-align:center;scroll-snap-stop:always;background:#cfc6bc center/cover}
+.voile{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.32),rgba(0,0,0,0) 20%,rgba(0,0,0,0) 38%,rgba(0,0,0,.72));pointer-events:none}
+.haut-e{pointer-events:none}
+.bas{pointer-events:none}.bas button,.bas label,.bas .pts i{pointer-events:auto}
+.fl[hidden]{display:none}
+.col[hidden]{display:none}
+/* la grande consigne au milieu : 3 s, puis elle s'efface */
+.intro{position:absolute;inset:0;z-index:2;display:grid;place-items:center;padding:0 34px;pointer-events:none;background:rgba(20,19,18,.55);animation:intro 3.4s ease forwards}
+.intro span{color:#fff;text-align:center;font:400 36px/1.15 Italiana,serif;text-shadow:0 2px 14px rgba(0,0,0,.45);transform:translateY(-40px)}
+.intro.part{animation:none;opacity:0;transition:opacity .3s}
+@keyframes intro{0%{opacity:0}10%{opacity:1}72%{opacity:1}100%{opacity:0}}
+.haut-e{position:absolute;top:58px;left:0;right:0;z-index:2;text-align:center;color:#fff;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase}
+/* flèches fines, sans rond */
+.fl{position:absolute;top:40%;transform:translateY(-50%);z-index:3;width:44px;height:64px;border:0;background:none;padding:0;display:grid;place-items:center;opacity:.9}
+.fl svg{width:26px;height:26px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.45))}
+.fl.g{left:6px}.fl.d{right:6px}
+.bas{position:absolute;left:20px;right:20px;bottom:30px;z-index:2;display:flex;flex-direction:column;gap:12px;color:#fff}
+.txt .k{display:block;font-size:10px;letter-spacing:.3em;text-transform:uppercase;opacity:.9;margin-bottom:10px}
+.txt h5{margin:0;font:400 44px/1 Italiana,serif}
+.txt .ti{margin:0;color:#fff}
+.pts{display:flex;justify-content:center;gap:6px;margin:4px 0 2px}
+.pts i{width:6px;height:6px;border-radius:3px;background:rgba(255,255,255,.45);transition:width .3s}
+.pts i.on{background:#fff;width:18px}
+.pts i{cursor:pointer}
+.cons{margin:0;text-align:center}
+.cons b{display:block;font:400 22px/1.2 Italiana,serif}
+.cons small{display:block;font-size:12px;opacity:.8;margin-top:4px}
+.pills{display:flex;gap:8px}
+.pills>*{flex:1;border:0;background:rgba(255,255,255,.95);color:var(--noir);border-radius:999px;padding:15px 8px;font:300 14px Jost,sans-serif;text-align:center;cursor:pointer}
+.noir{background:var(--noir)!important;color:var(--creme)!important;font-weight:400!important;letter-spacing:.12em;font-size:11.5px!important;text-transform:uppercase}
+.large{display:block;width:100%;border:0;border-radius:999px;padding:16px 10px;text-align:center;cursor:pointer;font:300 14px Jost,sans-serif;background:rgba(255,255,255,.95);color:var(--noir)}
+.large.noir{padding:17px 10px}
+.bandeau{background:var(--noir);color:var(--creme);border-radius:999px;padding:13px 16px;text-align:center;font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+.bandeau em{font-style:normal;opacity:.6;margin-right:8px}
+.sans{border:0;background:none;color:#fff;font:300 13px Jost,sans-serif;text-decoration:underline;text-underline-offset:4px;opacity:.9;padding:2px;align-self:center}
+.fait{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:30px;text-align:center}
+.fait h3{font:400 30px Italiana,serif;margin:0}
+.fait .duo{display:flex;gap:10px}
+.fait .duo div{width:140px;aspect-ratio:4/5;border-radius:12px;background:#cfc6bc center/cover;position:relative;display:grid;place-items:center;font-size:12px;color:var(--muted)}
+.fait .duo small{position:absolute;bottom:8px;left:8px;background:rgba(255,255,255,.9);border-radius:999px;padding:3px 8px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--noir)}
+.fait button{border:0;background:none;text-decoration:underline;text-underline-offset:3px;font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="entete">
+  <h1>Vos choix</h1>
+  <div class="bascule"><button data-p="prix">1 · La liste des prix</button><button class="on" data-p="photos">2 · Les photos</button></div>
+  <p class="explique" id="explique"></p>
+</div>
+
+<div class="partie" id="p-prix"><div class="rangee">
+  <div class="col"><div class="code"><b>B</b>Tiroirs · choisi</div><div class="tel"><div class="ecran"><div class="ile"></div><div class="defile" id="vB"></div></div></div>
+    <div class="mot">Fait sur les 3 sites.</div></div>
+</div></div>
+
+<div class="partie on" id="p-photos"><div class="rangee">
+  <div class="col"><div class="code"><b>2A</b>Telle quelle</div><div class="tel"><div class="ecran"><div class="ile"></div><div class="defile" id="va"></div></div></div>
+    <div class="mot">La consigne est écrite <em>juste au-dessus des boutons</em>, là où on regarde. Flèches fines.</div></div>
+  <div class="col"><div class="code"><b>2A</b>+ consigne au milieu</div><div class="tel"><div class="ecran"><div class="ile"></div><div class="defile" id="vb"></div></div></div>
+    <div class="mot">En arrivant, la phrase s’affiche <em>en grand au milieu</em>, puis s’efface toute seule (ou dès qu’elle fait glisser). Elle reste <em>en petit au-dessus des boutons</em>.</div></div>
+  <div class="col" hidden><div class="code"><b>2C</b>Ton idée</div><div class="tel"><div class="ecran"><div class="ile"></div><div class="defile" id="vc"></div></div></div>
+    <div class="mot">Une <em>pastille noire</em> dit l’étape : « Photo principale de votre site », puis <em>OK</em>. Flèches fines.</div></div>
+</div></div>
+
+<script>
+/* Les vrais tarifs d'Institut Casagrande (trouvés sur Planity) */
+const PRESTA=[["Première pose sur ongle naturels",50,60],["Remplissage",50,75],["Rallongement chablons FORMES ARTISTIQUES (stilleto, amande, ballerine…) ONGLES DIFFICILES (rongés, abîmés…)",65,120],["Premier remplissage d’un rallongement chablons",55,75],["Remplissage venant d’un autre institut",60,75],["Remplissage sur ongle long",55,75],["Première pose MAINS",40,45],["Première pose PIEDS",40,45],["Dépose & Repose MAINS",40,60],["Dépose & Repose PIEDS",40,60],["Dépose semi-permanent",15,15],["Dépose gel",15,15],["Dépose chablons",30,30],["Dépose capsules",30,30],["Supplément manucure",15,15],["Manucure express",30,30],["Manucure pieds express",30,30],["Nail Art Niveau 1",5,5],["Nail Art Niveau 2",10,5],["Nail Art Niveau 3",20,15],["Nail Art Niveau 4",30,30],["Réparation ongles",4,5]].map(([nom,prix,duree])=>({nom,prix,duree}));
+const NOM="Institut Casagrande",KICK="Prothésiste ongulaire · Ajaccio";
+const FAM=["Poses","Remplissages","Déposes","Manucure & pédicure","Nail art","Et aussi"];
+const fam=n=>{n=n.toLowerCase();
+  if(/nail art|déco|strass|french/.test(n))return"Nail art";
+  if(/remplissage/.test(n))return"Remplissages";
+  if(/dépose\s*(&|et)\s*repose/.test(n))return"Poses";
+  if(/dépose|retrait/.test(n))return"Déposes";
+  if(/manucure|pédicure|beauté des/.test(n))return"Manucure & pédicure";
+  if(/pose|rallongement|chablon|capsule|gel|semi/.test(n))return"Poses";
+  return"Et aussi"};
+const GR=FAM.map(f=>({f,l:PRESTA.filter(p=>fam(p.nom)===f)})).filter(g=>g.l.length);
+const dur=m=>m<60?`${m} min`:`${Math.floor(m/60)} h${m%60?" "+String(m%60).padStart(2,"0"):""}`;
+const eur=v=>`${String(v).replace(".",",")} €`;
+const ligne=p=>`<div class="pl"><div class="pl1"><b>${p.nom}<small>${dur(p.duree)}</small></b><span class="pp">${eur(p.prix)}</span></div><div class="plus"><button>Réserver</button></div></div>`;
+
+let PH=[];try{PH=(JSON.parse(localStorage.getItem("loginail-brouillon")||"{}").photos||[]).map(p=>p.url)}catch(e){}
+if(!PH.length)PH=[null,null,null,null,null,null];
+const bg=u=>u?`background-image:url('${u}')`:"";
+
+const ouvB=new Set();
+function rendB(){vB.innerHTML=`<div class="s-haut" style="${bg(PH[0])}"><h2>${NOM}</h2></div><div class="sec"><div class="ti">Prestations</div>
+  ${GR.map((g,i)=>`<div class="tir ${ouvB.has(i)?"ouv":""}"><button data-fb="${i}"><b>${g.f}</b><small>${g.l.length} · dès ${eur(Math.min(...g.l.map(p=>p.prix)))}</small><i></i></button><div class="tir-c"><div>${g.l.map(ligne).join("")}</div></div></div>`).join("")}</div>
+  <div class="sec"><div class="ti">Réalisations</div><div class="suite-ph" style="${bg(PH[1])}"></div></div><div class="fin"></div>`}
+rendB();
+
+/* ---------- photos : version 2, en 3 variantes ---------- */
+const MES={a:[],b:[],c:[]};   // ses photos à elle, lues dans le téléphone (rien n'est envoyé)
+const lit=f=>new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(f)});
+const L=v=>[...MES[v],...PH];
+const S={};["a","b","c"].forEach(v=>S[v]={etape:0,i:0,h:0,s:null});
+const svg=d=>`<svg viewBox="0 0 24 24"><path d="${d}" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const ajout=(v,cl,txt)=>`<label class="${cl}">${txt}<input type="file" accept="image/*" multiple data-mes="${v}"></label>`;
+const sansPhoto=v=>`<button class="sans" data-sans="${v}">Je n’ai pas de photo de mon salon</button>`;
+
+/* Les photos sont une vraie bande qui suit le pouce (défilement natif du téléphone, qui s'arrête pile sur une photo).
+   Avec une souris, on la tire aussi. Les flèches et les points font défiler la même bande. */
+function rend(v){const s=S[v],l=L(v),el=document.getElementById("v"+v);
+  if(s.etape===2){el.innerHTML=`<div class="fait"><h3>C’est noté.</h3><div class="duo"><div style="${bg(l[s.h])}"><small>Principale</small></div><div style="${s.s==null?"":bg(l[s.s])}">${s.s==null?"Pas de photo<br>du salon":""}<small>Le salon</small></div></div><button data-re="${v}">Changer</button></div>`;return}
+  const salon=s.etape===1;
+  const txt=`<div class="txt">${salon?`<div class="ti">Le salon</div>`:`<span class="k">${KICK}</span><h5>${NOM}</h5>`}</div>`;
+  const pts=`<div class="pts">${l.map((_,k)=>`<i data-pt="${v}:${k}"></i>`).join("")}</div>`;
+  let bas;
+  if(v==="a"||v==="b") bas=`${txt}${pts}<p class="cons"><b>${salon?"Et la photo de votre salon":"Choisissez la photo principale de votre site"}</b><small>Faites glisser pour voir les autres</small></p>
+    <div class="pills">${ajout(v,"","Ajouter une photo")}<button class="noir" data-ok="${v}">${salon?"C’est mon salon":"Celle-ci"}</button></div>${salon?sansPhoto(v):""}`;
+  if(v==="zz") bas=`${txt}${pts}<button class="large noir" data-ok="${v}">${salon?"Mettre en photo du salon":"Mettre en photo principale"}</button>
+    ${ajout(v,"large","+ Ajouter une photo depuis mon téléphone")}${salon?sansPhoto(v):""}`;
+  if(v==="c") bas=`${txt}${pts}<div class="bandeau"><em>${s.etape+1}/2</em>${salon?"Photo de votre salon":"Photo principale de votre site"}</div>
+    <div class="pills">${ajout(v,"","Ajouter une photo")}<button class="noir" data-ok="${v}">OK</button></div>${salon?sansPhoto(v):""}`;
+  el.innerHTML=`<div class="plein"><div class="piste" data-piste="${v}">${l.map(u=>`<div class="diapo" style="${bg(u)}"></div>`).join("")}</div><div class="voile"></div>
+    ${v!=="c"?`<div class="haut-e">Étape ${s.etape+1} sur 2</div>`:""}
+    ${v==="b"?`<div class="intro"><span>${salon?"Et la photo de votre salon":"Choisissez la photo principale de votre site"}</span></div>`:""}
+    ${v!=="zz"?`<button class="fl g" data-fl="${v}:-1" aria-label="Photo précédente">${svg("M15 4 7 12l8 8")}</button><button class="fl d" data-fl="${v}:1" aria-label="Photo suivante">${svg("M9 4l8 8-8 8")}</button>`:""}
+    <div class="bas">${bas}</div></div>`;
+  const p=el.querySelector(".piste");p.style.scrollBehavior="auto";p.scrollLeft=s.i*p.clientWidth;p.style.scrollBehavior="";maj(v);
+  setTimeout(()=>p.addEventListener("scroll",()=>{el.querySelector(".intro")?.classList.add("part");const i=Math.round(p.scrollLeft/p.clientWidth);if(i!==s.i){s.i=i;maj(v)}},{passive:true}),60);
+}
+/* les points et les flèches suivent la photo affichée */
+function maj(v){const el=document.getElementById("v"+v),s=S[v],n=L(v).length;
+  el.querySelectorAll(".pts i").forEach((x,k)=>x.classList.toggle("on",k===s.i));
+  const g=el.querySelector(".fl.g"),d=el.querySelector(".fl.d");if(g)g.hidden=s.i<=0;if(d)d.hidden=s.i>=n-1}
+function va(v,i){const p=document.querySelector(`[data-piste="${v}"]`);if(p)p.scrollTo({left:i*p.clientWidth,behavior:"smooth"})}
+const tout=()=>["a","b","c"].forEach(rend);tout();
+
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-fb],.pl,[data-fl],[data-ok],[data-re],[data-sans],[data-pt]");if(!t)return;const d=t.dataset;
+  if(d.fb!=null){const i=+d.fb;ouvB.has(i)?ouvB.delete(i):ouvB.add(i);t.parentElement.classList.toggle("ouv");}
+  else if(t.classList.contains("pl")){if(!e.target.closest(".plus"))t.classList.toggle("ouvert");}
+  else if(d.fl){const[v,dd]=d.fl.split(":");va(v,S[v].i+ +dd);}
+  else if(d.pt){const[v,k]=d.pt.split(":");va(v,+k);}
+  else if(d.ok){const s=S[d.ok];if(s.etape===0){s.h=s.i;s.etape=1;s.i=s.h===0&&L(d.ok).length>1?1:0}else{s.s=s.i;s.etape=2}rend(d.ok);}
+  else if(d.sans){const s=S[d.sans];s.s=null;s.etape=2;rend(d.sans);}
+  else if(d.re){const s=S[d.re];s.etape=0;s.i=s.h;rend(d.re);}
+});
+/* à la souris (ordinateur) : on tire la bande, elle se cale sur la photo la plus proche */
+let tire=null;
+document.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse")return;const p=e.target.closest(".piste");if(!p)return;
+  tire={p,x:e.clientX,l:p.scrollLeft};p.style.scrollSnapType="none";p.style.scrollBehavior="auto";e.preventDefault()});
+document.addEventListener("pointermove",e=>{if(tire)tire.p.scrollLeft=tire.l-(e.clientX-tire.x)/(parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--z"))||1)});
+document.addEventListener("pointerup",e=>{if(!tire)return;const{p,x,l}=tire;tire=null;const w=p.clientWidth,dx=e.clientX-x;
+  let i=Math.round(l/w);if(dx<-25)i++;else if(dx>25)i--;i=Math.max(0,Math.min(p.children.length-1,i));
+  p.style.scrollSnapType="";p.style.scrollBehavior="";p.scrollTo({left:i*w,behavior:"smooth"})});
+document.addEventListener("change",async e=>{
+  const t=e.target;if(!t.files||!t.files.length||!t.dataset.mes)return;
+  const v=t.dataset.mes,nv=[];for(const f of [...t.files].slice(0,6))nv.push(await lit(f));
+  MES[v]=[...nv,...MES[v]];const s=S[v];
+  if(s.etape===1)s.h+=nv.length;   // la photo principale déjà choisie reste la même
+  s.i=0;rend(v);                    // on montre tout de suite celle qu'elle vient d'ajouter
+});
+
+const TXT0={prix:"La liste rangée en tiroirs (B), les familles écrites comme la liste, en majuscules. C’est fait sur les 3 sites.",
+  photos:"La version 2 (plein écran), en 3 variantes : où mettre la consigne, et les flèches fines ou pas de flèches. Essayez jusqu’au bout : photo principale, puis le salon."};
+const TXT={...TXT0,photos:"La 2A, telle quelle à gauche, et à droite avec la grande phrase au milieu qui s’efface après 3 secondes. Pour la revoir : rechargez la page, ou passez à l’étape du salon."};
+function montre(p){document.querySelectorAll(".bascule button").forEach(b=>b.classList.toggle("on",b.dataset.p===p));
+  document.querySelectorAll(".partie").forEach(x=>x.classList.toggle("on",x.id==="p-"+p));explique.textContent=TXT[p];}
+document.querySelector(".bascule").addEventListener("click",e=>{const b=e.target.closest("button");if(b)montre(b.dataset.p)});
+montre(location.hash==="#prix"?"prix":"photos");
+function taille(){const z=Math.max(.42,Math.min(1,(innerWidth-32-56)/(3*412),(innerHeight-200)/866));document.documentElement.style.setProperty("--z",z.toFixed(3))}
+taille();addEventListener("resize",taille);
+</script>
+</body>
+</html>

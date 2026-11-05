@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mon ticket</title>
+<meta name="robots" content="noindex">
+<link href="../loginail-site/polices.css" rel="stylesheet">
+<style>
+:root{--noir:#1E1C1B;--creme:#F6F3EF;--gris:#8a8076;--ligne:rgba(30,28,27,.1)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--creme);font-family:Jost,sans-serif;color:var(--noir);-webkit-font-smoothing:antialiased;padding:28px 16px 40px}
+main{max-width:420px;margin:0 auto}
+.k{font-size:10.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--gris);text-align:center}
+h1{font-weight:300;font-size:30px;text-align:center;margin:6px 0 20px}
+.papier{background:#fff;border-radius:10px;padding:20px 18px 14px;box-shadow:0 14px 30px -18px rgba(0,0,0,.4);font-size:14px}
+.h{display:flex;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--ligne)}
+.h b{display:block;font-weight:500;font-size:15px}.h span{display:block;font-size:12px;color:var(--gris);line-height:1.45}
+.n{text-align:right;font-size:13px}.n span{display:block;font-size:12px;color:var(--gris)}
+.cl{font-size:13px;color:var(--gris);margin:12px 0 6px}
+.l{display:flex;justify-content:space-between;gap:12px;padding:6px 0}.l b{font-weight:400;white-space:nowrap}
+.t{border-top:1px solid var(--ligne);margin-top:6px;padding-top:9px}.t b,.t span{font-weight:500}
+.g{color:var(--gris)}
+.pied{font-size:11px;color:var(--gris);margin-top:12px;border-top:1px solid var(--ligne);padding-top:9px;line-height:1.5}
+.astuce{text-align:center;font-size:13px;color:var(--gris);margin:18px 0 0;line-height:1.5}
+.btn{display:block;width:100%;height:48px;margin-top:14px;border:0;border-radius:26px;background:var(--noir);color:var(--creme);font:500 11px Jost,sans-serif;letter-spacing:.24em;text-transform:uppercase;cursor:pointer}
+.cree{text-align:center;font-size:11px;color:var(--gris);margin-top:22px}.cree a{color:inherit}
+@media print{body{background:#fff;padding:0}.btn,.astuce,.cree{display:none}.papier{box-shadow:none}}
+</style>
+</head>
+<body>
+<main id="m"><p class="astuce">Chargement de votre ticket…</p></main>
+<script>
+(async () => {
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const eur = n => (Math.round((+n || 0) * 100) / 100).toFixed(2).replace(".", ",") + " €";
+  const MOY = { especes: "en espèces", carte: "par carte", virement: "par virement", en_ligne: "en ligne" };
+  const m = document.getElementById("m"), id = new URLSearchParams(location.search).get("t") || "";
+  if (!/^[0-9a-f-]{36}$/i.test(id)) { m.innerHTML = '<h1>Ticket introuvable</h1>'; return; }
+  try {
+    const r = await fetch("https://scfhaombuptmrlkdhcsl.supabase.co/rest/v1/rpc/lire_ticket", { method: "POST", headers: { apikey: "sb_publishable_lYx1ZH0k3EFrUhZ3v0W8gw_yhGPOhbq", "Content-Type": "application/json" }, body: JSON.stringify({ t: id }) });
+    const k = await r.json(); if (!k || !k.numero) throw 0;
+    const d = k.details || {}, le = new Date(k.le);
+    document.title = "Ticket " + k.numero + (d.salon ? " · " + d.salon : "");
+    m.innerHTML = `<div class="k">Votre ticket</div><h1>${esc(d.salon || "Merci !")}</h1>
+      <div class="papier"><div class="h"><div><b>${esc(d.salon || "")}</b><span>${esc(d.nomComplet || "")}<br>${esc(d.adresse || "")}</span></div>
+        <div class="n">Ticket n° ${esc(k.numero)}<span>${le.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })} · ${le.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span></div></div>
+        ${d.cliente ? `<div class="cl">Pour : ${esc(d.cliente)}${d.date_presta ? " · prestation du " + esc(d.date_presta) : ""}</div>` : ""}
+        ${(d.lignes || []).map(l => `<div class="l"><span>${esc(l.nom)} · ${l.qte || 1}</span><b>${eur(l.prix * (l.qte || 1))}</b></div>`).join("")}
+        <div class="l t"><span>Total TTC</span><b>${eur(k.total)}</b></div>
+        ${+k.acompte ? `<div class="l g"><span>Acompte déjà payé</span><b>− ${eur(k.acompte)}</b></div>` : ""}
+        <div class="l g"><span>Payé au salon ${esc(MOY[k.moyen] || "")}</span><b>${eur(k.paye)}</b></div>
+        <div class="pied">${d.tvaNon === false ? "" : "TVA non applicable, art. 293 B du CGI · "}${d.siret ? "SIRET " + esc(d.siret) : ""}</div></div>
+      <p class="astuce">Pour le garder : faites une capture d’écran, ou touchez le bouton.</p>
+      <button class="btn" onclick="print()">Enregistrer en PDF</button>
+      <div class="cree">Ticket fait avec <a href="https://loginail.fr">Loginail</a></div>`;
+  } catch (e) { m.innerHTML = '<h1>Ticket introuvable</h1><p class="astuce">Demandez au salon de vous le renvoyer.</p>'; }
+})();
+</script>
+</body>
+</html>

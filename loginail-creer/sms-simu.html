@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Messages · simulation</title>
+<link href="polices.css" rel="stylesheet">
+<style>
+/* Simulation : les SMS que reçoit la cliente (une appli de messages quelconque) : confirmation, rappel la veille,
+   puis après le rendez-vous le ticket de caisse et la demande d'avis. On avance en touchant le bouton du bas. */
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font:16px -apple-system,system-ui,"Segoe UI",sans-serif;color:#111;background:#fff;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+.simu{position:absolute;top:8px;left:50%;transform:translateX(-50%);font:400 10px Jost,system-ui,sans-serif;letter-spacing:.2em;color:#6B625C;background:#fff;border:1px dashed rgba(30,28,27,.35);border-radius:999px;padding:5px 11px;z-index:9;white-space:nowrap}
+.tete{flex:none;text-align:center;padding:40px 10px 10px;border-bottom:1px solid #eee}
+.tete .av{width:46px;height:46px;border-radius:50%;background:#c9c9cf;color:#fff;display:grid;place-items:center;margin:0 auto 4px;font:600 18px system-ui}
+.tete b{font-size:13px;font-weight:500}
+.fil{flex:1;overflow-y:auto;padding:14px 12px 10px;display:flex;flex-direction:column;gap:6px}
+.quand{text-align:center;font-size:11.5px;color:#8a8a8a;margin:12px 0 4px}
+.bulle{max-width:82%;background:#e9e9eb;border-radius:18px;padding:9px 13px;line-height:1.38;font-size:15.5px;animation:arrive .4s ease}
+.bulle a{color:#2f6fdb;text-decoration:underline;cursor:pointer}
+@keyframes arrive{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.bas{flex:none;padding:10px 14px 18px;border-top:1px solid #eee}
+.suite{width:100%;border:0;border-radius:999px;padding:15px;background:#1E1C1B;color:#F6F3EF;font:500 12.5px Jost,sans-serif;letter-spacing:.16em;cursor:pointer}
+.suite[hidden]{display:none}
+.fin{text-align:center;font:300 13px Jost,sans-serif;color:#6B625C}
+/* le ticket de caisse */
+.ticket{position:fixed;inset:0;background:rgba(20,18,17,.45);display:none;align-items:flex-end;z-index:20}
+.ticket.on{display:flex}
+.tk{width:100%;max-height:92%;overflow-y:auto;background:#F6F3EF;border-radius:28px 28px 0 0;padding:14px 24px 28px;font-family:Jost,sans-serif;color:#1E1C1B}
+.tk .poi{width:40px;height:5px;border-radius:3px;background:rgba(30,28,27,.2);margin:0 auto 14px}
+.tk h2{margin:0;text-align:center;font:200 26px Jost}
+.tk .n{text-align:center;font:300 12.5px Jost;color:#6B625C;margin-top:4px}
+.tk .l{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px dashed rgba(30,28,27,.2);font:300 14.5px Jost}
+.tk .l b{font-weight:400}
+.tk .t{font:400 16px Jost}
+.tk .p{margin-top:14px;text-align:center;font:300 12px/1.6 Jost;color:#8a8076}
+.tk button{width:100%;margin-top:18px;border:0;border-radius:999px;padding:15px;background:#1E1C1B;color:#F6F3EF;font:500 12.5px Jost;letter-spacing:.16em;cursor:pointer}
+.toast{position:fixed;left:50%;bottom:90px;transform:translate(-50%,20px);background:#1E1C1B;color:#F6F3EF;font:300 13.5px/1.45 Jost,sans-serif;padding:11px 16px;border-radius:18px;max-width:86%;text-align:center;opacity:0;transition:.3s;pointer-events:none;z-index:30}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<div class="simu">SIMULATION · SES SMS</div>
+<div class="tete"><div class="av" id="av"></div><b id="exp"></b></div>
+<div class="fil" id="fil"></div>
+<div class="bas"><button class="suite" id="suite"></button><div class="fin" id="fin" hidden>Fin du chemin de la cliente.</div></div>
+<div class="ticket" id="ticket"><div class="tk" id="tk"></div></div>
+<div class="toast" id="toast"></div>
+<script>
+let R = {}; try { R = JSON.parse(localStorage.getItem("loginail-resa")) || {}; } catch (e) {}
+const salon = R.salon || "Votre onglerie", prenom = R.prenom || "", heure = R.heure != null ? `${Math.floor(R.heure / 60)}h${String(R.heure % 60).padStart(2, "0")}` : "10h00";
+const jour = R.jourTxt || "jeudi", euros = n => `${String(Math.round((n || 0) * 100) / 100).replace(".", ",")} €`;
+const $ = id => document.getElementById(id);
+$("exp").textContent = salon.toUpperCase().slice(0, 11);   // un SMS affiche au plus 11 lettres comme expéditeur
+$("av").textContent = salon.charAt(0).toUpperCase();
+const MSG = [
+  { quand: "Maintenant", t: `Bonjour ${prenom}, votre rendez-vous chez ${salon} est confirmé : ${R.nom || "votre prestation"}, ${jour} à ${heure}. ${R.rue ? `Adresse : ${R.rue}, ${R.cp} ${R.ville}. ` : ""}Pour annuler ou déplacer : <a data-a="annuler">lien</a>. À bientôt !`, suite: "LA VEILLE DU RENDEZ-VOUS ›" },
+  { quand: "La veille, 18h00", t: `Rappel : demain à ${heure}, ${R.nom || "votre prestation"} chez ${salon}. Un empêchement ? <a data-a="annuler">Prévenez ici</a>.`, suite: "APRÈS LE RENDEZ-VOUS ›" },
+  { quand: "Après le rendez-vous", t: `Merci ${prenom} pour votre visite ! Votre ticket de caisse : <a data-a="ticket">voir le ticket</a>. Un petit avis nous ferait très plaisir : <a data-a="avis">laisser un avis</a>`, suite: "" },
+];
+let n = 0;
+function avance() {
+  const m = MSG[n];
+  $("fil").insertAdjacentHTML("beforeend", `<div class="quand">${m.quand}</div><div class="bulle">${m.t}</div>`);
+  document.documentElement.dataset.m = String(n + 1);
+  $("fil").scrollTop = $("fil").scrollHeight;
+  $("suite").textContent = m.suite; $("suite").hidden = !m.suite; $("fin").hidden = !!m.suite;
+  n++;
+}
+$("suite").onclick = avance;
+let tt; const dit = t => { $("toast").textContent = t; $("toast").classList.add("on"); clearTimeout(tt); tt = setTimeout(() => $("toast").classList.remove("on"), 3200); };
+$("fil").addEventListener("click", e => {
+  const a = e.target.closest("[data-a]"); if (!a) return;
+  if (a.dataset.a === "annuler") dit("Ici, elle annule ou déplace son rendez-vous, selon les conditions du salon.");
+  if (a.dataset.a === "avis") dit("Ici s’ouvre la fiche Google du salon, pour laisser ses étoiles.");
+  if (a.dataset.a === "ticket") ouvreTicket();
+});
+function ouvreTicket() {
+  const d = R.date ? new Date(R.date) : new Date();
+  $("tk").innerHTML = `<div class="poi"></div><h2>Ticket de caisse</h2><div class="n">${salon} · n° 2026-0001 · ${d.toLocaleDateString("fr-FR")}</div>
+    <div class="l"><span>${R.nom || "Prestation"}</span><b>${euros(R.prix)}</b></div>
+    <div class="l"><span>Acompte payé en ligne</span><b>− ${euros(R.acompte)}</b></div>
+    <div class="l"><span>Payé au salon</span><b>${euros((R.prix || 0) - (R.acompte || 0))}</b></div>
+    <div class="l t"><span>Total</span><b>${euros(R.prix)}</b></div>
+    <p class="p">${R.rue ? `${R.rue}, ${R.cp} ${R.ville}<br>` : ""}Exemple de ticket (simulation)</p><button id="fermeT">FERMER</button>`;
+  $("ticket").classList.add("on");
+  $("fermeT").onclick = () => $("ticket").classList.remove("on");
+}
+$("ticket").addEventListener("click", e => { if (e.target === $("ticket")) $("ticket").classList.remove("on"); });
+const deb = Math.min(3, Math.max(1, +new URLSearchParams(location.search).get("m") || 1));
+for (let k = 0; k < deb; k++) avance();
+</script>
+</body>
+</html>

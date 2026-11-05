@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Loginail · Espace pro</title>
+<meta name="theme-color" content="#F6F3EF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Loginail">
+<link rel="icon" href="loginail-app2/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="loginail-app2/icone.png">
+<link href="loginail-app2/polices.css" rel="stylesheet">
+<link href="loginail-app2/demo.css" rel="stylesheet">
+<style>
+/* la vraie appli : un téléphone sur l'ordinateur, plein écran sur téléphone */
+.rangee{padding:20px 16px}
+@media (max-width:699px){.rangee{padding:0}.tel{height:100dvh!important}}
+.pap .pr.ligne-en{box-shadow:inset 3px 0 0 #2E7D5B}
+.en-ligne{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:99px;background:#E3F1EA;color:#2E7D5B;font-size:9.5px;font-style:normal;vertical-align:1px}
+.nav-sem{display:flex;align-items:center;justify-content:space-between;margin:0 0 6px;font-size:12.5px;color:var(--gris)}
+.nav-sem button{width:36px;height:36px;border-radius:50%;border:0;background:#fff;font-size:18px;cursor:pointer}
+.pr.barre{opacity:.45;text-decoration:line-through}
+.cx{padding-top:90px}.cx h1{font-weight:300;font-size:34px;margin:18px 0 8px}.cx p{font-size:14px;color:var(--gris);line-height:1.5;margin:0 0 18px}
+.cx .marque{font-size:11px;letter-spacing:.42em;font-weight:500}
+.cx input{width:100%;height:50px;border-radius:14px;border:1px solid rgba(30,28,27,.12);background:#fff;padding:0 16px;font:inherit;font-size:16px;margin-bottom:10px}
+.cx .btn{width:100%}.cx .ok{background:#fff;border-radius:18px;padding:14px 16px;font-size:14px;line-height:1.5;margin-bottom:14px}
+.lien-t{display:block;margin:14px auto 0;border:0;background:none;font-size:13px;color:var(--gris);text-decoration:underline;cursor:pointer}
+.champ{width:100%;height:46px;border-radius:14px;border:1px solid rgba(30,28,27,.12);background:#fff;padding:0 14px;font:inherit;font-size:15px;margin-bottom:8px}
+.lab2{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gris);margin:12px 0 6px}
+.charge{position:absolute;inset:0;display:grid;place-items:center;font-size:11px;letter-spacing:.42em;color:var(--gris)}
+</style>
+</head>
+<body>
+<div class="rangee"><div class="tel"><div class="ecran" id="E"><div class="charge">LOGINAIL</div></div></div></div>
+<script>{const zc=()=>document.documentElement.style.setProperty("--z",Math.min(1,(innerHeight-40)/866,(innerWidth-30)/412).toFixed(3));zc();addEventListener("resize",zc)}</script>
+<script src="loginail-app2/vendor/supabase.js"></script>
+<script src="loginail-app2/vendor/qrcode.min.js"></script>
+<script src="loginail-app2/app2.js"></script>
+<script src="loginail-app2/modules/ronds.js"></script>
+<script src="loginail-app2/modules/monsite.js"></script>
+<script src="loginail-app2/modules/photos.js"></script>
+<script src="loginail-app2/modules/contenu.js"></script>
+<script src="loginail-app2/modules/legal.js"></script>
+<script src="loginail-app2/modules/couleurs.js"></script>
+
+</body>
+</html>

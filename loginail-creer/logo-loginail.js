@@ -1,0 +1,2 @@
+/* Le logo Loginail (nouveau, 04/11) : jamais dans un carré, sauf l'icône de l'appli. */
+const LOGO_MARQUE=(pilule="#1E1C1B",ongle="#F3EEE8")=>`<svg viewBox="0 0 288 130" aria-hidden="true"><rect x="0" y="5" width="225" height="120" rx="60" fill="${pilule}"/><path d="M172 21H215C254 21 282 42 282 65C282 88 254 109 215 109H172A44 44 0 0 1 172 21Z" fill="${pilule}"/><path d="M172 28H213C247 28 274 47 274 65C274 83 247 102 213 102H172A37 37 0 0 1 172 28Z" fill="${ongle}"/></svg>`;

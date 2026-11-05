@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Loginail · Site 3</title>
+<link rel="stylesheet" href="polices.css">
+<style>
+:root{--noir:#1E1C1B;--creme:#F6F3EF;--greige:#CFC6BC;--gris:#8a8076}
+*{box-sizing:border-box}
+body{margin:0;background:#E7E2DC;font-family:Jost,sans-serif;color:var(--noir);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+.entete{text-align:center;padding:22px 16px 6px}
+.entete h1{font:400 30px Italiana,serif;margin:0 0 10px}
+.explique{max-width:760px;margin:0 auto;font-size:13.5px;line-height:1.55;color:#5d554e}
+.rejouer{margin-top:10px;border:1px solid var(--noir);background:none;border-radius:999px;padding:8px 16px;font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+.rangee{display:flex;justify-content:safe center;align-items:flex-start;gap:28px;padding:16px 16px 40px;overflow-x:auto}
+.col{display:flex;flex-direction:column;align-items:center;gap:10px;width:calc(412px * var(--z,1))}
+.code{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:#5d554e;white-space:nowrap}
+.code b{color:var(--noir);font-weight:500;margin-right:6px;font-size:15px}
+.mot{font-size:13px;line-height:1.5;color:#5d554e;text-align:center;max-width:340px}
+.mot em{font-style:normal;color:var(--noir);font-weight:500}
+.tel{zoom:var(--z,1);width:412px;height:866px;border-radius:64px;background:#0d0d0d;padding:11px;position:relative;box-shadow:0 0 0 2px #2a2a2a inset,0 30px 60px -20px rgba(30,28,27,.45);flex:none}
+.ecran{width:390px;height:844px;border-radius:53px;overflow:hidden;position:relative;background:var(--creme)}
+.ecran::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1.5px #0d0d0d;pointer-events:none;z-index:90}
+.ile{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:118px;height:34px;background:#000;border-radius:20px;z-index:60}
+.defile{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
+.defile::-webkit-scrollbar{display:none}
+.kick{font-size:10px;letter-spacing:.32em;text-transform:uppercase}
+.resa{display:block;margin:0 auto;border:0;border-radius:999px;padding:16px 30px;font-size:10.5px;letter-spacing:.24em;text-transform:uppercase}
+.suite{padding:48px 26px 60px}
+.suite .ti{display:flex;align-items:center;gap:14px;font-weight:300;font-size:16px;letter-spacing:.32em;text-transform:uppercase;margin-bottom:18px}
+.suite .ti::before{content:"";width:26px;height:1px;background:currentColor}
+.suite .l{display:flex;justify-content:space-between;padding:18px 0;border-bottom:1px solid rgba(128,120,112,.28);font-size:14px;letter-spacing:.18em;text-transform:uppercase}
+.suite .l small{letter-spacing:.03em;text-transform:none;color:var(--gris);font-size:12px}
+@keyframes monte{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes fondu{from{opacity:0}to{opacity:1}}
+
+/* A · L'arche : la photo dans une arche, le nom au-dessus, sur fond crème */
+.hA{min-height:844px;padding:76px 26px 34px;text-align:center;display:flex;flex-direction:column;align-items:center}
+.hA .kick{color:var(--gris);animation:fondu 1s .1s both}
+.hA h2{font:400 46px/1.02 Italiana,serif;margin:14px 0 26px;animation:monte 1s .25s both}
+.arche{width:282px;height:390px;border-radius:141px 141px 10px 10px;background:#cfc6bc center/cover;box-shadow:0 30px 50px -30px rgba(30,28,27,.5);animation:arche 1.4s .35s cubic-bezier(.2,.7,.2,1) both}
+@keyframes arche{from{clip-path:inset(100% 0 0 0 round 141px 141px 10px 10px)}to{clip-path:inset(0 0 0 0 round 141px 141px 10px 10px)}}
+.hA .resa{margin-top:auto;background:var(--noir);color:var(--creme);animation:monte 1s .9s both}
+
+/* B · L'éventail : le nom en grand, trois photos en éventail comme des polaroïds */
+.hB{min-height:844px;padding:78px 26px 34px;display:flex;flex-direction:column}
+.hB .kick{color:var(--gris);animation:fondu 1s .1s both}
+.hB h2{font:400 52px/1 Italiana,serif;margin:14px 0 0;animation:monte 1s .25s both}
+.eventail{position:relative;height:330px;margin:34px 0 0}
+.eventail div{position:absolute;top:20px;left:50%;width:150px;height:200px;margin-left:-75px;background:#cfc6bc center/cover;border:7px solid #fff;border-bottom-width:30px;box-shadow:0 18px 30px -16px rgba(30,28,27,.45);transform-origin:50% 120%;animation:carte 1.2s cubic-bezier(.2,.7,.2,1) both}
+.eventail div:nth-child(1){--r:-10deg;--x:-54px;animation-delay:.5s}
+.eventail div:nth-child(2){--r:9deg;--x:54px;animation-delay:.62s}
+.eventail div:nth-child(3){--r:0deg;--x:0px;top:0;animation-delay:.74s}
+@keyframes carte{from{opacity:0;transform:translateY(40px) rotate(0)}to{opacity:1;transform:translateX(var(--x)) rotate(var(--r))}}
+.hB .bas{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:12px;animation:monte 1s 1s both}
+.hB .bas span{font-size:12.5px;color:var(--gris);line-height:1.4}
+.hB .resa{margin:0;background:var(--noir);color:var(--creme);flex:none}
+
+/* C · Le bloc de couleur : la photo en haut, le nom sur un bloc de sa couleur en dessous */
+.hC{min-height:844px;display:flex;flex-direction:column}
+.hC .ph{height:500px;background:#cfc6bc center/cover;animation:fondu 1.4s both}
+.hC .bloc{flex:1;background:var(--encre,#1E1C1B);color:var(--creme);padding:30px 26px 34px;display:flex;flex-direction:column}
+.hC .kick{opacity:.75;animation:fondu 1s .3s both}
+.hC h2{font:400 46px/1.02 Italiana,serif;margin:12px 0 0;animation:monte 1s .4s both}
+.hC .resa{margin:auto 0 0;background:none;color:var(--creme);border:1px solid rgba(246,243,239,.6);animation:monte 1s .7s both}
+
+/* D · Le grand titre : le bloc de couleur en haut avec le nom en très grand, la photo en dessous */
+.hD{min-height:844px;display:flex;flex-direction:column;background:var(--encre,#1E1C1B);color:var(--creme)}
+.hD .haut{padding:84px 26px 30px}
+.hD .kick{opacity:.7;animation:fondu 1s .1s both}
+.hD h2{font:400 64px/.95 Italiana,serif;margin:16px 0 0;animation:monte 1.1s .2s both}
+.hD .ph{flex:1;margin:0 0 0 0;background:#cfc6bc center/cover;position:relative;animation:fondu 1.4s .4s both}
+.hD .resa{position:absolute;left:26px;bottom:30px;background:var(--creme);color:var(--noir);margin:0}
+/* E · La galerie : la photo encadrée comme un tableau, sur sa couleur, le nom centré dessous */
+.hE{min-height:844px;background:var(--encre,#1E1C1B);color:var(--creme);padding:70px 22px 34px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.hE .cadre{width:100%;height:470px;padding:10px;border:1px solid rgba(246,243,239,.35);animation:fondu 1.2s both}
+.hE .cadre div{width:100%;height:100%;background:#cfc6bc center/cover}
+.hE .kick{opacity:.7;margin-top:26px;animation:fondu 1s .4s both}
+.hE h2{font:400 42px/1.02 Italiana,serif;margin:10px 0 0;animation:monte 1s .5s both}
+.hE .resa{margin-top:auto;background:none;color:var(--creme);border:1px solid rgba(246,243,239,.6);animation:monte 1s .8s both}
+/* F · Le bandeau : la photo sur tout l'écran, un bandeau de couleur en bas avec le nom */
+.hF{height:844px;position:relative;background:#cfc6bc center/cover;animation:fondu 1.4s both}
+.hF .bande{position:absolute;left:0;right:0;bottom:0;background:var(--encre,#1E1C1B);color:var(--creme);padding:26px 26px 34px;animation:bande 1s .3s cubic-bezier(.2,.7,.2,1) both}
+@keyframes bande{from{transform:translateY(100%)}to{transform:none}}
+.hF .bande .ligne1{display:flex;align-items:flex-end;justify-content:space-between;gap:14px}
+.hF h2{font:400 40px/1.02 Italiana,serif;margin:8px 0 0}
+.hF .kick{opacity:.7}
+.hF .resa{margin:0;flex:none;background:var(--creme);color:var(--noir);padding:15px 20px}
+
+/* G · La couverture de magazine : la photo sur tout l'écran, le nom en très grand EN HAUT, comme le titre d'un magazine */
+.hG{height:844px;position:relative;background:#cfc6bc center/cover;color:#fff;animation:fondu 1.4s both}
+.hG::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,0) 34%,rgba(0,0,0,0) 70%,rgba(0,0,0,.45))}
+.hG .titre{position:absolute;left:0;right:0;top:66px;text-align:center;padding:0 16px}
+.hG h2{font:400 58px/.95 Italiana,serif;margin:0;text-transform:uppercase;letter-spacing:.02em;animation:monte 1.1s .2s both}
+.hG .kick{display:block;margin-top:14px;opacity:.9;animation:fondu 1s .5s both}
+.hG .bas{position:absolute;left:0;right:0;bottom:34px;text-align:center;animation:monte 1s .8s both}
+.hG .resa{background:#fff;color:var(--noir)}
+/* H · Au centre, encadré : la photo sur tout l'écran, le nom au milieu dans un cadre fin */
+.hH{height:844px;position:relative;background:#cfc6bc center/cover;color:#fff;display:grid;place-items:center;animation:fondu 1.4s both}
+.hH::before{content:"";position:absolute;inset:0;background:rgba(20,19,18,.38)}
+.hH .cadre{position:relative;width:300px;padding:34px 18px 30px;border:1px solid rgba(255,255,255,.75);text-align:center;animation:monte 1.1s .3s both}
+.hH .kick{display:block;opacity:.9}
+.hH h2{font:400 46px/1.02 Italiana,serif;margin:14px 0 18px}
+.hH .resa{background:none;color:#fff;border:1px solid rgba(255,255,255,.8);padding:13px 22px}
+/* I · Le bandeau fin (comme le F, en plus grand) : la photo sur presque tout l'écran, une fine bande de sa couleur en bas */
+.hI{height:844px;position:relative;background:#cfc6bc center/cover;animation:fondu 1.4s both}
+.hI .bande{position:absolute;left:0;right:0;bottom:0;background:var(--encre,#1E1C1B);color:var(--creme);padding:20px 22px 28px;display:flex;align-items:center;justify-content:space-between;gap:12px;animation:bande 1s .3s cubic-bezier(.2,.7,.2,1) both}
+.hI h2{font:400 30px/1.05 Italiana,serif;margin:0}
+.hI .kick{display:block;opacity:.7;font-size:9px;margin-top:6px}
+.hI .resa{margin:0;flex:none;background:var(--creme);color:var(--noir);padding:14px 18px}
+</style>
+</head>
+<body>
+<div class="entete">
+  <h1>Le haut du site n°3 · en grand</h1>
+  <p class="explique">La photo sur tout l’écran, comme les sites 1 et 2. Ce qui change : l’endroit et la façon d’écrire le nom (site 1 : en bas à gauche ; site 2 : en grands mots en bas). Avec le vrai nom d’Institut Casagrande, et tes photos d’exemple.</p>
+  <button class="rejouer" id="rejouer">Revoir l’animation</button> <button class="rejouer" id="changer">Changer de photo</button>
+</div>
+<div class="rangee">
+  <div class="col"><div class="code"><b>G</b>La couverture</div><div class="tel"><div class="ecran"><div class="ile"></div><div class="defile" id="vA"></div></div></div>
+    <div class="mot">Comme une couverture de magazine : <em>le nom en très grand en haut</em>, en majuscules, la photo partout.</div></div>
+  <div class="col"><div class="code"><b>H</b>Au centre, encadré</div><div class="tel"><div class="ecran"><div class="ile"></div><div class="defile" id="vB"></div></div></div>
+    <div class="mot">Le nom <em>au milieu de la photo, dans un cadre fin</em>, avec « Réserver » dedans. Style grand hôtel.</div></div>
+  <div class="col"><div class="code"><b>I</b>Le bandeau fin</div><div class="tel"><div class="ecran"><div class="ile"></div><div class="defile" id="vC"></div></div></div>
+    <div class="mot">Comme le F, mais <em>la photo prend presque tout</em> : juste une fine bande de sa couleur en bas.</div></div>
+</div>
+<script src="photos-exemple.js"></script>
+<script>
+const nomCourt = (n, ville) => {
+  const plat = x => x.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const GEN = /^(onglerie|ongles?|nails?|bar|prothesiste|ongulaire|manucure|pedicure|institut|salon|beaute|esthetique|studio|spa|art|by|a|au|aux|de|des|du|d|la|le|les|l|et|&|en|sur|chez)$/;
+  const v = plat(ville || "");
+  const generique = p => plat(p).split(/[\s'’,]+/).filter(Boolean).every(m => GEN.test(m) || (v && v.includes(m)) || /^\d{5}$/.test(m));
+  const s = String(n || "").replace(/\s*\(([^)]*)\)\s*$/, (m, x) => generique(x) ? "" : m).trim();
+  const parts = s.split(/\s+[-–—|·•:]\s+|\s*\|\s*/).map(x => x.trim()).filter(Boolean);
+  return parts.length < 2 ? s : parts.find(p => !generique(p)) || parts[0];
+};
+let B={};try{B=JSON.parse(localStorage.getItem("loginail-brouillon")||"{}")}catch(e){}
+let n0=0;const PH=[];const prend=()=>{PH.length=0;for(let i=0;i<4;i++)PH.push(PHOTOS_EX[(n0+i)%PHOTOS_EX.length])};prend();
+const NOM=nomCourt(B.nom||"Votre salon",B.ville),KICK=`Prothésiste ongulaire · ${B.ville||"votre ville"}`;
+const bg=u=>u?`background-image:url('${u}')`:"";
+const suite=`<div class="suite"><div class="ti">Prestations</div><div class="l">Poses<small>6 · dès 40 €</small></div><div class="l">Remplissages<small>4 · dès 50 €</small></div><div class="l">Déposes<small>4 · dès 15 €</small></div></div>`;
+function rend(){
+  vA.innerHTML=`<div class="hG" style="${bg(PH[0])}"><div class="titre"><h2>${NOM}</h2><span class="kick">${KICK}</span></div><div class="bas"><button class="resa">Réserver un créneau</button></div></div>${suite}`;
+  vB.innerHTML=`<div class="hH" style="${bg(PH[0])}"><div class="cadre"><span class="kick">${KICK}</span><h2>${NOM}</h2><button class="resa">Réserver un créneau</button></div></div>${suite}`;
+  vC.innerHTML=`<div class="hI" style="${bg(PH[0])}"><div class="bande"><div><h2>${NOM}</h2><span class="kick">${KICK}</span></div><button class="resa">Réserver</button></div></div>${suite}`;
+}
+/* comme sur les vrais sites : si un mot du nom dépasse, l'écriture rapetisse juste ce qu'il faut */
+const ajuste=()=>document.querySelectorAll(".defile h2").forEach(h=>{h.style.fontSize="";let t=parseFloat(getComputedStyle(h).fontSize);while(h.scrollWidth>h.clientWidth+1&&t>22){t-=1;h.style.fontSize=t+"px"}});
+const rend0=rend;rend=()=>{rend0();(document.fonts?.ready||Promise.resolve()).then(ajuste)};
+changer.onclick=()=>{n0=(n0+1)%PHOTOS_EX.length;prend();rend()};
+rend();rejouer.onclick=()=>{["vA","vB","vC"].forEach(id=>document.getElementById(id).scrollTop=0);rend()};
+function taille(){const z=Math.max(.42,Math.min(1,(innerWidth-32-56)/(3*412),(innerHeight-170)/866));document.documentElement.style.setProperty("--z",z.toFixed(3))}
+taille();addEventListener("resize",taille);
+</script>
+</body>
+</html>
