@@ -11,6 +11,7 @@
   const COUL=[["noir","#1E1C1B"],["choco","#4A3226"],["marine","#24344F"],["taupe","#5E5149"],["greige","#BDB3A8"],["sable","#C9A97E"],["peche","#E2C3AF"],["sauge","#9EA791"],["lin","#CFC4B3"],["nude","#D9B8A9"],["rose","#EBC3CC"],["bleup","#B9CCE0"],["lilas","#D5C8EC"],["jaune","#F3E3A0"],["menthe","#BFE3D4"],["abricot","#F6C9AE"],["ciel","#BCDDEE"]];
   const FORMES=[[1,"Amande"],[2,"Stiletto"],[3,"Carré"],[4,"Ovale"],[5,"Coffin"]];
   const forme=b=>b.coffin?5:b.epure?4:(b.style||1);
+  const POLF={elegante:"Italiana",manuscrite:"'Great Vibes'",ronde:"'Bagel Fat One'",retro:"'Abril Fatface'",calligraphie:"'Pinyon Script'",parisienne:"Parisienne",chic:"'Playfair Display'",luxe:"Cinzel",surf:"Pacifico",seventies:"Shrikhand",bulle:"'Rubik Bubbles'",bonbon:"'Cherry Bomb One'",y2k:"Monoton",gothique:"UnifrakturMaguntia",feutre:"'Permanent Marker'",moderne:"Jost"};
   const POL=[["elegante","Élégante"],["manuscrite","Manuscrite"],["ronde","Ronde"],["retro","Rétro"],["chic","Chic"],["luxe","Luxe"],["seventies","Seventies"],["y2k","Y2K"],["bonbon","Bonbon"],["gothique","Gothique"]];
   const PAIL=[["non","Sans"],["or","Dorées"],["argent","Argentées"],["nacre","Nacrées"],["holo","Holographiques"],["rose","Roses"]];
   const NOMF={1:"Amande",2:"Stiletto",3:"Carré",4:"Ovale",5:"Coffin"};
@@ -18,7 +19,11 @@
   const st=document.createElement("style");st.textContent=`
 .ms2-apercu{position:relative;height:230px;border-radius:20px;overflow:hidden;background:#EAE5DF;margin:0 0 10px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
 .ms2-apercu iframe{position:absolute;left:0;top:0;width:390px;height:844px;border:0;transform-origin:0 0;pointer-events:none}
-.ms2-apercu .ms2-en{position:absolute;left:10px;bottom:10px;padding:7px 12px;border-radius:99px;background:rgba(30,28,27,.78);color:#fff;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase}
+.ms2-apercu{background-size:cover;background-position:center;cursor:pointer}
+.ms2-apercu iframe{display:none!important}
+.ms2-apercu:after{content:"";position:absolute;inset:0;background:rgba(20,18,17,.42);pointer-events:none}
+.ms2-apercu .ms2-nom{position:absolute;left:16px;right:16px;top:50%;transform:translateY(-58%);z-index:2;color:#fff;font-size:44px;line-height:1.05;text-align:center;text-shadow:0 2px 18px rgba(0,0,0,.35);overflow:hidden;text-overflow:ellipsis}
+.ms2-apercu .ms2-en{position:absolute;left:0;right:0;bottom:16px;z-index:2;text-align:center;color:rgba(255,255,255,.9);font-size:10px;letter-spacing:.24em;text-transform:uppercase}
 .ms2-p{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 1px 6px}.ms2-p::-webkit-scrollbar{display:none}
 .ms2-p button{flex:none;border:0;border-radius:99px;padding:9px 13px;background:#fff;font-size:13px;box-shadow:0 0 0 1px rgba(30,28,27,.1);cursor:pointer}
 .ms2-p button.on{background:var(--acc,#1E1C1B);color:#fff;box-shadow:none}
@@ -33,7 +38,7 @@
   const resume=b=>[b.univers||NOMF[forme(b)],(COUL.find(c=>c[0]===b.couleur)||["noir"])[0].replace("bleup","bleu pastel"),b.mode==="nuit"?"foncé":"clair"].join(" · ");
   /* la page « Mon site » */
   const PAGE=()=>{const b=lit();return tete("Mon site","En ligne")
-    +`<div class="ms2-apercu" data-ms2="voir"><iframe tabindex="-1" title="Mon site"></iframe><span class="ms2-en">Mon site en direct · voir en grand</span></div><button class="btn" data-ms2="grand" style="width:100%;margin:0 0 6px">Modifier mon site</button>`
+    +`<div class="ms2-apercu" data-ms2="voir" style="background-image:url('${String((((b.photos||[])[b.salon!=null?b.salon:(b.principale||0)])||{}).url||"").replace(/^\.\.\//,"").replace(/'/g,"%27")}')"><iframe tabindex="-1" title="Mon site"></iframe><div class="ms2-nom" style="font-family:${POLF[b.police||"elegante"]||"Italiana"},serif">${String(b.nom||"Mon salon").replace(/</g,"&lt;")}</div><span class="ms2-en">Voir mon site en grand</span></div><button class="btn" data-ms2="grand" style="width:100%;margin:0 0 6px">Modifier mon site</button>`
     +'<div class="k">Mon style</div><div class="liste">'
     +`<div class="ligne" data-ms2="grand"><div class="t">Style, couleur et fond<span>${resume(b)}${b.fond?" · "+b.fond:""}</span></div><span class="fl">›</span></div>`
     +`<div class="ligne" data-ms2="grand" data-v="4"><div class="t">Écriture, paillettes et charms<span>${(POL.find(p=>p[0]===b.police)||["","Élégante"])[1]} · ${(PAIL.find(p=>p[0]===(b.paillettes||"non"))||["","Sans"])[1]} · ${(b.charms||[]).length?(b.charms.length+" charms"):"sans charms"}</span></div><span class="fl">›</span></div></div>`

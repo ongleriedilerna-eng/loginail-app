@@ -2,7 +2,6 @@
    et une barre d'onglets en bas toujours visible (Accueil · Prix · À propos · Réserver). Activé par &coffin=1 ou BR.coffin. */
 (() => {
   const actif = () => { try { return new URLSearchParams(location.search).get("coffin") === "1" || (typeof BR !== "undefined" && BR && BR.coffin); } catch (e) { return false; } };
-  if (!actif()) return;
   const css = document.createElement("style");
   css.textContent = `.ecran.cof .burger,.ecran.cof .menu,.ecran.cof .voileM,.ecran.cof .hpill,.ecran.cof .cta,.ecran.cof .dock,.ecran.cof .resbar,.ecran.cof .barre-nav,.ecran.cof .fab{display:none!important}
   .ecran.cof .hero{border-radius:0 0 34px 34px;overflow:hidden;min-height:78%;box-shadow:0 18px 40px -26px rgba(0,0,0,.55)}
@@ -19,6 +18,8 @@
     apropos: '<svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c1.2-3.6 4-5 7-5s5.8 1.4 7 5"/></svg>', horaires: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></svg>' };
   const NOM = { accueil: "Accueil", presta: "Prix", apropos: "À propos", horaires: "Infos" };
   function pose(e) {
+    const veut = e.classList.contains("cofx") || (actif() && !/(ep|s3c|sa)/.test(e.className));
+    if (!veut) { const b = e.querySelector(".cof-barre"); if (b) b.remove(); e.classList.remove("cof"); return; }
     if (e.querySelector(".cof-barre")) return;
     const d = e.querySelector(".defile"); if (!d || !d.querySelector(".hero")) return;
     e.classList.add("cof");
