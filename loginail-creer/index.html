@@ -297,7 +297,7 @@ $("etapes").innerHTML = PHRASES.map(p => `<p>${p}…</p>`).join("") + `<p class=
 const attends = ms => new Promise(r => setTimeout(r, ms));
 const prechargePhotos = photos => Promise.all(photos.map(p => new Promise(ok => { const i = new Image(); i.onload = i.onerror = ok; i.src = p.url; })));
 
-/* ses prestations et ses prix, lus sur son site (ou Planity, Booksy) et ses photos de tarifs ; son Instagram.
+/* ses prestations et ses prix, lus sur son site (ou sa page de réservation) et ses photos de tarifs ; son Instagram.
    Au plus 75 s : sinon on continue, elle les écrira. */
 async function litTarifs() {
   if (!B.site && !B.photos.length) return;
@@ -308,7 +308,7 @@ async function litTarifs() {
   const t = await Promise.race([lecture, attends(75000).then(() => null)]);   // la recherche sur internet peut prendre ~30 s
   if (!t) return;
   if (t.instagram) B.insta = t.instagram;
-  if (t.presentation) B.presentation = t.presentation;   // son « À propos » de Planity, Booksy ou son site
+  if (t.presentation) B.presentation = t.presentation;   // son « À propos » de sa page de réservation ou de son site
   if (t.prestations?.length) {
     B.prestations = t.prestations.map(p => ({ nom: p.nom, prix: p.prix ?? "", duree: Math.round(p.duree_min || 60) }));
     B.prestationsTrouvees = true;
@@ -381,7 +381,7 @@ function corps(m) {
   if (m.k === "presta") return `<p class="q">${B.prestationsTrouvees ? "Nous avons trouvé ces tarifs. Dites-nous s’ils sont encore valables, et s’il en manque." : m.q}</p>
     <div class="lire"><p>${B.prestationsTrouvees ? "Une autre carte de prix ?" : "Gagnez du temps : on lit vos tarifs pour vous."}</p>
       <div class="lire-bts"><label class="lire-b">Une photo de mes tarifs<input type="file" accept="image/*" multiple data-tarifphoto></label><button type="button" class="lire-b" data-tariflien>Le lien de mes tarifs</button></div>
-      ${lienOuvert ? `<div class="saisie"><input class="champ" id="lienTarifs" inputmode="url" placeholder="Planity, Booksy, votre site…"><button class="ajouter" type="button" data-lirelien>LIRE</button></div>` : ""}
+      ${lienOuvert ? `<div class="saisie"><input class="champ" id="lienTarifs" inputmode="url" placeholder="Votre page de réservation, votre site…"><button class="ajouter" type="button" data-lirelien>LIRE</button></div>` : ""}
       ${etatLecture ? `<p class="lire-etat">${etatLecture}</p>` : ""}</div>
     <div class="puces">${SUGG.map(s => `<button type="button" data-sugg="${esc(s)}" class="${brouillonP.some(p => p.nom === s) ? "pris" : ""}">${s}</button>`).join("")}</div>
     ${brouillonP.map((p, i) => p.ferme
