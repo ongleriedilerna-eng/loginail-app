@@ -288,9 +288,9 @@ champLien.addEventListener("keydown", e => { if (e.key === "Enter") $("creer").c
 $("sansGoogle").onclick = () => { B.source = "main"; prepareManque(); montre("manque"); };
 
 /* ---------- 2 · le chargement : un ongle de plus toutes les 0,7 s, les phrases défilent, pendant que Google répond ---------- */
-const PAS = 36, X0 = -126;
+const PAS = 52, X0 = -104;   /* 06/11 (Marie) : 5 ongles bien droits, comme les 5 doigts */
 $("mdp").outerHTML = `<svg class="mdp" viewBox="-170 -50 340 100" aria-hidden="true">
-  ${[0, 1, 2, 3, 4, 5, 6, 7].map(i => `<g transform="translate(${X0 + i * PAS} 0) scale(.17) translate(0 ${-CY})"><g class="pt"><path d="${ONGLE}" fill="${NOIR}"/></g></g>`).join("")}
+  ${[0, 1, 2, 3, 4].map(i => `<g transform="translate(${X0 + i * PAS} 0) scale(.2) translate(0 ${-CY})"><g class="pt"><path d="${ONGLE}" fill="${NOIR}"/></g></g>`).join("")}
   <g class="suit" id="curseur"><line class="clig" x1="${X0 + PAS * .55}" y1="-26" x2="${X0 + PAS * .55}" y2="26" stroke="${NOIR}" stroke-width="2.2" stroke-linecap="round"/></g></svg>`;
 const PHRASES = ["On lit votre fiche", "On cherche vos prix et vos horaires", "On choisit vos plus belles photos", "On crée votre site"];
 $("etapes").innerHTML = PHRASES.map(p => `<p>${p}…</p>`).join("") + `<p class="fini">Tout est lu.</p>`;
@@ -325,14 +325,14 @@ async function lance(lien) {
     .catch(e => { erreur = e.message && !/fetch/i.test(e.message) ? e.message : "Pas de connexion. Vérifiez votre réseau et réessayez."; })
     .finally(() => { fini = true; });
   // les ongles s'écrivent (le dernier attend que Google ait répondu)
-  for (let i = 0; i < 8; i++) {
-    if (i === 7) while (!fini) await attends(200);
+  for (let i = 0; i < 5; i++) {
+    if (i === 4) while (!fini) await attends(200);
     if (erreur) break;
     pts[i].classList.add("on"); cur.style.transform = `translateX(${i * PAS}px)`;
-    const k = Math.min(3, Math.floor(i / 2));
+    const k = Math.min(3, i);
     ph.forEach((p, j) => { if (j < k) { p.classList.remove("on"); p.classList.add("parti"); } });
     ph[k].classList.add("on");
-    await attends(700);
+    await attends(1100);
   }
   await lecture;
   if (erreur) { montre("lien"); msg.textContent = erreur; return; }

@@ -9,10 +9,11 @@
    ["Clean","style=1&couleur=lin&mode=jour&fond=&police=chic&paillettes=nacre&charm="],
    ["Baddie","style=1&couleur=noir&mode=nuit&fond=Zèbre&police=retro&paillettes=or&charm=levres,coeurleopard,coeurzebre,cerisesbordeaux"]];
   const COUL=[["noir","#1E1C1B"],["choco","#4A3226"],["marine","#24344F"],["taupe","#5E5149"],["greige","#BDB3A8"],["sable","#C9A97E"],["peche","#E2C3AF"],["sauge","#9EA791"],["lin","#CFC4B3"],["nude","#D9B8A9"],["rose","#EBC3CC"],["bleup","#B9CCE0"],["lilas","#D5C8EC"],["jaune","#F3E3A0"],["menthe","#BFE3D4"],["abricot","#F6C9AE"],["ciel","#BCDDEE"]];
-  const FORMES=[[1,"Amande"],[2,"Stiletto"],[3,"Carré"]];
+  const FORMES=[[1,"Amande"],[2,"Stiletto"],[3,"Carré"],[4,"Ovale"],[5,"Coffin"]];
+  const forme=b=>b.coffin?5:b.epure?4:(b.style||1);
   const POL=[["elegante","Élégante"],["manuscrite","Manuscrite"],["ronde","Ronde"],["retro","Rétro"],["chic","Chic"],["luxe","Luxe"],["seventies","Seventies"],["y2k","Y2K"],["bonbon","Bonbon"],["gothique","Gothique"]];
   const PAIL=[["non","Sans"],["or","Dorées"],["argent","Argentées"],["nacre","Nacrées"],["holo","Holographiques"],["rose","Roses"]];
-  const NOMF={1:"Amande",2:"Stiletto",3:"Carré"};
+  const NOMF={1:"Amande",2:"Stiletto",3:"Carré",4:"Ovale",5:"Coffin"};
   const url=()=>"loginail-creer/pret.html?public&appli="+Date.now();
   const st=document.createElement("style");st.textContent=`
 .ms2-apercu{position:relative;height:230px;border-radius:20px;overflow:hidden;background:#EAE5DF;margin:0 0 10px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
@@ -29,7 +30,7 @@
 .ms2-ronds button.on{box-shadow:0 0 0 2px #fff,0 0 0 4px #1E1C1B}
 .ms2-ronds .rond-f{position:absolute;inset:0;width:auto;height:auto;border-radius:50%;overflow:hidden}`;
   document.head.appendChild(st);
-  const resume=b=>[b.univers||NOMF[b.style||1],(COUL.find(c=>c[0]===b.couleur)||["noir"])[0].replace("bleup","bleu pastel"),b.mode==="nuit"?"foncé":"clair"].join(" · ");
+  const resume=b=>[b.univers||NOMF[forme(b)],(COUL.find(c=>c[0]===b.couleur)||["noir"])[0].replace("bleup","bleu pastel"),b.mode==="nuit"?"foncé":"clair"].join(" · ");
   /* la page « Mon site » */
   const PAGE=()=>{const b=lit();return tete("Mon site","En ligne")
     +`<div class="ms2-apercu" data-ms2="voir"><iframe tabindex="-1" title="Mon site"></iframe><span class="ms2-en">Mon site en direct · voir en grand</span></div><button class="btn" data-ms2="grand" style="width:100%;margin:0 0 6px">Modifier mon site</button>`
@@ -47,7 +48,7 @@
     return `<div class="ms2-ronds"><button data-ms2="fond" data-v=""${b.fond?"":' class="on"'}>Aucun</button>${l.map(i=>`<button data-ms2="fond" data-v="${D.f[i][0].replace(/"/g,"&quot;")}"${D.f[i][0]===b.fond?' class="on"':""}>${F100.rond(i)}</button>`).join("")}</div>`};
   MSF["ms-style2"]=()=>{const b=lit();chargeF();return croix+`<h3>Style, couleur et fond</h3><div class="sous">Chaque choix change votre site tout de suite</div>
     <div class="lab" style="margin-top:12px">Partir d’un univers</div><div class="ms2-p">${UNIV.map((u,i)=>`<button data-ms2="univ" data-v="${i}"${u[0]===b.univers?' class="on"':""}>${u[0]}</button>`).join("")}</div>
-    <div class="lab" style="margin-top:10px">La forme du site</div><div class="ms2-p">${FORMES.map(f=>`<button data-ms2="style" data-v="${f[0]}"${f[0]===(b.style||1)?' class="on"':""}>${f[1]}</button>`).join("")}</div>
+    <div class="lab" style="margin-top:10px">La forme du site</div><div class="ms2-p">${FORMES.map(f=>`<button data-ms2="style" data-v="${f[0]}"${f[0]===forme(b)?' class="on"':""}>${f[1]}</button>`).join("")}</div>
     <div class="lab" style="margin-top:10px">Couleur</div><div class="ms2-dots">${COUL.map(c=>`<button data-ms2="couleur" data-v="${c[0]}" style="background:${c[1]}"${c[0]===b.couleur?' class="on"':""}></button>`).join("")}</div>
     <div class="lab" style="margin-top:10px">Clair ou foncé</div><div class="ms2-p"><button data-ms2="mode" data-v="jour"${b.mode!=="nuit"?' class="on"':""}>Clair</button><button data-ms2="mode" data-v="nuit"${b.mode==="nuit"?' class="on"':""}>Foncé</button></div>
     <div class="lab" style="margin-top:10px">Fond</div><div class="ms2-fonds">${ronds(b)}</div>`};
@@ -79,14 +80,14 @@
 .ms2-x{position:absolute;top:14px;right:14px;z-index:2;width:38px;height:38px;border-radius:50%;border:0;background:rgba(30,28,27,.82);color:#fff;font-size:22px;line-height:38px;padding:0;cursor:pointer}`;
   document.addEventListener("click",ev=>{const gg=ev.target.closest('[data-ms2="grand"],[data-ms2="voir"]');if(gg){ev.stopPropagation();grand(gg.closest(".ecran"),gg.dataset.ms2==="grand",gg.dataset.v);return}
     const x=ev.target.closest("[data-ms2]");if(!x)return;ev.stopPropagation();const k=x.dataset.ms2,v=x.dataset.v,b=lit();
-    if(k==="univ"){const u=UNIV[+v],q=new URLSearchParams(u[1]);b.style=+q.get("style");b.couleur=q.get("couleur");b.mode=q.get("mode");b.fond=q.get("fond")||"";b.police=q.get("police");b.paillettes=q.get("paillettes");b.charms=(q.get("charm")||"").split(",").filter(Boolean);b.univers=u[0];b._charmsU=b.charms.slice()}
-    else if(k==="style")b.style=+v;else if(k==="charmsoui"){if(v==="1"){b.charms=(b._charmsU&&b._charmsU.length?b._charmsU:["etoileargent","perle","noeudperle"]).slice()}else{if(b.charms&&b.charms.length)b._charmsU=b.charms.slice();b.charms=[]}}
+    if(k==="univ"){const u=UNIV[+v],q=new URLSearchParams(u[1]);b.style=+q.get("style");b.epure=false;b.coffin=false;b.couleur=q.get("couleur");b.mode=q.get("mode");b.fond=q.get("fond")||"";b.police=q.get("police");b.paillettes=q.get("paillettes");b.charms=(q.get("charm")||"").split(",").filter(Boolean);b.univers=u[0];b._charmsU=b.charms.slice()}
+    else if(k==="style"){const f=+v;b.style=f>3?1:f;b.epure=f===4;b.coffin=f===5}else if(k==="charmsoui"){if(v==="1"){b.charms=(b._charmsU&&b._charmsU.length?b._charmsU:["etoileargent","perle","noeudperle"]).slice()}else{if(b.charms&&b.charms.length)b._charmsU=b.charms.slice();b.charms=[]}}
     else b[k]=v;
     if(k!=="univ"&&k!=="charmsoui")b.univers="";
     ecrit(b);const g=x.parentElement;g.querySelectorAll("[data-ms2]").forEach(y=>y.classList.toggle("on",y===x));
     rafraichit();
     /* la page Mon site en dessous se met à jour */
     document.querySelectorAll('.vue[data-p="si"]').forEach(vu=>{const y=vu.scrollTop;vu.innerHTML=PAGE();vu.scrollTop=y});
-    if(k==="univ"){document.querySelectorAll('[data-ms2]').forEach(y=>{const kk=y.dataset.ms2,vv=y.dataset.v;const on=kk==="univ"?vv===v:kk==="style"?+vv===b.style:kk==="couleur"?vv===b.couleur:kk==="mode"?vv===(b.mode||"jour"):kk==="fond"?vv===(b.fond||""):kk==="police"?vv===b.police:kk==="paillettes"?vv===b.paillettes:kk==="charmsoui"?(vv==="1")===!!(b.charms||[]).length:y.classList.contains("on");y.classList.toggle("on",on)})}
+    if(k==="univ"){document.querySelectorAll('[data-ms2]').forEach(y=>{const kk=y.dataset.ms2,vv=y.dataset.v;const on=kk==="univ"?vv===v:kk==="style"?+vv===forme(b):kk==="couleur"?vv===b.couleur:kk==="mode"?vv===(b.mode||"jour"):kk==="fond"?vv===(b.fond||""):kk==="police"?vv===b.police:kk==="paillettes"?vv===b.paillettes:kk==="charmsoui"?(vv==="1")===!!(b.charms||[]).length:y.classList.contains("on");y.classList.toggle("on",on)})}
   },true);
 })();
