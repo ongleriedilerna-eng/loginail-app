@@ -142,11 +142,31 @@ function vueSite() {
     + (b ? "" : `<div class="blanche vide" style="margin-top:12px"><b>Créez d’abord votre site</b><span>Sur loginail.fr, en 3 étapes : il apparaîtra ici.</span></div>`);
 }
 function vueReglages() {
+  const L = (t, sous, a, fin) => `<div class="ligne"${a ? ` data-a="${a}"` : ""}><div class="t">${t}${sous ? `<span>${sous}</span>` : ""}</div>${fin ?? (a ? '<span class="fl">›</span>' : "")}</div>`;
+  const regles = (S.site && S.site.donnees && S.site.donnees.regles) || {};
   return tete("Réglages", S.user.email)
-    + `<div class="k">Mon salon</div><div class="liste"><div class="ligne" data-a="salon"><div class="t">Mon salon<span>${esc([S.profil.prenom, S.profil.nom_salon, S.profil.ville].filter(Boolean).join(" · ") || "Prénom, nom du salon, téléphone")}</span></div><span class="fl">›</span></div>
-      <div class="ligne" data-a="prestas"><div class="t">Mes prestations<span>${S.prestations.length ? S.prestations.length + " prestation" + (S.prestations.length > 1 ? "s" : "") : "À ajouter"}</span></div><span class="fl">›</span></div></div>`
-    + `<div class="k">Ma caisse</div><div class="liste"><div class="ligne" data-a="caisse"><div class="t">Ma caisse<span>${CAISSE() ? "Encaissé ce mois-ci : " + euros(totalMois()) : "Pas utilisée"}</span></div><span class="fl">›</span></div></div>`
-    + `<div class="k">Mon compte</div><div class="liste"><div class="ligne" data-a="deco"><div class="t">Se déconnecter</div></div></div>`;
+    + `<div class="k">Mon salon</div><div class="liste">${L("Mon salon", esc([S.profil.prenom, S.profil.nom_salon, S.profil.ville].filter(Boolean).join(" · ") || "Prénom, nom du salon, téléphone"), "salon")}
+      ${L("Mes prestations", S.prestations.length ? S.prestations.length + " prestation" + (S.prestations.length > 1 ? "s" : "") : "À ajouter", "prestas")}</div>`
+    + `<div class="k">Mes réservations</div><div class="liste">${L("Réservation en ligne", S.site ? (S.site.en_ligne ? "Vos clientes réservent sur votre site" : "Fermée : votre site s’affiche, sans réservation") : "Mettez d’abord votre site en ligne", S.site ? null : "site", S.site ? `<button class="sw${S.site.en_ligne ? " on" : ""}" data-a="resa-sw" aria-label="Réservation en ligne"></button>` : undefined)}
+      ${L("Acompte, retard, annulation", (regles.acompte === false ? "Sans acompte" : "Acompte " + (regles.montant || "15 €")) + " · annulation " + (regles.annulation || "48 h avant"), "ms-bon")}</div>`
+    + `<div class="k">SMS à mes clientes</div><div class="liste">${L("Confirmation et rappel la veille", "Arrivent avec le service SMS (bientôt)")}</div>`
+    + `<div class="k">Ma caisse</div><div class="liste">${L("Ma caisse", CAISSE() ? "Encaissé ce mois-ci : " + (euros(totalMois()) || "0 €") : "Pas utilisée", "caisse")}</div>`
+    + `<div class="k">Mes données</div><div class="liste">${L("Télécharger mes données", "Clientes, rendez-vous, tickets, site", "export")}${L("Supprimer mon compte", "Tout est effacé, pour toujours", "suppr")}</div>`
+    + `<div class="k">Aide et infos</div><div class="liste">${L("Besoin d’aide ?", "Écrire à l’équipe Loginail", "aide")}${L("Mentions légales", "", "lien", "")}${L("Confidentialité", "", "lien2", "")}</div>`
+    + `<div class="k">Mon compte</div><div class="liste">${L("Se déconnecter", "", "deco", "")}</div>`;
+}
+async function exporteDonnees() {
+  const t = ["profils", "prestations", "clientes", "rendez_vous", "tickets", "sites"], out = { exporte_le: new Date().toISOString(), compte: S.user.email };
+  for (const n of t) { const { data, error } = await sb.from(n).select("*"); if (error) return oups(error); out[n] = data; }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" }));
+  a.download = "mes-donnees-loginail-" + new Date().toISOString().slice(0, 10) + ".json"; a.click(); dit("Vos données sont téléchargées ✓");
+}
+function feuilleSuppr() {
+  ouvre(`<h3>Supprimer mon compte</h3><div class="sous">Votre site, vos clientes, vos rendez-vous et vos tickets seront effacés <b>pour toujours</b>. Pensez à télécharger vos données avant.</div>
+    <button class="btn clair" data-a="export">Télécharger mes données d’abord</button>
+    <div class="lab2" style="margin-top:16px">Pour confirmer, écrivez SUPPRIMER</div><input class="champ" id="suppr-ok" autocomplete="off" autocapitalize="characters">
+    <button class="btn" data-a="suppr-ok" style="background:#A04A4A">Supprimer définitivement</button>
+    <div class="sous" style="margin-top:12px;font-size:12px">Votre abonnement s’arrête aussi. Les tickets déjà donnés à vos clientes ne seront plus consultables.</div>`);
 }
 const VUES = { acc: vueAccueil, ag: vueAgenda, cl: vueClientes, si: vueSite, re: vueReglages };
 function rendu() {
@@ -353,6 +373,16 @@ E.addEventListener("click", async ev => {
     else if (k === "ph-ajout") $("#ph-in", E).click();
     else if (k === "ph-x") { const b = brouillon() || {}, i = +a.dataset.i; b.photos.splice(i, 1); if (b.salon != null && b.salon > i) b.salon--; if (b.principale != null && b.principale >= b.photos.length) b.principale = 0;
       localStorage.setItem("loginail-brouillon", JSON.stringify(b)); ouvre(MSF["ms-photos"]()); rendu(); dit("Photo enlevée"); }
+    else if (k === "resa-sw") { const on = !S.site.en_ligne; const { data, error } = await sb.from("sites").update({ en_ligne: on }).eq("pro_id", S.user.id).select("slug,en_ligne,maj,donnees").single();
+      if (error) return oups(error); S.site = data; rendu(); dit(on ? "Réservation en ligne ouverte ✓" : "Réservation en ligne fermée"); }
+    else if (k === "export") await exporteDonnees();
+    else if (k === "suppr") feuilleSuppr();
+    else if (k === "suppr-ok") { if (($("#suppr-ok", E).value || "").trim().toUpperCase() !== "SUPPRIMER") return dit("Écrivez SUPPRIMER pour confirmer");
+      a.disabled = true; a.textContent = "Suppression…"; const { error } = await sb.rpc("supprimer_mon_compte"); if (error) { a.disabled = false; a.textContent = "Supprimer définitivement"; return oups(error); }
+      try { localStorage.removeItem("loginail-brouillon"); } catch (e) {} await sb.auth.signOut(); S.user = null; ecranConnexion(); }
+    else if (k === "aide") location.href = "mailto:contact@loginail.fr?subject=" + encodeURIComponent("Aide Loginail");
+    else if (k === "lien") window.open("https://loginail.fr/mentions-legales.html", "_blank", "noopener");
+    else if (k === "lien2") window.open("https://loginail.fr/confidentialite.html", "_blank", "noopener");
     else if (k === "deco") { await sb.auth.signOut(); S.user = null; ecranConnexion(); }
   } catch (e) { oups(e); }
 });
