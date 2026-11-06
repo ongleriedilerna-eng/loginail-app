@@ -62,7 +62,8 @@ document.getElementById("logo").innerHTML = `<g transform="scale(.5)"><rect x="0
 
 const $ = id => document.getElementById(id);
 const coffre = supabase.createClient("https://scfhaombuptmrlkdhcsl.supabase.co", "sb_publishable_lYx1ZH0k3EFrUhZ3v0W8gw_yhGPOhbq");
-$("ouvrir").href = "../loginail-app/index.html" + IPHONE;
+/* 06/11 : on arrive dans la vraie appli (app.loginail.fr) */
+$("ouvrir").href = (location.hostname === "app.loginail.fr" ? "../" : "../appli.html") + IPHONE;
 $("recommencer").href = "index.html" + IPHONE;
 const montre = (...ids) => ["range", "pret", "perdu", "ouvrir", "recommencer"].forEach(i => $(i).hidden = !ids.includes(i));
 
@@ -93,6 +94,18 @@ async function range(user) {
     const { error: e3 } = await coffre.from("horaires").upsert(b.horaires.map((h, j) => ({
       pro_id: user.id, jour: j, ouvert: !!h, debut: h?.d || "09:00", fin: h?.f || "18:00", pause_debut: h?.pd || null, pause_fin: h?.pf || null })));
     if (e3) throw e3;
+  }
+  /* 06/11 : son site va dans le coffre, avec son adresse (dilerna, dilerna-2…) : les clientes peuvent réserver */
+  const { data: deja } = await coffre.from("sites").select("slug").maybeSingle();
+  if (!deja) {
+    const d = { ...b }; delete d.univers; delete d.exempleFictif; delete d._charmsU;
+    const base = String(b.nom || b.prenom || "mon-salon").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 34) || "mon-salon";
+    for (let n = 1; n <= 30; n++) {
+      const slug = (n === 1 ? base : base + "-" + n).padEnd(3, "0");
+      const { error } = await coffre.from("sites").insert({ pro_id: user.id, slug, donnees: d, en_ligne: true });   /* plus tard : en ligne seulement après l'abonnement (Stripe) */
+      if (!error) break;
+      if (!/duplicate|unique/i.test(error.message)) throw error;
+    }
   }
   await coffre.auth.updateUser({ data: { brouillon: null } });
   try { localStorage.removeItem("loginail-brouillon"); } catch (e) {}
