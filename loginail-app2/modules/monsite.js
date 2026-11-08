@@ -28,6 +28,8 @@
 .ms2-apercu iframe{display:none!important}
 .ms2-apercu:after{content:"";position:absolute;inset:0;background:rgba(20,18,17,.42);pointer-events:none}
 .ms2-apercu .ms2-nom{position:absolute;left:16px;right:16px;top:50%;transform:translateY(-58%);z-index:2;color:#fff;font-size:44px;line-height:1.05;text-align:center;text-shadow:0 2px 18px rgba(0,0,0,.35);overflow:hidden;text-overflow:ellipsis}
+/* 09/11 (Marie) : le nom du salon, bien encadré */
+.ms2-apercu .ms2-nom{left:50%!important;right:auto!important;transform:translate(-50%,-58%)!important;width:calc(100% - 44px);font-size:38px!important;padding:18px 14px 16px;border:1.5px solid rgba(255,255,255,.9);border-radius:16px;box-shadow:0 0 0 5px rgba(255,255,255,.16),0 0 0 6.5px rgba(255,255,255,.55);background:rgba(20,18,17,.18);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .ms2-apercu .ms2-en{position:absolute;left:0;right:0;bottom:16px;z-index:2;text-align:center;color:rgba(255,255,255,.9);font-size:10px;letter-spacing:.24em;text-transform:uppercase}
 .ms2-p{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 1px 6px}.ms2-p::-webkit-scrollbar{display:none}
 .ms2-p button{flex:none;border:0;border-radius:99px;padding:9px 13px;background:#fff;font-size:13px;box-shadow:0 0 0 1px rgba(30,28,27,.1);cursor:pointer}
