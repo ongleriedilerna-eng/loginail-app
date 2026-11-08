@@ -137,8 +137,8 @@ function vueSite() {
   const s = S.site, b = brouillon();
   return tete("Mon site", s?.en_ligne ? "En ligne" : "Pas encore en ligne")
     + `<div class="noire siteb"><small>Mon site</small><div class="adr">${s ? esc(s.slug) : "Pas encore d’adresse"}</div><div class="enl"><i></i>${s?.en_ligne ? "En ligne · réservations ouvertes" : "Hors ligne"}</div>
-      <div class="bts">${s?.en_ligne ? `<button class="plein" data-href="loginail-creer/pret.html?public&s=${esc(s.slug)}" data-neuf>Voir mon site</button>` : ""}<button data-a="site">${s?.en_ligne ? "Mettre à jour" : "Mettre en ligne"}</button></div></div>`
-    + `<div class="k">Bientôt ici</div><div class="liste"><div class="ligne"><div class="t">Style, couleurs, photos, prestations, horaires…<span>Comme dans la démo : on les branche à l’étape suivante</span></div></div></div>`
+      <div class="bts">${s?.en_ligne ? `<button class="plein" data-href="${location.hostname === "app.loginail.fr" ? "https://loginail.fr/" : ""}loginail-creer/pret.html?public&s=${esc(s.slug)}" data-neuf>Voir mon site</button>` : ""}<button data-a="site">${s?.en_ligne ? "Mettre à jour" : "Mettre en ligne"}</button></div></div>`
+    + (b ? `<div class="k">Mon style</div><div class="liste">${[["style", "Changer de style", "Des sites à glisser : gardez vos coups de cœur"], ["perso", "Personnaliser", "La forme, le fond, les couleurs, l’écriture"], ["charms", "Mes charms", (b.stickers || []).length ? b.stickers.length + " charm" + (b.stickers.length > 1 ? "s" : "") + " posé" + (b.stickers.length > 1 ? "s" : "") : "Posez-les où vous voulez sur votre site"]].map(l => `<div class="ligne" data-pont="${l[0]}"><div class="t">${l[1]}<span>${l[2]}</span></div><span class="fl">›</span></div>`).join("")}</div>` : "")
     + (b ? "" : `<div class="blanche vide" style="margin-top:12px"><b>Créez d’abord votre site</b><span>Sur loginail.fr, en 3 étapes : il apparaîtra ici.</span></div>`);
 }
 function vueReglages() {
@@ -398,3 +398,19 @@ sb.auth.onAuthStateChange((_e, s) => setTimeout(() => demarre(s), 0));
 sb.auth.getSession().then(({ data }) => demarre(data.session));
 /* une réservation arrive pendant que l'appli est ouverte : on recharge toutes les minutes */
 setInterval(async () => { if (!S.user || document.hidden || E.classList.contains("fe") || S.onglet === "cl") return; try { await chargeSemaine(); rendu(); } catch (e) {} }, 60000);
+
+/* ---------- 09/11 (Marie) : « Mon site » → les pages de loginail.fr (cartes à glisser, personnalisation, présentoir des charms), par-dessus l'appli.
+   On leur passe son site ; elles le renvoient modifié ; on l'enregistre (et il part en ligne tout seul). ---------- */
+{ const SITE = location.hostname === "app.loginail.fr" ? "https://loginail.fr/" : "../", SITEO = location.hostname === "app.loginail.fr" ? "https://loginail.fr" : location.origin;
+  const st = document.createElement("style");
+  st.textContent = `.pont{position:fixed;inset:0;z-index:200;background:#F6F3EF;animation:monte .3s both}.pont iframe{width:100%;height:100%;border:0;display:block}
+  .pont-x{position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;z-index:2;width:38px;height:38px;border-radius:50%;border:0;background:rgba(30,28,27,.82);color:#fff;font-size:22px;line-height:38px;padding:0;cursor:pointer}`;
+  document.head.appendChild(st);
+  const ferme = () => { document.querySelectorAll(".pont").forEach(o => o.remove()); };
+  document.addEventListener("click", e => { const l = e.target.closest("[data-pont]"); if (!l) return; e.stopPropagation(); ferme();
+    const o = document.createElement("div"); o.className = "pont"; o.innerHTML = `<iframe title="Mon site" src="${SITE}appli-pont.html?p=${l.dataset.pont}&t=${Date.now()}"></iframe><button class="pont-x" aria-label="Fermer">×</button>`;
+    document.body.appendChild(o); o.querySelector(".pont-x").onclick = ferme; }, true);
+  addEventListener("message", m => { if (m.origin !== SITEO || !m.data || typeof m.data !== "object") return;
+    if (m.data.loginail === "pret") { const f = document.querySelector(".pont iframe"); if (f && f.contentWindow === m.source) f.contentWindow.postMessage({ loginail: "brouillon", br: brouillon() || {} }, SITEO); }
+    if (m.data.loginail === "enregistre" && m.data.br) { const b = Object.assign(brouillon() || {}, m.data.br); localStorage.setItem("loginail-brouillon", JSON.stringify(b)); ferme(); try { rendu(); } catch (x) {} dit("Mon site est à jour ✓"); } });
+}
