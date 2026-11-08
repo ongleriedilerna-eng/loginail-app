@@ -30,6 +30,18 @@
 .ms2-apercu .ms2-nom{position:absolute;left:16px;right:16px;top:50%;transform:translateY(-58%);z-index:2;color:#fff;font-size:44px;line-height:1.05;text-align:center;text-shadow:0 2px 18px rgba(0,0,0,.35);overflow:hidden;text-overflow:ellipsis}
 /* 09/11 (Marie) : le nom du salon, bien encadré */
 .ms2-apercu .ms2-nom{left:50%!important;right:auto!important;transform:translate(-50%,-58%)!important;width:calc(100% - 44px);font-size:38px!important;padding:18px 14px 16px;border:1.5px solid rgba(255,255,255,.9);border-radius:16px;box-shadow:0 0 0 5px rgba(255,255,255,.16),0 0 0 6.5px rgba(255,255,255,.55);background:rgba(20,18,17,.18);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+/* 15/11 (Marie) : le carré ressemble au haut de SON site (plus de cadre) */
+.ms2-apercu{height:auto!important;aspect-ratio:auto;background:#F6F3EF!important;background-image:none!important;padding:0;box-shadow:0 14px 30px -22px rgba(0,0,0,.45),inset 0 0 0 1px rgba(0,0,0,.06)!important}
+.ms2-apercu:after{display:none!important}
+.ms2-apercu .ms2-nom{display:none!important}
+.ms2-apercu .ms2-photo{position:relative;height:178px;background:#ddd center/cover}
+.ms2-nom2{position:absolute;left:16px;right:16px;top:139px;font-size:40px;line-height:.95;text-transform:uppercase;letter-spacing:.01em;z-index:2;pointer-events:none}
+.ms2-nom2 span{display:block;position:absolute;left:0;right:0;top:0}
+.ms2-nom2 .cl{color:#fff;clip-path:inset(0 0 calc(100% - 39px) 0);text-shadow:0 2px 14px rgba(0,0,0,.25)}
+.ms2-nom2 .fc{color:#1E1C1B;clip-path:inset(39px 0 0 0)}
+.ms2-info{padding:14px 16px 14px;margin-top:0;position:relative}
+.ms2-info small{display:block;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:#8a8079;margin-top:30px}
+.ms2-info em{display:block;font-style:normal;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#1E1C1B;margin-top:10px}
 .ms2-apercu .ms2-en{position:absolute;left:0;right:0;bottom:16px;z-index:2;text-align:center;color:rgba(255,255,255,.9);font-size:10px;letter-spacing:.24em;text-transform:uppercase}
 .ms2-p{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 1px 6px}.ms2-p::-webkit-scrollbar{display:none}
 .ms2-p button{flex:none;border:0;border-radius:99px;padding:9px 13px;background:#fff;font-size:13px;box-shadow:0 0 0 1px rgba(30,28,27,.1);cursor:pointer}
@@ -44,8 +56,8 @@
   document.head.appendChild(st);
   const resume=b=>[b.univers||NOMF[forme(b)],(COUL.find(c=>c[0]===b.couleur)||["noir"])[0].replace("bleup","bleu pastel"),b.mode==="nuit"?"foncé":"clair"].join(" · ");
   /* la page « Mon site » */
-  const PAGE=()=>{const b=lit();return tete("Mon site","En ligne")
-    +`<div class="ms2-apercu" data-ms2="voir" style="background-image:url('${String((((b.photos||[])[b.salon!=null?b.salon:(b.principale||0)])||{}).url||"").replace(/^\.\.\//,"").replace(/'/g,"%27")}')"><iframe tabindex="-1" title="Mon site"></iframe><div class="ms2-nom" style="font-family:${POLF[b.police||"elegante"]||"Italiana"},serif">${String(b.nom||"Mon salon").replace(/</g,"&lt;")}</div><span class="ms2-en">Voir mon site en grand</span></div><button class="btn" data-ms2="nouveau" data-v="perso" style="width:100%;margin:0 0 6px">Modifier mon site</button>`
+  const PAGE=()=>{const b=lit();return tete("Modifier mon site","En ligne")
+    +`<div class="ms2-apercu" data-ms2="voir"><iframe tabindex="-1" title="Mon site"></iframe><div class="ms2-photo" style="background-image:url('${String((((b.photos||[])[b.salon!=null?b.salon:(b.principale||0)])||{}).url||"").replace(/^\.\.\//,"").replace(/'/g,"%27")}')"></div><div class="ms2-nom2" style="font-family:${POLF[b.police||"elegante"]||"Italiana"},serif"><span class="cl">${String(b.nom||"Mon salon").replace(/</g,"&lt;")}</span><span class="fc">${String(b.nom||"Mon salon").replace(/</g,"&lt;")}</span></div><div class="ms2-info"><small>Prothésiste ongulaire${b.ville?" · "+String(b.ville).replace(/</g,"&lt;"):""}</small><em>Voir mon site en grand ›</em></div></div><button class="btn" data-ms2="nouveau" data-v="perso" style="width:100%;margin:0 0 6px">Personnaliser mon site</button>`
     +'<div class="k">Mon style</div><div class="liste">'+`<div class="ligne" data-ms2="nouveau" data-v="style"><div class="t">Changer de style<span>Des sites à glisser : gardez vos coups de cœur</span></div><span class="fl">›</span></div>`+`<div class="ligne" data-ms2="nouveau" data-v="perso"><div class="t">Personnaliser<span>La forme, le fond, les couleurs, l’écriture · ${resume(b)}${b.fond?" · "+b.fond:""}</span></div><span class="fl">›</span></div>`+`<div class="ligne" data-ms2="nouveau" data-v="charms"><div class="t">Mes charms<span>${(b.stickers||[]).length?(b.stickers.length+" charms posés"):"Posez-les où vous voulez sur votre site"}</span></div><span class="fl">›</span></div></div>`
     +(DEMO?'<div class="k">Et aussi</div><div class="liste"><div class="ligne"><div class="t">Vos prix, vos photos, vos horaires, votre adresse…<span>Tout se change ici, en 2 secondes</span></div></div></div>':'')
     +(DEMO?'':'<div class="k">Mon contenu</div><div class="liste">'

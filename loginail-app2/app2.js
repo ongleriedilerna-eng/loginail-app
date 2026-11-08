@@ -132,7 +132,7 @@ function vueClientes() {
       : `<div class="blanche vide"><b>${q ? "Personne avec ce nom" : "Pas encore de clientes"}</b><span>${q ? "Essayez un autre nom." : "Elles s’ajoutent toutes seules quand elles réservent sur votre site."}</span></div>`);
 }
 function vueSite() {
-  if (MS.rgk) return MS.rgk().replace(/<div class="tete">.*?<\/div><\/div>/, tete("Mon site", S.site?.en_ligne ? "En ligne · " + esc(S.site.slug) : "Pas encore en ligne"))
+  if (MS.rgk) return MS.rgk().replace(/<div class="tete">.*?<\/div><\/div>/, tete("Modifier mon site", S.site?.en_ligne ? "En ligne · " + esc(S.site.slug) : "Pas encore en ligne"))
     + `<div class="k">Mettre en ligne</div><div class="liste"><div class="ligne" data-a="site"><div class="t">Mon adresse<span>${S.site ? esc(S.site.slug) : "Pas encore en ligne"}</span></div><span class="fl">›</span></div></div>`;
   const s = S.site, b = brouillon();
   return tete("Mon site", s?.en_ligne ? "En ligne" : "Pas encore en ligne")
