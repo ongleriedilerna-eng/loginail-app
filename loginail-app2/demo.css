@@ -415,3 +415,12 @@ button{font:inherit;color:inherit}
 .k-tk b{font-weight:500;font-size:14px;margin-left:auto}.k-tk .t{flex:1}
 .k-tk{flex-wrap:wrap;padding:8px 0}.k-renv{flex-basis:100%;text-align:left;border:0;background:none;padding:0 0 4px;font-size:11.5px;cursor:pointer;text-decoration:underline;color:var(--noir)}
 .k-renv:disabled{border-color:transparent;color:var(--gris)}
+/* 09/11 (Marie) : « Mon site » : le nom du salon bien encadré ; le fond de son site derrière la page */
+.siteb .ms-nom{margin:14px 0 14px;padding:18px 14px 15px;border:1px solid rgba(246,243,239,.5);border-radius:18px;text-align:center;box-shadow:inset 0 0 0 5px var(--acc,var(--noir)),inset 0 0 0 6px rgba(246,243,239,.28)}
+.siteb .ms-nom b{display:block;font:400 31px/1.05 'Cormorant Garamond',serif;overflow-wrap:anywhere}
+.siteb .ms-nom span{display:block;margin-top:7px;font-size:11.5px;letter-spacing:.12em;opacity:.7}
+.ecran>.fond-site{display:none}
+.ecran.ms-f>.fond-site{display:block}
+.ms-f .vue[data-p="si"] .tete>div{background:rgba(246,243,239,.9);padding:8px 16px 10px;border-radius:20px}
+.ms-f .vue[data-p="si"] .k{display:inline-flex;background:rgba(246,243,239,.9);color:var(--noir);padding:6px 12px;border-radius:99px}
+.ms-f .vue[data-p="si"] .liste,.ms-f .vue[data-p="si"] .blanche{box-shadow:0 10px 26px -16px rgba(0,0,0,.4)}

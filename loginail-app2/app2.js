@@ -136,7 +136,7 @@ function vueSite() {
     + `<div class="k">Mettre en ligne</div><div class="liste"><div class="ligne" data-a="site"><div class="t">Mon adresse<span>${S.site ? esc(S.site.slug) : "Pas encore en ligne"}</span></div><span class="fl">›</span></div></div>`;
   const s = S.site, b = brouillon();
   return tete("Mon site", s?.en_ligne ? "En ligne" : "Pas encore en ligne")
-    + `<div class="noire siteb"><small>Mon site</small><div class="adr">${s ? esc(s.slug) : "Pas encore d’adresse"}</div><div class="enl"><i></i>${s?.en_ligne ? "En ligne · réservations ouvertes" : "Hors ligne"}</div>
+    + `<div class="noire siteb"><small>Mon site</small><div class="ms-nom"><b>${esc((b && b.nom) || S.profil?.nom_salon || "Votre salon")}</b><span>${s ? esc(s.slug) : "Pas encore d’adresse"}</span></div><div class="enl"><i></i>${s?.en_ligne ? "En ligne · réservations ouvertes" : "Hors ligne"}</div>
       <div class="bts">${s?.en_ligne ? `<button class="plein" data-href="${location.hostname === "app.loginail.fr" ? "https://loginail.fr/" : ""}loginail-creer/pret.html?public&s=${esc(s.slug)}" data-neuf>Voir mon site</button>` : ""}<button data-a="site">${s?.en_ligne ? "Mettre à jour" : "Mettre en ligne"}</button></div></div>`
     + (b ? `<div class="k">Mon style</div><div class="liste">${[["style", "Changer de style", "Des sites à glisser : gardez vos coups de cœur"], ["perso", "Personnaliser", "La forme, le fond, les couleurs, l’écriture"], ["charms", "Mes charms", (b.stickers || []).length ? b.stickers.length + " charm" + (b.stickers.length > 1 ? "s" : "") + " posé" + (b.stickers.length > 1 ? "s" : "") : "Posez-les où vous voulez sur votre site"]].map(l => `<div class="ligne" data-pont="${l[0]}"><div class="t">${l[1]}<span>${l[2]}</span></div><span class="fl">›</span></div>`).join("")}</div>` : "")
     + (b ? "" : `<div class="blanche vide" style="margin-top:12px"><b>Créez d’abord votre site</b><span>Sur loginail.fr, en 3 étapes : il apparaîtra ici.</span></div>`);
@@ -172,6 +172,19 @@ const VUES = { acc: vueAccueil, ag: vueAgenda, cl: vueClientes, si: vueSite, re:
 function rendu() {
   E.querySelectorAll(".vue").forEach(v => { const on = v.dataset.p === S.onglet; v.classList.toggle("on", on); if (on) v.innerHTML = VUES[v.dataset.p](); });
   E.querySelectorAll("[data-go]").forEach(b => b.classList.toggle("on", b.dataset.go === S.onglet && !!b.closest(".ong")));
+  try { msFond(); } catch (e) { console.warn(e); }
+}
+/* 09/11 (Marie) : « Mon site » a le même fond que son site (le fond choisi dans le nuancier) */
+let F100P = null;
+function msFond() {
+  const b = brouillon(), fo = (b && b.fond) || (S.site && S.site.donnees && S.site.donnees.fond) || "", on = S.onglet === "si" && !!fo;
+  E.classList.toggle("ms-f", on); if (!on) return;
+  if (E.dataset.msFond === fo && E.querySelector(":scope>.fond-site")) return;
+  const pose = () => { const i = window.F100 && F100.idx[fo]; if (i == null) { E.classList.remove("ms-f"); return; } F100.poseFond(document, i, false); E.dataset.msFond = fo; };
+  if (window.F100) return pose();
+  if (!F100P) F100P = new Promise(r => { addEventListener("f100", r, { once: true }); const sc = document.createElement("script");
+    sc.src = (location.hostname === "app.loginail.fr" ? "https://loginail.fr/" : "../") + "loginail-site/fonds-100.js"; sc.onerror = r; document.head.appendChild(sc); });
+  F100P.then(pose);
 }
 
 /* ---------- les feuilles ---------- */
