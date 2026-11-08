@@ -403,13 +403,13 @@ setInterval(async () => { if (!S.user || document.hidden || E.classList.contains
    On leur passe son site ; elles le renvoient modifié ; on l'enregistre (et il part en ligne tout seul). ---------- */
 { const SITE = location.hostname === "app.loginail.fr" ? "https://loginail.fr/" : "../", SITEO = location.hostname === "app.loginail.fr" ? "https://loginail.fr" : location.origin;
   const st = document.createElement("style");
-  st.textContent = `.pont{position:fixed;inset:0;z-index:200;background:#F6F3EF;animation:monte .3s both}.pont iframe{width:100%;height:100%;border:0;display:block}
+  st.textContent = `.pont{position:absolute;inset:0;z-index:200;border-radius:inherit;overflow:hidden;background:#F6F3EF;animation:monte .3s both}.pont iframe{width:100%;height:100%;border:0;display:block}
   .pont-x{position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;z-index:2;width:38px;height:38px;border-radius:50%;border:0;background:rgba(30,28,27,.82);color:#fff;font-size:22px;line-height:38px;padding:0;cursor:pointer}`;
   document.head.appendChild(st);
   const ferme = () => { document.querySelectorAll(".pont").forEach(o => o.remove()); };
   document.addEventListener("click", e => { const l = e.target.closest("[data-pont]"); if (!l) return; e.stopPropagation(); ferme();
     const o = document.createElement("div"); o.className = "pont"; o.innerHTML = `<iframe title="Mon site" src="${SITE}appli-pont.html?p=${l.dataset.pont}&t=${Date.now()}"></iframe><button class="pont-x" aria-label="Fermer">×</button>`;
-    document.body.appendChild(o); o.querySelector(".pont-x").onclick = ferme; }, true);
+    (document.getElementById("E") || document.body).appendChild(o); o.querySelector(".pont-x").onclick = ferme; }, true);
   addEventListener("message", m => { if (m.origin !== SITEO || !m.data || typeof m.data !== "object") return;
     if (m.data.loginail === "pret") { const f = document.querySelector(".pont iframe"); if (f && f.contentWindow === m.source) f.contentWindow.postMessage({ loginail: "brouillon", br: brouillon() || {} }, SITEO); }
     if (m.data.loginail === "enregistre" && m.data.br) { const b = Object.assign(brouillon() || {}, m.data.br); localStorage.setItem("loginail-brouillon", JSON.stringify(b)); ferme(); try { rendu(); } catch (x) {} dit("Mon site est à jour ✓"); } });
