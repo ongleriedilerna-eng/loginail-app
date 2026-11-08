@@ -2995,5 +2995,14 @@ document.addEventListener("scroll",e=>{if(e.target.classList?.contains("defile")
 document.querySelectorAll("[data-pf] .ecran").forEach(e=>{try{apres(e)}catch(x){}});
 </script>
 <script src="../loginail-site/options-site.js"></script><script src="resa-simu.js"></script><script src="legal-site.js"></script><script src="menu-carre.js?v=3"></script><script src="menu-coffin.js?v=3"></script>
+<script>
+/* 09/11 (Marie) : les charms posés avec le présentoir (BR.stickers : n, x en % de la largeur, y en px, taille s, rotation r, largeur w du téléphone) ; ils flottent doucement */
+(function(){try{if(typeof BR==="undefined"||!BR||!Array.isArray(BR.stickers)||!BR.stickers.length)return;
+  const st=document.createElement("style");st.textContent="@keyframes lgnFlotte2{0%,100%{translate:-50% -50%}50%{translate:-50% calc(-50% - 7px)}}.lgn-st{position:absolute;z-index:30;translate:-50% -50%;pointer-events:none;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25));animation:lgnFlotte2 3.2s ease-in-out infinite}";document.head.appendChild(st);
+  const pose=()=>{const d=document.querySelector(".ecran .defile");if(!d)return setTimeout(pose,200);d.querySelectorAll(".lgn-st").forEach(x=>x.remove());const k=d.clientWidth/(BR.stickers[0].w||d.clientWidth||390);
+    BR.stickers.forEach((c,i)=>{const im=document.createElement("img");im.className="lgn-st";im.alt="";im.src=(location.hostname==="app.loginail.fr"?"https://loginail.fr/loginail-site/charms/":"../loginail-site/charms/")+String(c.n).replace(/[^a-z0-9-]/gi,"")+".png";
+      im.style.left=c.x+"%";im.style.top=(c.y*k)+"px";im.style.width=im.style.height=(c.s*k)+"px";im.style.rotate=(c.r||0)+"deg";im.style.animationDelay=(-i*.45)+"s";d.appendChild(im)})};
+  setTimeout(pose,500)}catch(e){}})();
+</script>
 </body>
 </html>
