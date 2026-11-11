@@ -152,7 +152,7 @@ function vueReglages() {
     + `<div class="k">SMS à mes clientes</div><div class="liste">${L("Confirmation et rappel la veille", "Arrivent avec le service SMS (bientôt)")}</div>`
     + `<div class="k">Ma caisse</div><div class="liste">${L("Ma caisse", CAISSE() ? "Encaissé ce mois-ci : " + (euros(totalMois()) || "0 €") : "Pas utilisée", "caisse")}</div>`
     + `<div class="k">Mes données</div><div class="liste">${L("Télécharger mes données", "Clientes, rendez-vous, tickets, site", "export")}${L("Supprimer mon compte", "Tout est effacé, pour toujours", "suppr")}</div>`
-    + `<div class="k">Aide et infos</div><div class="liste">${L("Besoin d’aide ?", "Écrire à l’équipe Loginail", "aide")}${L("Mentions légales", "", "lien", "")}${L("Confidentialité", "", "lien2", "")}</div>`
+    + `<div class="k">Aide et infos</div><div class="liste">${L("Besoin d’aide ?", "Écrire à Loginail sur WhatsApp", "aide")}${L("Mentions légales", "", "lien", "")}${L("Confidentialité", "", "lien2", "")}</div>`
     + `<div class="k">Mon compte</div><div class="liste">${L("Se déconnecter", "", "deco", "")}</div>`;
 }
 async function exporteDonnees() {
@@ -393,7 +393,7 @@ E.addEventListener("click", async ev => {
     else if (k === "suppr-ok") { if (($("#suppr-ok", E).value || "").trim().toUpperCase() !== "SUPPRIMER") return dit("Écrivez SUPPRIMER pour confirmer");
       a.disabled = true; a.textContent = "Suppression…"; const { error } = await sb.rpc("supprimer_mon_compte"); if (error) { a.disabled = false; a.textContent = "Supprimer définitivement"; return oups(error); }
       try { localStorage.removeItem("loginail-brouillon"); } catch (e) {} await sb.auth.signOut(); S.user = null; ecranConnexion(); }
-    else if (k === "aide") location.href = "mailto:contact@loginail.fr?subject=" + encodeURIComponent("Aide Loginail");
+    else if (k === "aide") window.open("https://wa.me/33745073235?text=" + encodeURIComponent("Bonjour Loginail, j’ai besoin d’aide : "), "_blank", "noopener");   /* 12/11 (Marie) : WhatsApp, son numéro pour commencer */
     else if (k === "lien") window.open("https://loginail.fr/mentions-legales.html", "_blank", "noopener");
     else if (k === "lien2") window.open("https://loginail.fr/confidentialite.html", "_blank", "noopener");
     else if (k === "deco") { await sb.auth.signOut(); S.user = null; ecranConnexion(); }
