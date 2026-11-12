@@ -112,7 +112,7 @@ function vueAccueil() {
   return h;
 }
 const ligneRdv = r => { const d = new Date(r.debut), st = { fini: "fini", absente: "pas venue" }[r.statut];
-  return `<div class="rdv" data-rdv="${r.id}"><div class="h">${hm(d)}</div><div class="t"><b>${esc(nomRdv(r))}${r.source === "en_ligne" ? '<em class="en-ligne">En ligne</em>' : ""}</b><span>${esc(titreRdv(r))}${r.prix ? " · " + euros(r.prix) : ""}</span></div>${st ? `<em style="font-style:normal;font-size:12px;color:var(--gris)">${st}</em>` : r.acompte ? '<div class="ac"><i></i>acompte</div>' : ""}</div>`; };
+  return `<div class="rdv" data-rdv="${r.id}"><div class="h">${hm(d)}</div><div class="t"><b>${esc(nomRdv(r))}${r.source === "en_ligne" ? '<em class="en-ligne">Réservé en ligne</em>' : ""}</b><span>${esc(titreRdv(r))}${r.prix ? " · " + euros(r.prix) : ""}</span></div>${st ? `<em style="font-style:normal;font-size:12px;color:var(--gris)">${st}</em>` : r.acompte ? '<div class="ac"><i></i>acompte</div>' : ""}</div>`; };
 
 function vueAgenda() {
   const L = S.lundi, F = plusJours(L, 6), j = S.jour;
@@ -126,7 +126,7 @@ function vueAgenda() {
   for (let m = OUV; m < FERM; m += 30) g += `<div class="pl${m % 60 ? "" : " plein"}" data-a="creneau" data-m="${m}">${m % 60 ? "" : `<span>${m / 60}h</span>`}</div>`;
   duJour.forEach(r => { const d = new Date(r.debut), f = new Date(r.fin), m0 = d.getHours() * 60 + d.getMinutes(), m1 = f.getHours() * 60 + f.getMinutes();
     const top = Math.max(0, (m0 - OUV) / 30 * R), haut = Math.max(R, (Math.min(m1, FERM) - Math.max(m0, OUV)) / 30 * R);
-    g += `<div class="pr${r.source === "en_ligne" ? " ligne-en" : ""}${r.statut === "annule" ? " barre" : ""}" data-rdv="${r.id}" style="top:${top}px;height:${haut}px"><b><strong>${hm(d)} – ${hm(f)}</strong> ${esc(nomRdv(r))}${r.source === "en_ligne" ? '<em class="en-ligne">En ligne</em>' : ""}</b><span>${esc(titreRdv(r))}${r.acompte ? " · acompte " + euros(r.acompte) : ""}</span></div>`; });
+    g += `<div class="pr${r.source === "en_ligne" ? " ligne-en" : ""}${r.statut === "annule" ? " barre" : ""}" data-rdv="${r.id}" style="top:${top}px;height:${haut}px"><b><strong>${hm(d)} – ${hm(f)}</strong> ${esc(nomRdv(r))}${r.source === "en_ligne" ? '<em class="en-ligne">Réservé en ligne</em>' : ""}</b><span>${esc(titreRdv(r))}${r.acompte ? " · acompte " + euros(r.acompte) : ""}</span></div>`; });
   h += g + "</div>";
   h += `<button class="btn" data-a="nouveau" style="width:100%;margin-top:16px">Nouveau rendez-vous</button>`;
   return h;
@@ -139,11 +139,19 @@ function vueClientes() {
   else if (S.tri === "neuves") L = L.slice().sort((x, y) => (y.cree_le || "").localeCompare(x.cree_le || ""));
   const sous = c => { const w = v(c); return S.tri === "vues" ? (w.der ? "Vue le " + jourCourt(w.der) : "Pas encore venue") : S.tri === "proch" ? (w.proch ? "Prochain : " + jourCourt(w.proch) : "Pas de rendez-vous prévu") : S.tri === "neuves" && c.cree_le ? "Ajoutée le " + jourCourt(c.cree_le) : (c.telephone || "Pas de numéro"); };
   return tete("Clientes", `${S.clientes.length} cliente${S.clientes.length > 1 ? "s" : ""}`)
-    + `<label class="cherche">${I.lo}<input id="cherche" value="${esc(S.cherche)}" placeholder="Chercher une cliente" style="border:0;background:none;font:inherit;font-size:16px;flex:1;outline:none"></label>`
-    + `<div class="tris" style="display:flex;gap:6px;overflow-x:auto;margin:10px -20px 0;padding:0 20px 2px;scrollbar-width:none">${TRIS.map(t => `<button data-a="tri" data-t="${t[0]}" style="flex:none;border:0;border-radius:999px;padding:9px 14px;font:inherit;font-size:13px;white-space:nowrap;background:${S.tri === t[0] ? "var(--noir,#1E1C1B)" : "#fff"};color:${S.tri === t[0] ? "#fff" : "inherit"}">${t[1]}</button>`).join("")}</div>`
+    + `<div style="display:flex;gap:8px;align-items:center;position:relative"><label class="cherche" style="flex:1;margin:0">${I.lo}<input id="cherche" value="${esc(S.cherche)}" placeholder="Chercher une cliente" style="border:0;background:none;font:inherit;font-size:16px;flex:1;outline:none;min-width:0"></label>
+      <button data-a="tri-menu" aria-label="Trier mes clientes" style="flex:none;width:50px;height:50px;border-radius:50%;border:0;background:${S.tri === "az" ? "#fff" : "var(--noir,#1E1C1B)"};color:${S.tri === "az" ? "inherit" : "#fff"};display:grid;place-items:center;padding:0"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 7h16M7 12h10M10 17h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      ${S.triOuvert ? `<div class="tris" style="position:absolute;right:0;top:58px;z-index:20;background:#fff;border-radius:18px;padding:6px;box-shadow:0 18px 40px -16px rgba(0,0,0,.45);min-width:230px">${TRIS.map(t => `<button data-a="tri" data-t="${t[0]}" style="display:flex;justify-content:space-between;align-items:center;width:100%;border:0;background:${S.tri === t[0] ? "rgba(30,28,27,.06)" : "none"};border-radius:12px;padding:12px 14px;font:inherit;font-size:14.5px;text-align:left">${t[1]}<span>${S.tri === t[0] ? "✓" : ""}</span></button>`).join("")}</div>` : ""}</div>`
     + `<button class="btn" data-a="cli-nouv" style="width:100%;margin-top:10px">Ajouter une cliente</button>`
-    + `<div class="k">${q ? "Résultats" : "Toutes mes clientes"}</div>` + (L.length ? `<div class="carte">${L.map(c => `<div class="cli" data-cli="${c.id}"><div class="av">${esc((c.prenom || "?")[0])}${esc((c.nom || "")[0] || "")}</div><div class="t"><b>${esc(nomCli(c))}</b><span>${esc(sous(c))}</span></div><em style="font-style:normal;font-size:12px;opacity:.6;white-space:nowrap">${v(c).n ? v(c).n + " visite" + (v(c).n > 1 ? "s" : "") + " ›" : "›"}</em></div>`).join("")}</div>`
-      : `<div class="blanche vide"><b>${q ? "Personne avec ce nom" : "Pas encore de clientes"}</b><span>${q ? "Essayez un autre nom." : "Elles s’ajoutent toutes seules quand elles réservent sur votre site."}</span></div>`);
+    + ((() => { const ligne = c => `<div class="cli" data-cli="${c.id}"><div class="av">${esc((c.prenom || "?")[0])}${esc((c.nom || "")[0] || "")}</div><div class="t"><b>${esc(nomCli(c))}</b><span>${esc(sous(c))}</span></div><em style="font-style:normal;font-size:12px;opacity:.6;white-space:nowrap">${v(c).n ? v(c).n + " visite" + (v(c).n > 1 ? "s" : "") + " ›" : "›"}</em></div>`;
+      if (!L.length) return null;
+      if (S.tri !== "az" || q) return `<div class="k">${q ? "Résultats" : (TRIS.find(t => t[0] === S.tri) || TRIS[0])[1]}</div><div class="carte">${L.map(ligne).join("")}</div>`;
+      /* A à Z : une lettre par groupe, et les lettres sur le côté (comme les contacts de l'iPhone) */
+      const init = c => { const l = String(c.prenom || "#").normalize("NFD").replace(/[\u0300-\u036f]/g, "")[0].toUpperCase(); return /[A-Z]/.test(l) ? l : "#"; }, G = {}; L.forEach(c => (G[init(c)] = G[init(c)] || []).push(c));
+      const lettres = Object.keys(G).sort((x, y) => x === "#" ? 1 : y === "#" ? -1 : x.localeCompare(y));
+      return lettres.map(l => `<div class="k" id="L-${l === "#" ? "0" : l}" style="scroll-margin-top:70px">${l}</div><div class="carte" style="margin-right:14px">${G[l].map(ligne).join("")}</div>`).join("")
+        + `<div class="idx" style="position:fixed;right:1px;top:50%;transform:translateY(-50%);z-index:15;display:flex;flex-direction:column;align-items:center;padding:6px 3px;touch-action:none;user-select:none;-webkit-user-select:none">${"ABCDEFGHIJKLMNOPQRSTUVWXYZ#".split("").map(l => `<span data-l="${l}" style="font-size:10.5px;font-weight:600;line-height:14px;width:16px;text-align:center;color:${G[l] ? "#1E1C1B" : "rgba(30,28,27,.28)"}">${l}</span>`).join("")}</div>`; })()
+    ?? (`<div class="blanche vide"><b>${q ? "Personne avec ce nom" : "Pas encore de clientes"}</b><span>${q ? "Essayez un autre nom." : "Elles s’ajoutent toutes seules quand elles réservent sur votre site."}</span></div>`));
 }
 
 function vueSite() {
@@ -164,7 +172,7 @@ function vueReglages() {
       ${L("Mes prestations", S.prestations.length ? S.prestations.length + " prestation" + (S.prestations.length > 1 ? "s" : "") : "À ajouter", "prestas")}</div>`
     + `<div class="k">Mes réservations</div><div class="liste">${L("Réservation en ligne", S.site ? (S.site.en_ligne ? "Vos clientes réservent sur votre site" : "Fermée : votre site s’affiche, sans réservation") : "Mettez d’abord votre site en ligne", S.site ? null : "site", S.site ? `<button class="sw${S.site.en_ligne ? " on" : ""}" data-a="resa-sw" aria-label="Réservation en ligne"></button>` : undefined)}
       ${L("Acompte, retard, annulation", (regles.acompte === false ? "Sans acompte" : "Acompte " + (regles.montant || "15 €")) + " · annulation " + (regles.annulation || "48 h avant"), "ms-bon")}</div>`
-    + `<div class="k">SMS à mes clientes</div><div class="liste">${L("Confirmation et rappel la veille", "Envoyés quand le service SMS de votre salon est activé")}</div>`
+    + `<div class="k">SMS à mes clientes</div><div class="liste">${L("Confirmation et rappel la veille", "Voir les messages envoyés", "sms-info")}</div>`
     + `<div class="k">Ma caisse</div><div class="liste">${L("Ma caisse", CAISSE() ? "Encaissé ce mois-ci : " + (euros(totalMois()) || "0 €") : "Pas utilisée", "caisse")}</div>`
     + `<div class="k">Mes données</div><div class="liste">${L("Télécharger mes données", "Clientes, rendez-vous, tickets, site", "export")}${L("Supprimer mon compte", "Tout est effacé, pour toujours", "suppr")}</div>`
     + `<div class="k">Aide et infos</div><div class="liste">${L("Besoin d’aide ?", "Écrire à Loginail sur WhatsApp", "aide")}${L("Mentions légales", "", "lien", "")}${L("Confidentialité", "", "lien2", "")}</div>`
@@ -211,7 +219,7 @@ function feuilleRdv(id) {
     ${CAISSE() && r.cliente_id && r.statut !== "annule" && r.statut !== "absente" ? (ticketDe(r) ? `<div class="sous" style="text-align:left;margin:12px 0 0">Encaissé ✓ · ticket n° ${esc(ticketDe(r).numero)}</div><button class="btn clair" data-a="qr-voir" data-t="${ticketDe(r).id}" style="margin-top:10px">Revoir son ticket</button>`
       : `<button class="btn" data-a="encaisser" data-id="${r.id}" style="margin-top:16px">Encaisser · ${euros(resteDe(r))}</button>`) : ""}
     ${r.statut === "prevu" ? `<button class="btn${CAISSE() && r.cliente_id ? " clair" : ""}" data-a="statut" data-s="fini" data-id="${r.id}" style="margin-top:${CAISSE() && r.cliente_id ? 8 : 16}px">C’est fini</button>
-    <div class="petits"><button data-a="statut" data-s="absente" data-id="${r.id}">Pas venue</button><button data-a="statut" data-s="annule" data-id="${r.id}">Annuler le rendez-vous</button></div>`
+    <div class="petits"><button data-a="decaler" data-id="${r.id}">Décaler</button><button data-a="statut" data-s="absente" data-id="${r.id}">Pas venue</button><button data-a="statut" data-s="annule" data-id="${r.id}">Annuler le rendez-vous</button></div>`
     : `<div class="sous" style="margin-top:14px">${{ fini: "Rendez-vous fini", absente: "Pas venue", annule: "Annulé" }[r.statut]}</div><div class="petits"><button data-a="statut" data-s="prevu" data-id="${r.id}">Remettre comme prévu</button></div>`}`);
 }
 let N = {};
@@ -336,6 +344,10 @@ E.addEventListener("change", ev => { if (ev.target.id !== "ph-in") return; const
     if (--n === 0) { ouvre(MSF["ms-photos"]()); dit("Photos ajoutées ✓"); rendu(); } }; im.src = r.result; }; r.readAsDataURL(f); }); });
 
 /* ---------- les gestes ---------- */
+{ const vers = ev => { const x = document.elementFromPoint(ev.clientX, ev.clientY), l = x && x.dataset && x.dataset.l; if (!l) return; const ids = [...E.querySelectorAll('[id^="L-"]')]; if (!ids.length) return;
+    const cible = ids.find(z => (z.id === "L-0" ? "[" : z.id.slice(2)) >= (l === "#" ? "[" : l)) || ids[ids.length - 1]; cible.scrollIntoView({ block: "start" }); };
+  E.addEventListener("pointerdown", ev => { if (ev.target.closest(".idx")) { ev.preventDefault(); vers(ev); } });
+  E.addEventListener("pointermove", ev => { if (ev.target.closest(".idx") && (ev.buttons || ev.pointerType === "touch")) vers(ev); }); }
 E.addEventListener("input", ev => { if (ev.target.id === "cherche") { S.cherche = ev.target.value; const pos = ev.target.selectionStart; rendu(); const i = $("#cherche", E); if (i) { i.focus(); i.setSelectionRange(pos, pos); } } });
 E.addEventListener("click", async ev => {
   const t = ev.target;
@@ -372,12 +384,28 @@ E.addEventListener("click", async ev => {
       if (error) return oups(error); ferme(); await chargeSemaine(); rendu(); dit("Rendez-vous enregistré ✓"); }
     else if (k === "statut") { const { error } = await sb.from("rendez_vous").update({ statut: a.dataset.s }).eq("id", a.dataset.id); if (error) return oups(error);
       ferme(); await chargeSemaine(); rendu(); dit({ fini: "C’est noté ✓", absente: "Marquée pas venue", annule: "Rendez-vous annulé", prevu: "Remis comme prévu" }[a.dataset.s]); }
-    else if (k === "tri") { S.tri = a.dataset.t; try { localStorage.setItem("loginail-tri", S.tri); } catch (x) {} const x = E.querySelector(".tris")?.scrollLeft || 0; rendu(); const z = E.querySelector(".tris"); if (z) z.scrollLeft = x; }
+    else if (k === "tri-menu") { S.triOuvert = !S.triOuvert; rendu(); }
+    else if (k === "tri") { S.tri = a.dataset.t; S.triOuvert = false; try { localStorage.setItem("loginail-tri", S.tri); } catch (x) {} rendu(); }
+    else if (k === "sms-info") ouvre(`<h3>SMS à mes clientes</h3><div class="sous">Vos clientes reçoivent deux messages, sans que vous ayez rien à faire.</div>
+      <div class="lab2">À la réservation</div><div class="blanche" style="font-size:13.5px;line-height:1.5;padding:12px 14px;text-align:left">Bonjour Jade, votre rendez-vous chez ${esc(S.profil.nom_salon || "votre salon")} est confirmé pour le vendredi 13 novembre à 9h00. À bientôt !</div>
+      <div class="lab2">La veille</div><div class="blanche" style="font-size:13.5px;line-height:1.5;padding:12px 14px;text-align:left">Bonjour Jade, petit rappel : votre rendez-vous chez ${esc(S.profil.nom_salon || "votre salon")} est demain à 9h00. À demain !</div>
+      <div class="sous" style="margin-top:12px;font-size:12px">Ce sont des exemples. Les messages partent quand le service SMS de votre salon est activé.</div>`);
+    else if (k === "decaler") { const r = S.rdv.find(x => x.id === a.dataset.id); if (!r) return; const d = new Date(r.debut), p2 = n => String(n).padStart(2, "0");
+      ouvre(`<h3>Décaler le rendez-vous</h3><div class="sous">${esc(nomRdv(r))} · ${esc(titreRdv(r))}</div>
+        <div class="lab2">Nouveau jour</div><input class="champ" id="dc-j" type="date" value="${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}" style="font-size:16px">
+        <div class="lab2">Nouvelle heure</div><input class="champ" id="dc-h" type="time" value="${p2(d.getHours())}:${p2(d.getMinutes())}" step="900" style="font-size:16px">
+        <button class="btn" data-a="decaler-ok" data-id="${r.id}" style="margin-top:16px">Décaler</button>`); }
+    else if (k === "decaler-ok") { const r = S.rdv.find(x => x.id === a.dataset.id), j = $("#dc-j", E).value, h = $("#dc-h", E).value; if (!r || !j || !h) return dit("Choisissez le jour et l’heure");
+      const deb = new Date(j + "T" + h + ":00"), fin = new Date(deb.getTime() + (new Date(r.fin) - new Date(r.debut))), j0 = new Date(deb); j0.setHours(0, 0, 0, 0); const j1 = plusJours(j0, 1);
+      a.disabled = true; const { data: autres } = await sb.from("rendez_vous").select("id,debut,fin,statut").gte("debut", j0.toISOString()).lt("debut", j1.toISOString());
+      if ((autres || []).some(x => x.id !== r.id && x.statut !== "annule" && new Date(x.debut) < fin && new Date(x.fin) > deb)) { a.disabled = false; return dit("Ce créneau est déjà pris"); }
+      const { error } = await sb.from("rendez_vous").update({ debut: deb.toISOString(), fin: fin.toISOString() }).eq("id", r.id); if (error) { a.disabled = false; return oups(error); }
+      await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit("Rendez-vous décalé ✓"); }
     else if (k === "cli-nouv") feuilleCliente(null);
     else if (k === "cli-ok") { const v = { prenom: $("#c-p", E).value.trim(), nom: $("#c-n", E).value.trim() || null, telephone: $("#c-t", E).value.trim() || null, email: $("#c-e", E).value.trim() || null, anniversaire: $("#c-a", E).value || null, notes: $("#c-no", E).value.trim() || null };
       if (!v.prenom) return dit("Écrivez au moins le prénom"); const id = a.dataset.id;
       const { error } = id ? await sb.from("clientes").update(v).eq("id", id) : await sb.from("clientes").insert(v); if (error) return oups(error);
-      const { data } = await sb.from("clientes").select("*").order("prenom"); S.clientes = data || []; ferme(); rendu(); dit("C’est enregistré ✓"); }
+      const { data } = await sb.from("clientes").select("*").order("prenom"); S.clientes = data || []; rendu(); if (id) feuilleCliente(id); else ferme(); dit("C’est enregistré ✓"); }
     else if (k === "site") feuilleSite();
     else if (k === "site-ok") { const b = brouillon(), slug = enSlug($("#site-slug", E).value); if (!b) return dit("Créez d’abord votre site"); if (slug.length < 3) return dit("Au moins 3 lettres");
       const d = Object.assign({}, b); delete d.univers; delete d.exempleFictif; delete d._charmsU;
