@@ -99,10 +99,12 @@ const nomRdv = r => r.clientes ? nomCli(r.clientes) : (r.titre || "Bloqué");
 /* ---------- les pages ---------- */
 function vueAccueil() {
   const maint = new Date(), auj = S.rdv.filter(r => memeJour(new Date(r.debut), maint) && r.statut !== "annule");
-  const proch = auj.find(r => new Date(r.fin) > maint && r.statut === "prevu");
+  const ici = auj.find(r => r.cliente_id && new Date(r.debut) <= maint && new Date(r.fin) > maint && r.statut === "prevu");
+  const proch = auj.find(r => r !== ici && new Date(r.fin) > maint && r.statut === "prevu");
   const nouv = S.rdv.filter(r => r.source === "en_ligne" && new Date(r.cree_le) > plusJours(maint, -1)).length;
   let h = tete("Bonjour" + (S.profil.prenom ? " " + esc(S.profil.prenom) : ""), `${JOURS[(maint.getDay() + 6) % 7]} ${maint.getDate()} ${MOIS[maint.getMonth()]}`);
   if (nouv) h += `<div class="nouv" data-go="ag"><i></i><span><b>Depuis hier :</b> ${nouv} réservation${nouv > 1 ? "s" : ""} en ligne</span><span class="fl">›</span></div>`;
+  if (ici) h += `<div class="noire prochain" data-rdv="${ici.id}" style="margin-bottom:10px"><small>En ce moment au salon</small><div class="nom" style="margin-top:6px">${esc(nomRdv(ici))}</div><div class="pr">${esc(titreRdv(ici))} · jusqu’à ${hm(new Date(ici.fin))}</div></div>`;
   if (proch) { const d = new Date(proch.debut), mn = Math.round((d - maint) / 60000);
     h += `<div class="noire prochain" data-rdv="${proch.id}"><small>Prochain rendez-vous</small><div class="l1"><b>${hm(d)}</b><span>${mn > 0 ? "dans " + (mn >= 60 ? duree(mn) : mn + " min") : "en cours"}</span></div><div class="nom">${esc(nomRdv(proch))}</div><div class="pr">${esc(titreRdv(proch))}${proch.prix ? " · " + euros(proch.prix) : ""}</div>
       <div class="bts">${proch.clientes?.telephone ? `<button data-href="tel:${esc(proch.clientes.telephone.replace(/\s/g, ""))}">Appeler</button><button data-href="sms:${esc(proch.clientes.telephone.replace(/\s/g, ""))}">Message</button>` : ""}</div></div>`; }
@@ -114,9 +116,18 @@ function vueAccueil() {
 const ligneRdv = r => { const d = new Date(r.debut), st = { fini: "fini", absente: "pas venue" }[r.statut];
   return `<div class="rdv" data-rdv="${r.id}"><div class="h">${hm(d)}</div><div class="t"><b>${esc(nomRdv(r))}${r.source === "en_ligne" ? '<em class="en-ligne">Réservé en ligne</em>' : ""}</b><span>${esc(titreRdv(r))}${r.prix ? " · " + euros(r.prix) : ""}</span></div>${st ? `<em style="font-style:normal;font-size:12px;color:var(--gris)">${st}</em>` : r.acompte ? '<div class="ac"><i></i>acompte</div>' : ""}</div>`; };
 
+/* 12/11 (Marie) : le mois entier, dans un panneau de verre blanc */
+function calMois() { const v = S.moisVu || (S.moisVu = new Date(S.jour.getFullYear(), S.jour.getMonth(), 1)), an = v.getFullYear(), mo = v.getMonth(), nb = new Date(an, mo + 1, 0).getDate(), dec = (new Date(an, mo, 1).getDay() + 6) % 7, auj = new Date();
+  let c = ""; for (let i = 0; i < dec; i++) c += "<span></span>";
+  for (let d = 1; d <= nb; d++) { const x = new Date(an, mo, d), sel = memeJour(x, S.jour), au = memeJour(x, auj);
+    c += `<button data-a="mois-j" data-d="${x.toISOString()}" style="aspect-ratio:1;border:0;border-radius:50%;padding:0;font:inherit;font-size:14px;background:${sel ? "#1E1C1B" : "none"};color:${sel ? "#fff" : "inherit"};${au && !sel ? "box-shadow:inset 0 0 0 1.5px #1E1C1B;" : ""}">${d}</button>`; }
+  return `<div class="calm" style="position:absolute;right:0;top:56px;z-index:30;width:min(310px,calc(100vw - 40px));border-radius:26px;padding:14px 14px 12px;background:rgba(255,255,255,.9);backdrop-filter:blur(20px) saturate(1.3);-webkit-backdrop-filter:blur(20px) saturate(1.3);border:1px solid rgba(255,255,255,.9);box-shadow:0 24px 50px -22px rgba(0,0,0,.5)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><button data-a="mois-nav" data-n="-1" aria-label="Mois d’avant" style="width:34px;height:34px;border:0;border-radius:50%;background:rgba(255,255,255,.8);font-size:18px;padding:0">‹</button><b style="font-weight:500;font-size:15px;text-transform:capitalize">${MOIS[mo]} ${an}</b><button data-a="mois-nav" data-n="1" aria-label="Mois d’après" style="width:34px;height:34px;border:0;border-radius:50%;background:rgba(255,255,255,.8);font-size:18px;padding:0">›</button></div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center">${["L", "M", "M", "J", "V", "S", "D"].map(l => `<small style="font-size:10.5px;font-weight:500;opacity:.5;padding:4px 0">${l}</small>`).join("")}${c}</div></div>`; }
 function vueAgenda() {
   const L = S.lundi, F = plusJours(L, 6), j = S.jour;
-  let h = tete("Agenda", `${MOIS[j.getMonth()]} ${j.getFullYear()}`);
+  const rond = "width:46px;height:46px;border-radius:50%;border:0;display:grid;place-items:center;padding:0";
+  let h = tete("Agenda", `${MOIS[j.getMonth()]} ${j.getFullYear()}`, `<div style="display:flex;gap:8px;position:relative"><button data-a="mois" aria-label="Voir le mois" style="${rond};background:#fff"><svg viewBox="0 0 24 24" width="20" height="20"><rect x="4" y="5.5" width="16" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><button data-a="nouveau" aria-label="Nouveau rendez-vous" style="${rond};background:var(--noir,#1E1C1B);color:#fff;font-size:26px;font-weight:300;line-height:1">+</button>${S.moisOuvert ? calMois() : ""}</div>`);
   h += `<div class="nav-sem"><button data-a="sem" data-n="-7" aria-label="Semaine d’avant">‹</button><span>Du ${L.getDate()} ${MOIS[L.getMonth()]} au ${F.getDate()} ${MOIS[F.getMonth()]}</span><button data-a="sem" data-n="7" aria-label="Semaine d’après">›</button></div>`;
   h += '<div class="semaine">' + [0, 1, 2, 3, 4, 5, 6].map(i => { const d = plusJours(L, i), n = S.rdv.filter(r => memeJour(new Date(r.debut), d) && r.statut !== "annule").length;
     return `<button class="${n ? "plein" : ""}${memeJour(d, j) ? " on" : ""}" data-jour="${d.toISOString()}"><small>${COURT[i]}</small><b>${d.getDate()}</b><i></i></button>`; }).join("") + "</div>";
@@ -128,7 +139,6 @@ function vueAgenda() {
     const top = Math.max(0, (m0 - OUV) / 30 * R), haut = Math.max(R, (Math.min(m1, FERM) - Math.max(m0, OUV)) / 30 * R);
     g += `<div class="pr${r.source === "en_ligne" ? " ligne-en" : ""}${r.statut === "annule" ? " barre" : ""}" data-rdv="${r.id}" style="top:${top}px;height:${haut}px"><b><strong>${hm(d)} – ${hm(f)}</strong> ${esc(nomRdv(r))}${r.source === "en_ligne" ? '<em class="en-ligne">Réservé en ligne</em>' : ""}</b><span>${esc(titreRdv(r))}${r.acompte ? " · acompte " + euros(r.acompte) : ""}</span></div>`; });
   h += g + "</div>";
-  h += `<button class="btn" data-a="nouveau" style="width:100%;margin-top:16px">Nouveau rendez-vous</button>`;
   return h;
 }
 function vueClientes() {
@@ -149,7 +159,7 @@ function vueClientes() {
       /* A à Z : une lettre par groupe, et les lettres sur le côté (comme les contacts de l'iPhone) */
       const init = c => { const l = String(c.prenom || "#").normalize("NFD").replace(/[\u0300-\u036f]/g, "")[0].toUpperCase(); return /[A-Z]/.test(l) ? l : "#"; }, G = {}; L.forEach(c => (G[init(c)] = G[init(c)] || []).push(c));
       const lettres = Object.keys(G).sort((x, y) => x === "#" ? 1 : y === "#" ? -1 : x.localeCompare(y));
-      return lettres.map(l => `<div class="k" id="L-${l === "#" ? "0" : l}" style="scroll-margin-top:70px">${l}</div><div class="carte" style="margin-right:14px">${G[l].map(ligne).join("")}</div>`).join("")
+      return `<div class="k">Toutes mes clientes</div><div class="carte" style="margin-right:16px">${lettres.map(l => G[l].map((c, i) => i ? ligne(c) : ligne(c).replace('<div class="cli"', `<div class="cli" id="L-${l === "#" ? "0" : l}"`)).join("")).join("")}</div>`
         + `<div class="idx" style="position:fixed;right:1px;top:50%;transform:translateY(-50%);z-index:15;display:flex;flex-direction:column;align-items:center;padding:6px 3px;touch-action:none;user-select:none;-webkit-user-select:none">${"ABCDEFGHIJKLMNOPQRSTUVWXYZ#".split("").map(l => `<span data-l="${l}" style="font-size:10.5px;font-weight:600;line-height:14px;width:16px;text-align:center;color:${G[l] ? "#1E1C1B" : "rgba(30,28,27,.28)"}">${l}</span>`).join("")}</div>`; })()
     ?? (`<div class="blanche vide"><b>${q ? "Personne avec ce nom" : "Pas encore de clientes"}</b><span>${q ? "Essayez un autre nom." : "Elles s’ajoutent toutes seules quand elles réservent sur votre site."}</span></div>`));
 }
@@ -345,9 +355,13 @@ E.addEventListener("change", ev => { if (ev.target.id !== "ph-in") return; const
 
 /* ---------- les gestes ---------- */
 { const vers = ev => { const x = document.elementFromPoint(ev.clientX, ev.clientY), l = x && x.dataset && x.dataset.l; if (!l) return; const ids = [...E.querySelectorAll('[id^="L-"]')]; if (!ids.length) return;
-    const cible = ids.find(z => (z.id === "L-0" ? "[" : z.id.slice(2)) >= (l === "#" ? "[" : l)) || ids[ids.length - 1]; cible.scrollIntoView({ block: "start" }); };
+    const cible = ids.find(z => (z.id === "L-0" ? "[" : z.id.slice(2)) >= (l === "#" ? "[" : l)) || ids[ids.length - 1]; const vu = E.querySelector(".vue.on"); if (vu) vu.scrollTop = Math.max(0, cible.offsetTop - 10); };
+  const droit = () => { if (E.scrollTop) E.scrollTop = 0; if (E.scrollLeft) E.scrollLeft = 0; const t = E.parentElement; if (t && t.scrollTop) t.scrollTop = 0; }; E.addEventListener("scroll", droit); setInterval(droit, 400);
   E.addEventListener("pointerdown", ev => { if (ev.target.closest(".idx")) { ev.preventDefault(); vers(ev); } });
   E.addEventListener("pointermove", ev => { if (ev.target.closest(".idx") && (ev.buttons || ev.pointerType === "touch")) vers(ev); }); }
+{ let fy = null, fx = 0;
+  E.addEventListener("touchstart", ev => { const f = ev.target.closest(".feuille"); fy = f && E.classList.contains("fe") && f.scrollTop <= 0 && !ev.target.closest("input,textarea,select,.idx") ? ev.touches[0].clientY : null; fx = ev.touches[0].clientX; }, { passive: true });
+  E.addEventListener("touchmove", ev => { if (fy == null) return; const dy = ev.touches[0].clientY - fy, dx = Math.abs(ev.touches[0].clientX - fx); if (dy > 90 && dy > dx * 1.5) { fy = null; ferme(); } else if (dy < -10) fy = null; }, { passive: true }); }
 E.addEventListener("input", ev => { if (ev.target.id === "cherche") { S.cherche = ev.target.value; const pos = ev.target.selectionStart; rendu(); const i = $("#cherche", E); if (i) { i.focus(); i.setSelectionRange(pos, pos); } } });
 E.addEventListener("click", async ev => {
   const t = ev.target;
@@ -375,6 +389,9 @@ E.addEventListener("click", async ev => {
     else if (k === "sem") { S.lundi = plusJours(S.lundi, +a.dataset.n); S.jour = plusJours(S.jour, +a.dataset.n); await chargeSemaine(); rendu(); }
     else if (k === "creneau") feuilleNouveau(+a.dataset.m);
     else if (k === "nouveau") feuilleNouveau(null);
+    else if (k === "mois") { S.moisOuvert = !S.moisOuvert; S.moisVu = new Date(S.jour.getFullYear(), S.jour.getMonth(), 1); rendu(); }
+    else if (k === "mois-nav") { S.moisVu = new Date(S.moisVu.getFullYear(), S.moisVu.getMonth() + +a.dataset.n, 1); rendu(); }
+    else if (k === "mois-j") { S.jour = new Date(a.dataset.d); S.lundi = lundiDe(S.jour); S.moisOuvert = false; await chargeSemaine(); rendu(); }
     else if (k === "nouveau-ok") { const [hh, mm] = ($("#n-h", E).value || "09:00").split(":").map(Number), deb = new Date(N.jour); deb.setHours(hh, mm, 0, 0);
       const p = N.presta, fin = new Date(deb.getTime() + (p?.duree || 60) * 60000), saisie = $("#n-cli", E).value.trim();
       let cli = S.clientes.find(c => nomCli(c).toLowerCase() === saisie.toLowerCase());
@@ -392,8 +409,8 @@ E.addEventListener("click", async ev => {
       <div class="sous" style="margin-top:12px;font-size:12px">Ce sont des exemples. Les messages partent quand le service SMS de votre salon est activé.</div>`);
     else if (k === "decaler") { const r = S.rdv.find(x => x.id === a.dataset.id); if (!r) return; const d = new Date(r.debut), p2 = n => String(n).padStart(2, "0");
       ouvre(`<h3>Décaler le rendez-vous</h3><div class="sous">${esc(nomRdv(r))} · ${esc(titreRdv(r))}</div>
-        <div class="lab2">Nouveau jour</div><input class="champ" id="dc-j" type="date" value="${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}" style="font-size:16px">
-        <div class="lab2">Nouvelle heure</div><input class="champ" id="dc-h" type="time" value="${p2(d.getHours())}:${p2(d.getMinutes())}" step="900" style="font-size:16px">
+        <div class="lab2">Nouveau jour</div><input class="champ" id="dc-j" type="date" value="${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}" style="font-size:16px;width:100%;min-width:0;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block">
+        <div class="lab2">Nouvelle heure</div><input class="champ" id="dc-h" type="time" value="${p2(d.getHours())}:${p2(d.getMinutes())}" step="900" style="font-size:16px;width:100%;min-width:0;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block">
         <button class="btn" data-a="decaler-ok" data-id="${r.id}" style="margin-top:16px">Décaler</button>`); }
     else if (k === "decaler-ok") { const r = S.rdv.find(x => x.id === a.dataset.id), j = $("#dc-j", E).value, h = $("#dc-h", E).value; if (!r || !j || !h) return dit("Choisissez le jour et l’heure");
       const deb = new Date(j + "T" + h + ":00"), fin = new Date(deb.getTime() + (new Date(r.fin) - new Date(r.debut))), j0 = new Date(deb); j0.setHours(0, 0, 0, 0); const j1 = plusJours(j0, 1);

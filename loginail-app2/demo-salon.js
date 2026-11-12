@@ -31,7 +31,7 @@
     prestations: prestations.map((p, i) => ({ nom: p.nom, prix: p.prix, duree: p.duree_min, photo: P + (i % 5 + 1) + ".webp" })),
     apropos: { toilettes: false, parking: { freeParkingLot: true }, paiement: { acceptsCashOnly: true }, accessibilite: {}, animaux: null, enfants: false },
     site: "", prestationsTrouvees: true, tarifsVerifies: true, insta: "", presentation: "Moi, c’est Chloé ! Prothésiste ongulaire à Marseille, j’adore les cerises, le rouge et les ongles qui brillent. Je vous reçois dans mon petit salon, sur rendez-vous.",
-    principale: 0, salon: 6, style: 1, couleur: "cerise", mode: "jour", exempleFictif: true, quiPhoto: P + "portrait.webp", adresseCachee: true, police: "seventies", nomc: "rougefonce", vif: "cerise" };
+    principale: 0, salon: 6, style: 1, couleur: "cerise", mode: "jour", exempleFictif: true, quiPhoto: P + "portrait.webp", adresseCachee: true, police: "seventies", nomc: "rougefonce", vif: "cerise", fond: "Cœurs chrome rubis sur fond ivoire" };
   let DB = { profils: [{ id: U.id, prenom: "Chloé", nom_salon: "les Ongles de Cerise", telephone: "06 00 00 00 00", ville: "Marseille", caisse_active: true }], prestations, clientes, rendez_vous, tickets: [],
     sites: [{ pro_id: U.id, slug: "les-ongles-de-cerise", en_ligne: true, maj: iso(jour(-1, 18)), donnees }] };
 
