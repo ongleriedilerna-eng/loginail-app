@@ -32,10 +32,13 @@
     apropos: { toilettes: false, parking: { freeParkingLot: true }, paiement: { acceptsCashOnly: true }, accessibilite: {}, animaux: null, enfants: false },
     site: "", prestationsTrouvees: true, tarifsVerifies: true, insta: "", presentation: "Moi, c’est Chloé ! Prothésiste ongulaire à Marseille, j’adore les cerises, le rouge et les ongles qui brillent. Je vous reçois dans mon petit salon, sur rendez-vous.",
     principale: 0, salon: 6, style: 1, couleur: "cerise", mode: "jour", exempleFictif: true, quiPhoto: P + "portrait.webp", adresseCachee: true, police: "seventies", nomc: "rougefonce", vif: "cerise" };
-  const DB = { profils: [{ id: U.id, prenom: "Chloé", nom_salon: "les Ongles de Cerise", telephone: "06 00 00 00 00", ville: "Marseille", caisse_active: true }], prestations, clientes, rendez_vous, tickets: [],
+  let DB = { profils: [{ id: U.id, prenom: "Chloé", nom_salon: "les Ongles de Cerise", telephone: "06 00 00 00 00", ville: "Marseille", caisse_active: true }], prestations, clientes, rendez_vous, tickets: [],
     sites: [{ pro_id: U.id, slug: "les-ongles-de-cerise", en_ligne: true, maj: iso(jour(-1, 18)), donnees }] };
 
-  let nid = 1000, numero = 12; const uid = () => "d" + (++nid), copie = o => JSON.parse(JSON.stringify(o));
+  /* ce qu'on ajoute dans la démonstration est gardé dans le téléphone jusqu'au lendemain (ou jusqu'à « Se déconnecter ») */
+  const AUJ = now.toDateString(), garde = () => { try { localStorage.setItem("loginail-demo-db", JSON.stringify({ j: AUJ, DB })); } catch (e) {} };
+  try { const g = JSON.parse(localStorage.getItem("loginail-demo-db") || "null"); if (g && g.j === AUJ && g.DB && g.DB.clientes) DB = g.DB; } catch (e) {}
+  let nid = 1000 + Math.floor(Math.random() * 9e5), numero = 12; const uid = () => "d" + (++nid), copie = o => JSON.parse(JSON.stringify(o));
   const joint = (t, r) => { const o = copie(r); if (t === "rendez_vous") { const c = DB.clientes.find(x => x.id === r.cliente_id), p = DB.prestations.find(x => x.id === r.prestation_id);
     o.clientes = c ? { id: c.id, prenom: c.prenom, nom: c.nom, telephone: c.telephone } : null; o.prestations = p ? { id: p.id, nom: p.nom } : null; } return o; };
   function Q(t) { this.t = t; this.f = []; this.o = []; this.op = "select"; this.v = null; this.un = 0; }
@@ -50,12 +53,13 @@
       if (this.op === "insert") { rows = [].concat(this.v).map(v => Object.assign({ id: uid(), cree_le: iso(new Date()) }, this.t === "rendez_vous" ? { statut: "prevu" } : {}, v)); T.push(...rows); }
       else if (this.op === "upsert") { const cle = this.t === "sites" ? "pro_id" : "id"; rows = [].concat(this.v).map(v => { const a = T.find(r => r[cle] === v[cle]); if (a) return Object.assign(a, v); const n = Object.assign({ id: uid() }, v); T.push(n); return n; }); }
       else { rows = T.filter(r => this.f.every(f => f(r))); if (this.op === "update") rows.forEach(r => Object.assign(r, this.v)); if (this.op === "delete") DB[this.t] = T.filter(r => !rows.includes(r)); }
+      if (this.op !== "select") garde();
       rows = rows.map(r => joint(this.t, r));
       this.o.slice().reverse().forEach(([c, asc]) => rows.sort((a, b) => { const x = a[c] ?? "", y = b[c] ?? ""; return (x > y ? 1 : x < y ? -1 : 0) * (asc ? 1 : -1); }));
       if (this.lim) rows = rows.slice(0, this.lim);
       return { data: this.un ? rows[0] || null : rows, error: null }; }
   };
-  const sortir = () => { try { localStorage.removeItem("loginail-demo"); localStorage.removeItem("loginail-brouillon"); } catch (e) {} setTimeout(() => location.replace(location.pathname), 50); };
+  const sortir = () => { try { localStorage.removeItem("loginail-demo"); localStorage.removeItem("loginail-demo-db"); localStorage.removeItem("loginail-brouillon"); } catch (e) {} setTimeout(() => location.replace(location.pathname), 50); };
   window.SB_DEMO = {
     from: t => new Q(t),
     rpc: async n => n === "prochain_numero" ? { data: ++numero, error: null } : { data: null, error: null },

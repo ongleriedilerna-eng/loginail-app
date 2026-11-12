@@ -23,7 +23,7 @@ const I = {
   tel: '<svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>',
   msg: '<svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></svg>' };
 const ONG = [["acc", "Accueil"], ["ag", "Agenda"], ["cl", "Clientes"], ["si", "Mon site"], ["re", "Réglages"]];
-const S = { user: null, profil: {}, prestations: [], clientes: [], rdv: [], site: null, onglet: "acc", lundi: lundiDe(new Date()), jour: new Date(), cherche: "" };
+const S = { user: null, profil: {}, prestations: [], clientes: [], rdv: [], site: null, onglet: "acc", lundi: lundiDe(new Date()), jour: new Date(), cherche: "", vis: {}, tri: (() => { try { return localStorage.getItem("loginail-tri") || "az"; } catch (e) { return "az"; } })() };
 const OUV = 8 * 60, FERM = 20 * 60, R = 30;
 /* les modules « Mon site » de la démo (style, contenu, photos, légal…) s'appuient sur ces trois-là */
 const MSF = {}, MS = {}, croix = "";
@@ -72,8 +72,15 @@ async function chargeTout() {
   if (p.error || pr.error || cl.error) throw p.error || pr.error || cl.error;
   S.profil = p.data || {}; S.prestations = pr.data || []; S.clientes = cl.data || []; S.site = st.data || null;
   if (S.site && S.site.donnees && S.site.donnees.nom) { window.__pasSync = 1; localStorage.setItem("loginail-brouillon", JSON.stringify(S.site.donnees)); window.__pasSync = 0; }
-  await chargeSemaine();
+  await chargeSemaine(); chargeVisites();
 }
+/* 12/11 (Marie) : pour chaque cliente — combien de fois elle est venue, sa dernière visite, son prochain rendez-vous */
+async function chargeVisites() { try { const { data } = await sb.from("rendez_vous").select("cliente_id,debut,fin,statut"); const m = {}, n = new Date().toISOString();
+    (data || []).forEach(r => { if (!r.cliente_id || r.statut === "annule" || r.statut === "absente") return; const v = m[r.cliente_id] || (m[r.cliente_id] = { n: 0, der: "", proch: "" });
+      if (r.fin < n) { v.n++; if (r.debut > v.der) v.der = r.debut; } else if (!v.proch || r.debut < v.proch) v.proch = r.debut; });
+    S.vis = m; if (S.onglet === "cl" && E.querySelector(".ong") && !E.querySelector(".feuille.on,.voile.on")) rendu(); } catch (e) {} }
+const TRIS = [["az", "A à Z"], ["vues", "Vues récemment"], ["proch", "Prochain rendez-vous"], ["neuves", "Ajoutées récemment"]];
+const MOISC = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."], jourCourt = d => { const x = new Date(d); return x.getDate() + " " + MOISC[x.getMonth()]; };
 async function chargeSemaine() {
   const de = S.lundi, a = plusJours(S.lundi, 7);
   const { data, error } = await sb.from("rendez_vous").select("*, clientes(id,prenom,nom,telephone), prestations(id,nom)")
@@ -125,13 +132,20 @@ function vueAgenda() {
   return h;
 }
 function vueClientes() {
-  const q = S.cherche.trim().toLowerCase(), L = S.clientes.filter(c => !q || nomCli(c).toLowerCase().includes(q) || (c.telephone || "").replace(/\s/g, "").includes(q.replace(/\s/g, "")));
+  const q = S.cherche.trim().toLowerCase(), V = S.vis || {}, v = c => V[c.id] || { n: 0, der: "", proch: "" };
+  let L = S.clientes.filter(c => !q || nomCli(c).toLowerCase().includes(q) || (c.telephone || "").replace(/\s/g, "").includes(q.replace(/\s/g, "")));
+  if (S.tri === "vues") L = L.slice().sort((x, y) => (v(y).der || "").localeCompare(v(x).der || ""));
+  else if (S.tri === "proch") L = L.slice().sort((x, y) => (v(x).proch || "9").localeCompare(v(y).proch || "9"));
+  else if (S.tri === "neuves") L = L.slice().sort((x, y) => (y.cree_le || "").localeCompare(x.cree_le || ""));
+  const sous = c => { const w = v(c); return S.tri === "vues" ? (w.der ? "Vue le " + jourCourt(w.der) : "Pas encore venue") : S.tri === "proch" ? (w.proch ? "Prochain : " + jourCourt(w.proch) : "Pas de rendez-vous prévu") : S.tri === "neuves" && c.cree_le ? "Ajoutée le " + jourCourt(c.cree_le) : (c.telephone || "Pas de numéro"); };
   return tete("Clientes", `${S.clientes.length} cliente${S.clientes.length > 1 ? "s" : ""}`)
-    + `<label class="cherche">${I.lo}<input id="cherche" value="${esc(S.cherche)}" placeholder="Chercher une cliente" style="border:0;background:none;font:inherit;font-size:14px;flex:1;outline:none"></label>`
+    + `<label class="cherche">${I.lo}<input id="cherche" value="${esc(S.cherche)}" placeholder="Chercher une cliente" style="border:0;background:none;font:inherit;font-size:16px;flex:1;outline:none"></label>`
+    + `<div class="tris" style="display:flex;gap:6px;overflow-x:auto;margin:10px -20px 0;padding:0 20px 2px;scrollbar-width:none">${TRIS.map(t => `<button data-a="tri" data-t="${t[0]}" style="flex:none;border:0;border-radius:999px;padding:9px 14px;font:inherit;font-size:13px;white-space:nowrap;background:${S.tri === t[0] ? "var(--noir,#1E1C1B)" : "#fff"};color:${S.tri === t[0] ? "#fff" : "inherit"}">${t[1]}</button>`).join("")}</div>`
     + `<button class="btn" data-a="cli-nouv" style="width:100%;margin-top:10px">Ajouter une cliente</button>`
-    + `<div class="k">Toutes mes clientes</div>` + (L.length ? `<div class="carte">${L.map(c => `<div class="cli" data-cli="${c.id}"><div class="av">${esc((c.prenom || "?")[0])}${esc((c.nom || "")[0] || "")}</div><div class="t"><b>${esc(nomCli(c))}</b><span>${esc(c.telephone || "Pas de numéro")}</span></div><em>›</em></div>`).join("")}</div>`
+    + `<div class="k">${q ? "Résultats" : "Toutes mes clientes"}</div>` + (L.length ? `<div class="carte">${L.map(c => `<div class="cli" data-cli="${c.id}"><div class="av">${esc((c.prenom || "?")[0])}${esc((c.nom || "")[0] || "")}</div><div class="t"><b>${esc(nomCli(c))}</b><span>${esc(sous(c))}</span></div><em style="font-style:normal;font-size:12px;opacity:.6;white-space:nowrap">${v(c).n ? v(c).n + " visite" + (v(c).n > 1 ? "s" : "") + " ›" : "›"}</em></div>`).join("")}</div>`
       : `<div class="blanche vide"><b>${q ? "Personne avec ce nom" : "Pas encore de clientes"}</b><span>${q ? "Essayez un autre nom." : "Elles s’ajoutent toutes seules quand elles réservent sur votre site."}</span></div>`);
 }
+
 function vueSite() {
   if (MS.rgk) return MS.rgk().replace(/<div class="tete">.*?<\/div><\/div>/, tete("Modifier mon site", S.site?.en_ligne ? "En ligne · " + esc(S.site.slug) : "Pas encore en ligne"))
     + `<div class="k">Mettre en ligne</div><div class="liste"><div class="ligne" data-a="site"><div class="t">Mon adresse<span>${S.site ? esc(S.site.slug) : "Pas encore en ligne"}</span></div><span class="fl">›</span></div></div>`;
@@ -212,7 +226,8 @@ function feuilleNouveau(m) {
 }
 function feuilleCliente(id) {
   const c = id ? S.clientes.find(x => x.id === id) || {} : {};
-  ouvre(`<h3>${id ? esc(nomCli(c)) : "Nouvelle cliente"}</h3><div class="form" style="margin-top:12px">
+  const w = id && (S.vis || {})[id];
+  ouvre(`<h3>${id ? esc(nomCli(c)) : "Nouvelle cliente"}</h3>${w && (w.n || w.proch) ? `<div class="sous" style="text-align:left;margin:4px 0 0">${w.n ? w.n + " visite" + (w.n > 1 ? "s" : "") + (w.der ? " · dernière le " + jourCourt(w.der) : "") : "Pas encore venue"}${w.proch ? " · prochain rendez-vous le " + jourCourt(w.proch) : ""}</div>` : ""}<div class="form" style="margin-top:12px">
     <label>Prénom<input id="c-p" value="${esc(c.prenom)}" autocomplete="off"></label><label>Nom<input id="c-n" value="${esc(c.nom)}" autocomplete="off"></label>
     <label>Téléphone<input id="c-t" value="${esc(c.telephone)}" inputmode="tel"></label><label>E-mail<input id="c-e" value="${esc(c.email)}" inputmode="email"></label>
     <label>Anniversaire <small>facultatif</small><input id="c-a" type="date" value="${esc(c.anniversaire || "")}"></label></div>
@@ -357,6 +372,7 @@ E.addEventListener("click", async ev => {
       if (error) return oups(error); ferme(); await chargeSemaine(); rendu(); dit("Rendez-vous enregistré ✓"); }
     else if (k === "statut") { const { error } = await sb.from("rendez_vous").update({ statut: a.dataset.s }).eq("id", a.dataset.id); if (error) return oups(error);
       ferme(); await chargeSemaine(); rendu(); dit({ fini: "C’est noté ✓", absente: "Marquée pas venue", annule: "Rendez-vous annulé", prevu: "Remis comme prévu" }[a.dataset.s]); }
+    else if (k === "tri") { S.tri = a.dataset.t; try { localStorage.setItem("loginail-tri", S.tri); } catch (x) {} const x = E.querySelector(".tris")?.scrollLeft || 0; rendu(); const z = E.querySelector(".tris"); if (z) z.scrollLeft = x; }
     else if (k === "cli-nouv") feuilleCliente(null);
     else if (k === "cli-ok") { const v = { prenom: $("#c-p", E).value.trim(), nom: $("#c-n", E).value.trim() || null, telephone: $("#c-t", E).value.trim() || null, email: $("#c-e", E).value.trim() || null, anniversaire: $("#c-a", E).value || null, notes: $("#c-no", E).value.trim() || null };
       if (!v.prenom) return dit("Écrivez au moins le prénom"); const id = a.dataset.id;
