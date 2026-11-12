@@ -3,7 +3,8 @@
    Tout est fictif et reste dans le téléphone : ce fichier remplace le coffre (Supabase) par une petite base en mémoire, remise à neuf à chaque ouverture. */
 (function () {
   let on = false;
-  try { on = localStorage.getItem("loginail-demo") === "1" || /[?&]salon-essai\b/.test(location.search); if (on) localStorage.setItem("loginail-demo", "1"); } catch (e) {}
+  const PARCOURS = /[?&]parcours/.test(location.search);   /* une nouvelle prothésiste, depuis le tout début */
+  try { on = PARCOURS || localStorage.getItem("loginail-demo") === "1" || /[?&]salon-essai\b/.test(location.search); if (on && !PARCOURS) localStorage.setItem("loginail-demo", "1"); } catch (e) {}
   if (!on) return;
   const U = { id: "demo", email: "demo@loginail.fr" }, now = new Date(), iso = d => d.toISOString();
   const jour = (dj, h, m) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + dj, h, m || 0);
@@ -40,8 +41,8 @@
     sites: [{ pro_id: U.id, slug: "les-ongles-de-cerise", en_ligne: true, maj: iso(jour(-1, 18)), donnees }] };
 
   /* ce qu'on ajoute dans la démonstration est gardé dans le téléphone jusqu'au lendemain (ou jusqu'à « Se déconnecter ») */
-  const AUJ = now.toDateString(), garde = () => { if (/[?&]salon-neuf/.test(location.search)) return; try { localStorage.setItem("loginail-demo-db2", JSON.stringify({ j: AUJ, DB })); } catch (e) {} };
-  const NEUF = /[?&]salon-neuf/.test(location.search); if (NEUF) { DB.prestations = []; DB.clientes = []; DB.rendez_vous = []; DB.sites = []; DB.profils[0].nom_salon = ""; try { localStorage.removeItem("loginail-brouillon"); } catch (e) {} }
+  const AUJ = now.toDateString(), garde = () => { if (PARCOURS || /[?&]salon-neuf/.test(location.search)) return; try { localStorage.setItem("loginail-demo-db2", JSON.stringify({ j: AUJ, DB })); } catch (e) {} };
+  const NEUF = PARCOURS || /[?&]salon-neuf/.test(location.search); if (NEUF) { DB.prestations = []; DB.clientes = []; DB.rendez_vous = []; DB.sites = []; DB.profils[0].nom_salon = ""; if (PARCOURS) { DB.profils[0].prenom = ""; DB.profils[0].ville = ""; DB.profils[0].telephone = ""; } try { localStorage.removeItem("loginail-brouillon"); } catch (e) {} }
   try { const g = NEUF ? null : JSON.parse(localStorage.getItem("loginail-demo-db2") || "null"); if (g && g.j === AUJ && g.DB && g.DB.clientes) DB = g.DB; } catch (e) {}
   let nid = 1000 + Math.floor(Math.random() * 9e5), numero = 12; const uid = () => "d" + (++nid), copie = o => JSON.parse(JSON.stringify(o));
   const joint = (t, r) => { const o = copie(r); if (t === "rendez_vous") { const c = DB.clientes.find(x => x.id === r.cliente_id), p = DB.prestations.find(x => x.id === r.prestation_id);
@@ -70,7 +71,7 @@
     functions: { invoke: async () => ({ data: { demo: true }, error: null }) },
     rpc: async n => n === "prochain_numero" ? { data: ++numero, error: null } : { data: null, error: null },
     auth: { /* on attend que toute la page soit chargée (sinon l'appli démarre avant ses modules, puisqu'ici rien ne passe par internet) */
-      getSession: () => new Promise(r => { const go = () => setTimeout(() => r({ data: { session: { user: U } }, error: null }), 0); document.readyState === "complete" ? go() : addEventListener("load", go); }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
-      signOut: async () => { sortir(); return { error: null }; }, signInWithOtp: async () => ({ error: null }), verifyOtp: async () => ({ data: { session: { user: U } }, error: null }) }
+      getSession: () => new Promise(r => { const go = () => setTimeout(() => r({ data: { session: PARCOURS ? null : { user: U } }, error: null }), PARCOURS ? 2200 : 0); document.readyState === "complete" ? go() : addEventListener("load", go); }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+      signOut: async () => { if (PARCOURS) setTimeout(() => location.reload(), 50); else sortir(); return { error: null }; }, signInWithOtp: async () => ({ error: null }), verifyOtp: async () => ({ data: { session: { user: U } }, error: null }) }
   };
 })();

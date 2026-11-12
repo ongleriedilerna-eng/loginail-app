@@ -380,7 +380,7 @@ E.addEventListener("click", async ev => {
     if (k.startsWith("ms-") && MSF[k]) return ouvre(MSF[k](a));
     if (k === "fermer") ferme();
     else if (k === "cx-envoi") { const m = $("#cx-mail", E).value.trim(); if (!/^\S+@\S+\.\S+$/.test(m)) return dit("Vérifiez votre adresse e-mail");
-      if (m.toLowerCase() === "demo@loginail.fr") { try { localStorage.setItem("loginail-demo", "1"); } catch (x) {} location.reload(); return; }   /* 12/11 : le salon de démonstration (aucun e-mail envoyé) */
+      if (m.toLowerCase() === "demo@loginail.fr" && !/[?&]parcours/.test(location.search)) { try { localStorage.setItem("loginail-demo", "1"); } catch (x) {} location.reload(); return; }   /* 12/11 : le salon de démonstration (aucun e-mail envoyé) */
       a.disabled = true; a.textContent = "Envoi…"; const { error } = await sb.auth.signInWithOtp({ email: m, options: { shouldCreateUser: false, emailRedirectTo: /^https?:$/.test(location.protocol) ? location.origin + location.pathname : "https://app.loginail.fr/" } });
       if (error) { a.disabled = false; a.textContent = "Recevoir mon code"; return dit(error.status === 429 ? "Attendez une minute avant de redemander" : /signups? not allowed|not found|otp_disabled/i.test((error.code || "") + " " + (error.message || "")) ? "Aucun compte avec cette adresse" : "Oups, réessayez"); } ecranConnexion(m); }
     else if (k === "cx-retour") ecranConnexion();
