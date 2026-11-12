@@ -75,7 +75,7 @@ async function chargeTout() {
   await chargeSemaine(); chargeVisites();
 }
 /* 12/11 (Marie) : pour chaque cliente — combien de fois elle est venue, sa dernière visite, son prochain rendez-vous */
-async function chargeVisites() { try { const { data } = await sb.from("rendez_vous").select("cliente_id,debut,fin,statut"); const m = {}, n = new Date().toISOString();
+async function chargeVisites() { try { const { data } = await sb.from("rendez_vous").select("id,cliente_id,prestation_id,titre,debut,fin,prix,statut,source,cree_le"); S.tous = data || []; const m = {}, n = new Date().toISOString();
     (data || []).forEach(r => { if (!r.cliente_id || r.statut === "annule" || r.statut === "absente") return; const v = m[r.cliente_id] || (m[r.cliente_id] = { n: 0, der: "", proch: "" });
       if (r.fin < n) { v.n++; if (r.debut > v.der) v.der = r.debut; } else if (!v.proch || r.debut < v.proch) v.proch = r.debut; });
     S.vis = m; if (S.onglet === "cl" && E.querySelector(".ong") && !E.querySelector(".feuille.on,.voile.on")) rendu(); } catch (e) {} }

@@ -24,6 +24,10 @@
         cree_le: iso(enLigne && deb > now ? new Date(now.getTime() - 5 * 3600000) : jour(dj - 6, 11)) });
     });
   }
+  /* deux clientes pas revenues depuis longtemps (pour « À relancer ») et quelques rendez-vous du mois dernier (pour le bilan) */
+  [["Chloé", "Bernard", 52], ["Nina", "Lopez", 75]].forEach((c, i) => { const id = "c" + (9 + i); clientes.push({ id, prenom: c[0], nom: c[1], telephone: "06 00 00 00 1" + i, email: null, anniversaire: null, notes: null, cree_le: iso(jour(-120, 10)) });
+    [c[2], c[2] + 24].forEach(j => { const p = prestations[1], deb = jour(-j, 10, 0); rendez_vous.push({ id: "r" + (++k), cliente_id: id, prestation_id: p.id, titre: p.nom, debut: iso(deb), fin: iso(new Date(deb.getTime() + p.duree_min * 60000)), prix: p.prix, statut: "fini", source: null, acompte: null, acompte_paye: false, cree_le: iso(jour(-j - 7, 11)) }); }); });
+  for (let j = 20; j <= 40; j += 4) { const c = clientes[j % 8], p = prestations[j % 3], deb = jour(-j, 14, 0); rendez_vous.push({ id: "r" + (++k), cliente_id: c.id, prestation_id: p.id, titre: p.nom, debut: iso(deb), fin: iso(new Date(deb.getTime() + p.duree_min * 60000)), prix: p.prix, statut: "fini", source: null, acompte: null, acompte_paye: false, cree_le: iso(jour(-j - 5, 11)) }); }
   const donnees = { source: "exemple", nom: "les Ongles de Cerise", prenom: "Chloé", rue: "12 rue Paradis", cp: "13006", ville: "Marseille", telephone: "06 00 00 00 00", placeId: "", lienGoogle: "",
     horaires: [{ d: "09:00", f: "18:00" }, { d: "09:00", f: "18:00" }, { d: "09:00", f: "18:00" }, { d: "09:00", f: "18:00" }, { d: "09:00", f: "18:00" }, { d: "09:00", f: "13:00" }, null],
     note: 5, nbAvis: 3, avis: [{ auteur: "Inès (exemple)", note: 5, texte: "Mes cerises disco brillent à chaque mouvement, je suis amoureuse !", quand: "exemple" }, { auteur: "Sarah (exemple)", note: 5, texte: "Le salon est trop beau, Chloé est adorable et super précise.", quand: "exemple" }, { auteur: "Lina (exemple)", note: 5, texte: "La french verte avec les cerises, c’est juste parfait.", quand: "exemple" }],
@@ -36,8 +40,8 @@
     sites: [{ pro_id: U.id, slug: "les-ongles-de-cerise", en_ligne: true, maj: iso(jour(-1, 18)), donnees }] };
 
   /* ce qu'on ajoute dans la démonstration est gardé dans le téléphone jusqu'au lendemain (ou jusqu'à « Se déconnecter ») */
-  const AUJ = now.toDateString(), garde = () => { try { localStorage.setItem("loginail-demo-db", JSON.stringify({ j: AUJ, DB })); } catch (e) {} };
-  try { const g = JSON.parse(localStorage.getItem("loginail-demo-db") || "null"); if (g && g.j === AUJ && g.DB && g.DB.clientes) DB = g.DB; } catch (e) {}
+  const AUJ = now.toDateString(), garde = () => { try { localStorage.setItem("loginail-demo-db2", JSON.stringify({ j: AUJ, DB })); } catch (e) {} };
+  try { const g = JSON.parse(localStorage.getItem("loginail-demo-db2") || "null"); if (g && g.j === AUJ && g.DB && g.DB.clientes) DB = g.DB; } catch (e) {}
   let nid = 1000 + Math.floor(Math.random() * 9e5), numero = 12; const uid = () => "d" + (++nid), copie = o => JSON.parse(JSON.stringify(o));
   const joint = (t, r) => { const o = copie(r); if (t === "rendez_vous") { const c = DB.clientes.find(x => x.id === r.cliente_id), p = DB.prestations.find(x => x.id === r.prestation_id);
     o.clientes = c ? { id: c.id, prenom: c.prenom, nom: c.nom, telephone: c.telephone } : null; o.prestations = p ? { id: p.id, nom: p.nom } : null; } return o; };
@@ -59,7 +63,7 @@
       if (this.lim) rows = rows.slice(0, this.lim);
       return { data: this.un ? rows[0] || null : rows, error: null }; }
   };
-  const sortir = () => { try { localStorage.removeItem("loginail-demo"); localStorage.removeItem("loginail-demo-db"); localStorage.removeItem("loginail-brouillon"); } catch (e) {} setTimeout(() => location.replace(location.pathname), 50); };
+  const sortir = () => { try { localStorage.removeItem("loginail-demo"); localStorage.removeItem("loginail-demo-db2"); localStorage.removeItem("loginail-brouillon"); } catch (e) {} setTimeout(() => location.replace(location.pathname), 50); };
   window.SB_DEMO = {
     from: t => new Q(t),
     rpc: async n => n === "prochain_numero" ? { data: ++numero, error: null } : { data: null, error: null },
