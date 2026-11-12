@@ -57,7 +57,8 @@ function ecranConnexion(envoye) {
       <input id="cx-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Le code" style="text-align:center;letter-spacing:.3em;font-size:20px" data-mail="${esc(envoye)}">
       <button class="btn" data-a="cx-code">Me connecter</button><button class="lien-t" data-a="cx-retour">Changer d’adresse</button>`
     : `<h1>Votre espace pro.</h1><p>Entrez votre adresse e-mail : nous vous envoyons un code pour vous connecter, sans mot de passe.</p>
-      <input id="cx-mail" type="email" inputmode="email" autocomplete="email" placeholder="votre@adresse.fr"><button class="btn" data-a="cx-envoi">Recevoir mon code</button>`}
+      <input id="cx-mail" type="email" inputmode="email" autocomplete="email" placeholder="votre@adresse.fr"><button class="btn" data-a="cx-envoi">Recevoir mon code</button>
+      ${/^https?:$/.test(location.protocol) ? `<div class="cx-neuve" style="margin-top:26px;border-radius:18px;background:#fff;padding:14px 16px;font-size:13.5px;line-height:1.5;text-align:left"><b style="font-weight:500">Pas encore de compte ?</b><br>Votre espace pro se crée en même temps que votre site, en 3 minutes.<a href="https://loginail.fr" style="display:block;margin-top:8px;font-weight:500;text-decoration:underline;text-underline-offset:3px;color:inherit">Créer mon site sur loginail.fr ›</a></div>` : ""}`}
     <p class="cx-legal" style="margin-top:22px;font-size:12px;line-height:1.5;opacity:.7">En vous connectant, vous acceptez nos <a data-a="lien3" style="text-decoration:underline">conditions</a> et notre <a data-a="lien2" style="text-decoration:underline">politique de confidentialité</a>.</p>
     </div></div><div class="toast"></div>`;
 }
@@ -239,6 +240,8 @@ function feuilleNouveau(m) {
   ouvre(`<h3>Nouveau rendez-vous</h3><div class="sous">${JOURS[(j.getDay() + 6) % 7]} ${j.getDate()} ${MOIS[j.getMonth()]}</div>
     <div class="lab2">Heure</div><input class="champ" id="n-h" type="time" value="${String(Math.floor(N.m / 60)).padStart(2, "0")}:${String(N.m % 60).padStart(2, "0")}" step="900">
     <div class="lab2">Cliente</div><input class="champ" id="n-cli" list="n-cl" placeholder="Prénom et nom" autocomplete="off"><datalist id="n-cl">${S.clientes.map(c => `<option value="${esc(nomCli(c))}">`).join("")}</datalist>
+    <button class="lien-t" data-a="n-neuve" id="n-neuve" style="display:block;margin:8px 0 0;padding:4px 0;text-align:left">+ Nouvelle cliente, avec son numéro</button>
+    <div id="n-neuve-z" hidden><div class="lab2">Son téléphone <small style="text-transform:none;letter-spacing:0;opacity:.6">facultatif</small></div><input class="champ" id="n-tel" inputmode="tel" placeholder="06 12 34 56 78" autocomplete="off"></div>
     <div class="lab2">Prestation</div><div class="chips">${P.map((p, i) => `<button class="chip" data-np="${i}">${esc(p.nom)}<span>${duree(p.duree || 60)}</span></button>`).join("") || '<span class="sous">Ajoutez vos prestations dans Réglages</span>'}</div>
     <button class="btn" data-a="nouveau-ok" style="margin-top:16px">Enregistrer</button>`);
 }
@@ -390,13 +393,14 @@ E.addEventListener("click", async ev => {
     else if (k === "sem") { S.lundi = plusJours(S.lundi, +a.dataset.n); S.jour = plusJours(S.jour, +a.dataset.n); await chargeSemaine(); rendu(); }
     else if (k === "creneau") feuilleNouveau(+a.dataset.m);
     else if (k === "nouveau") feuilleNouveau(null);
+    else if (k === "n-neuve") { $("#n-neuve-z", E).hidden = false; a.hidden = true; const c = $("#n-cli", E); c.placeholder = "Son prénom et son nom"; c.removeAttribute("list"); c.focus(); }
     else if (k === "mois") { S.moisOuvert = !S.moisOuvert; S.moisVu = new Date(S.jour.getFullYear(), S.jour.getMonth(), 1); rendu(); }
     else if (k === "mois-nav") { S.moisVu = new Date(S.moisVu.getFullYear(), S.moisVu.getMonth() + +a.dataset.n, 1); rendu(); }
     else if (k === "mois-j") { S.jour = new Date(a.dataset.d); S.lundi = lundiDe(S.jour); S.moisOuvert = false; await chargeSemaine(); rendu(); }
     else if (k === "nouveau-ok") { const [hh, mm] = ($("#n-h", E).value || "09:00").split(":").map(Number), deb = new Date(N.jour); deb.setHours(hh, mm, 0, 0);
       const p = N.presta, fin = new Date(deb.getTime() + (p?.duree || 60) * 60000), saisie = $("#n-cli", E).value.trim();
       let cli = S.clientes.find(c => nomCli(c).toLowerCase() === saisie.toLowerCase());
-      if (!cli && saisie) { const mots = saisie.split(/\s+/), prenom = mots.shift(); const { data, error } = await sb.from("clientes").insert({ prenom, nom: mots.join(" ") || null }).select().single(); if (error) return oups(error); cli = data; S.clientes.push(data); }
+      if (!cli && saisie) { const mots = saisie.split(/\s+/), prenom = mots.shift(); const { data, error } = await sb.from("clientes").insert({ prenom, nom: mots.join(" ") || null, telephone: ($("#n-tel", E) && $("#n-tel", E).value.trim()) || null }).select().single(); if (error) return oups(error); cli = data; S.clientes.push(data); }
       if (S.rdv.some(r => r.statut !== "annule" && new Date(r.debut) < fin && new Date(r.fin) > deb)) return dit("Ce créneau est déjà pris");
       const { error } = await sb.from("rendez_vous").insert({ cliente_id: cli?.id || null, prestation_id: p?.id || null, titre: cli ? (p?.nom || null) : (saisie || "Bloqué"), debut: deb.toISOString(), fin: fin.toISOString(), prix: p?.prix ?? null });
       if (error) return oups(error); ferme(); await chargeSemaine(); rendu(); dit("Rendez-vous enregistré ✓"); }

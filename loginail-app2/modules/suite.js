@@ -159,7 +159,8 @@
     ouvre(`<h3>${hM(m)}</h3><div class="sous" style="text-transform:capitalize">${JOURS[(j.getDay() + 6) % 7]} ${j.getDate()} ${MOIS[j.getMonth()]}</div>
       <button class="btn" data-s5="rdv" style="margin-top:16px">Nouveau rendez-vous</button><button class="btn clair" data-s5="bloquer" style="margin-top:8px">Bloquer ce créneau</button>`); };
   const feuilleBloquer = () => ouvre(`<h3>Bloquer à partir de ${hM(BL.m)}</h3><div class="sous">Personne ne pourra réserver sur ce créneau.</div>
-      <div class="su-puces">${[[30, "30 min"], [60, "1 h"], [120, "2 h"], [240, "4 h"]].map(x => `<button data-s5="bl-d" data-d="${x[0]}" class="${BL.d === x[0] ? "on" : ""}">${x[1]}</button>`).join("")}</div>
+      <div class="su-puces">${[[30, "30 min"], [60, "1 h"], [120, "2 h"], [240, "4 h"]].map(x => `<button data-s5="bl-d" data-d="${x[0]}" class="${BL.d === x[0] && !BL.libre ? "on" : ""}">${x[1]}</button>`).join("")}<button data-s5="bl-libre" class="${BL.libre ? "on" : ""}">Autre…</button></div>
+      ${BL.libre ? `<div class="lab2">Jusqu’à</div><input class="champ" id="bl-fin" type="time" step="300" value="${hM(Math.min(23 * 60 + 55, BL.m + BL.d)).replace("h", ":").padStart(5, "0")}" style="font-size:16px;width:100%;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block">` : ""}
       <div class="lab2">Pourquoi ? <small style="text-transform:none;letter-spacing:0;opacity:.6">facultatif</small></div><input class="champ" id="bl-n" maxlength="40" placeholder="Pause, médecin, formation…" value="${esc(BL.n || "")}" style="font-size:16px;width:100%;box-sizing:border-box">
       <button class="btn" data-s5="bl-ok" style="margin-top:16px">Bloquer</button>`);
 
@@ -184,10 +185,26 @@
   /* 4 · ajouter plusieurs clientes d'un coup */
   const lis = t => t.split(/\n+/).map(l => l.trim()).filter(Boolean).map(l => { const m = l.match(/(\+?\d[\d .\-]{7,}\d)\s*$/), tel = m ? m[1].replace(/[.\-]/g, " ").replace(/\s+/g, " ").trim() : null, nom = (m ? l.slice(0, m.index) : l).replace(/[;,\t]+/g, " ").trim().split(/\s+/).filter(Boolean);
     return nom.length ? { prenom: nom[0], nom: nom.slice(1).join(" ") || null, telephone: tel } : null; }).filter(Boolean);
-  const feuillePlusieurs = () => ouvre(`<h3>Ajouter plusieurs clientes</h3><div class="sous">Une cliente par ligne : son prénom, son nom, puis son numéro si vous l’avez. Vous pouvez coller une liste copiée ailleurs.</div>
-      <textarea class="msg" id="s5-liste" style="height:190px;margin-top:12px" placeholder="Jade Martin 06 12 34 56 78&#10;Inès Moreau&#10;Sarah Benali 0611223344"></textarea>
+  /* les fichiers : une fiche contact de l'iPhone (.vcf) ou un tableau (.csv, Excel « enregistrer en CSV ») */
+  const deVcf = t => t.replace(/\r?\n[ \t]/g, "").split(/BEGIN:VCARD/i).slice(1).map(c => { const v = k => { const m = c.match(new RegExp("^" + k + "(?:;[^:\\n]*)?:(.*)$", "im")); return m ? m[1].trim() : ""; };
+      const n = v("N").split(";"), fn = v("FN"), tel = v("TEL"); let prenom = (n[1] || "").trim(), nom = (n[0] || "").trim(); if (!prenom && fn) { const w = fn.split(/\s+/); prenom = w.shift(); nom = w.join(" "); }
+      return prenom ? `${prenom} ${nom}`.trim() + (tel ? " " + tel : "") : ""; }).filter(Boolean).join("\n");
+  const deCsv = t => { const L = t.split(/\r?\n/).filter(x => x.trim()), sep = (L[0] || "").split(";").length > (L[0] || "").split(",").length ? ";" : ",", cols = L.map(l => l.split(sep).map(x => x.replace(/^"|"$/g, "").trim()));
+      const h = (cols[0] || []).map(x => x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")), i = r => h.findIndex(x => r.test(x)), ip = i(/prenom|first/), inn = i(/^nom|last|family/), it = i(/tel|phone|mobile|portable/), entete = ip >= 0 || inn >= 0 || it >= 0;
+      return (entete ? cols.slice(1) : cols).map(c => entete ? [c[ip] || "", c[inn] || "", c[it] || ""].join(" ").trim() : c.join(" ").trim()).filter(Boolean).join("\n"); };
+  const feuillePlusieurs = () => ouvre(`<h3>Importer mes clientes</h3><div class="sous">Pour ne pas tout retaper quand vous commencez.</div>
+      <label class="btn" style="display:block;margin-top:16px;text-align:center;cursor:pointer">Choisir un fichier<input type="file" id="s5-fic" accept=".vcf,.csv,.txt,text/vcard,text/csv,text/plain" hidden></label>
+      <details style="margin-top:10px;font-size:13px;line-height:1.5;color:#6B625C"><summary style="cursor:pointer;font-weight:500;color:#1E1C1B">Comment récupérer mes clientes ?</summary>
+        <p style="margin:8px 0 0"><b>Depuis les contacts de mon iPhone :</b> ouvrez Contacts, touchez une liste (ou créez-en une « Clientes »), restez appuyée dessus, puis « Exporter » et « Enregistrer dans Fichiers ». Revenez ici et choisissez ce fichier.</p>
+        <p style="margin:8px 0 0"><b>Depuis une autre appli de réservation :</b> demandez-lui l’export de vos clientes (souvent un fichier Excel). Ouvrez-le, « Enregistrer sous » en CSV, puis choisissez-le ici.</p></details>
+      <div class="lab2" style="margin-top:16px">Ou écrivez-les : une par ligne</div>
+      <textarea class="msg" id="s5-liste" style="height:150px" placeholder="Jade Martin 06 12 34 56 78&#10;Inès Moreau&#10;Sarah Benali 0611223344"></textarea>
       <button class="btn" data-s5="pl-ok" style="margin-top:12px" disabled>Ajouter</button>`);
-  const cl1 = VUES.cl; VUES.cl = () => { const h = cl1(), rep = "Ajouter une cliente</button>"; return h.includes(rep) ? h.replace(rep, rep + `<button class="s5-plus" data-s5="plusieurs">Ajouter plusieurs clientes d’un coup</button>`) : h; };
+  document.addEventListener("change", e => { if (e.target.id !== "s5-fic") return; const f = e.target.files && e.target.files[0]; if (!f) return; const r = new FileReader();
+    r.onload = () => { const t = String(r.result || ""), l = /BEGIN:VCARD/i.test(t) ? deVcf(t) : deCsv(t), z = E.querySelector("#s5-liste"); if (!l) return dit("Aucune cliente trouvée dans ce fichier"); z.value = (z.value.trim() ? z.value.trim() + "\n" : "") + l; z.dispatchEvent(new Event("input", { bubbles: true })); dit("Vérifiez la liste, puis touchez « Ajouter »"); };
+    r.readAsText(f); });
+  const cl1 = VUES.cl; VUES.cl = () => { const h = cl1(), rep = "Ajouter une cliente</button>"; return h.includes(rep) && S.clientes.length < 10 && !S.cherche.trim() ? h.replace(rep, rep + `<button class="s5-plus" data-s5="plusieurs">J’ai déjà des clientes : les importer</button>`) : h; };
+  const re2 = VUES.re; VUES.re = () => { const h = re2(), rep = '<div class="k">Mes données</div><div class="liste">'; return h.includes(rep) ? h.replace(rep, rep + `<div class="ligne" data-s5="plusieurs">${sv('<path d="M12 20V9M7 13l5-5 5 5M5 4h14"/>')}<div class="t">Importer mes clientes<span>Depuis les contacts de mon téléphone ou un fichier</span></div><span class="fl">›</span></div>`) : h; };
   document.addEventListener("input", e => { if (e.target.id !== "s5-liste") return; const n = lis(e.target.value).length, b = E.querySelector('[data-s5="pl-ok"]'); if (b) { b.disabled = !n; b.textContent = n ? `Ajouter ${n} cliente${n > 1 ? "s" : ""}` : "Ajouter"; } });
 
   document.addEventListener("click", async e => { const t = e.target; if (!t.closest) return;
@@ -195,13 +212,15 @@
     const a = t.closest("[data-s5]"); if (!a) return; e.stopPropagation(); const k = a.dataset.s5;
     if (k === "rdv") feuilleNouveau(BL.m);
     else if (k === "bloquer") feuilleBloquer();
-    else if (k === "bl-d") { BL.n = E.querySelector("#bl-n").value; BL.d = +a.dataset.d; feuilleBloquer(); }
-    else if (k === "bl-ok") { const deb = new Date(S.jour); deb.setHours(0, BL.m, 0, 0); const fin = new Date(+deb + BL.d * 60000), note = (E.querySelector("#bl-n").value || "").trim();
+    else if (k === "bl-d") { BL.n = E.querySelector("#bl-n").value; BL.d = +a.dataset.d; BL.libre = false; feuilleBloquer(); }
+    else if (k === "bl-libre") { BL.n = E.querySelector("#bl-n").value; BL.libre = true; feuilleBloquer(); }
+    else if (k === "bl-ok") { if (BL.libre) { const v = (E.querySelector("#bl-fin").value || "").split(":").map(Number); const f = v[0] * 60 + (v[1] || 0); if (!(f > BL.m)) return dit("L’heure de fin doit être après " + hM(BL.m)); BL.d = f - BL.m; }
+      const deb = new Date(S.jour); deb.setHours(0, BL.m, 0, 0); const fin = new Date(+deb + BL.d * 60000), note = (E.querySelector("#bl-n").value || "").trim();
       if (S.rdv.some(r => r.statut !== "annule" && new Date(r.debut) < fin && new Date(r.fin) > deb)) return dit("Il y a déjà un rendez-vous sur ce créneau");
       a.disabled = true; const { error } = await sb.from("rendez_vous").insert({ cliente_id: null, prestation_id: null, titre: note || "Bloqué", debut: deb.toISOString(), fin: fin.toISOString(), prix: null });
       if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessayez."); } await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit("Créneau bloqué ✓"); }
     else if (k === "plusieurs") feuillePlusieurs();
-    else if (k === "pl-ok") { const l = lis(E.querySelector("#s5-liste").value); if (!l.length) return; a.disabled = true; a.textContent = "Un instant…";
+    else if (k === "pl-ok") { const deja = new Set(S.clientes.map(c => nomCli(c).toLowerCase())), l = lis(E.querySelector("#s5-liste").value).filter((c, i, t) => !deja.has(nomCli(c).toLowerCase()) && t.findIndex(x => nomCli(x).toLowerCase() === nomCli(c).toLowerCase()) === i); if (!l.length) return dit("Ces clientes sont déjà dans votre liste"); a.disabled = true; a.textContent = "Un instant…";
       const { error } = await sb.from("clientes").insert(l); if (error) { a.disabled = false; a.textContent = "Ajouter"; return dit("Oups, ça n’a pas marché. Réessayez."); }
       const { data } = await sb.from("clientes").select("*").order("prenom"); S.clientes = data || []; ferme(); rendu(); dit(l.length > 1 ? l.length + " clientes ajoutées ✓" : "Cliente ajoutée ✓"); }
   }, true);
