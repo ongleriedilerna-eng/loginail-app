@@ -53,7 +53,7 @@ const tete = (t, s, d) => `<div class="tete"><div><small>${s || ""}</small><h1>$
 /* ---------- connexion (code ou lien par e-mail, sans mot de passe) ---------- */
 function ecranConnexion(envoye) {
   E.innerHTML = `<div class="vue on"><div class="cx"><div class="marque">LOGINAIL</div>
-    ${envoye ? `<h1>Regardez vos e-mails.</h1><div class="ok">Nous venons d’envoyer un e-mail à <b>${esc(envoye)}</b>. Le code est dans son titre.</div>
+    ${envoye ? (/[?&]parcours/.test(location.search) ? `<h1>Ceci est un essai.</h1><div class="ok">Aucun e-mail n’est envoyé ici. Tapez <b>6 chiffres au hasard</b> pour entrer et voir l’appli d’une nouvelle prothésiste.</div>` : `<h1>Regardez vos e-mails.</h1><div class="ok">Nous venons d’envoyer un e-mail à <b>${esc(envoye)}</b>. Le code est dans son titre.</div>`) + `
       <input id="cx-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Le code" style="text-align:center;letter-spacing:.3em;font-size:20px" data-mail="${esc(envoye)}">
       <button class="btn" data-a="cx-code">Me connecter</button><button class="lien-t" data-a="cx-retour">Changer d’adresse</button>`
     : `<h1>Votre espace pro.</h1><p>Entrez votre adresse e-mail : nous vous envoyons un code pour vous connecter, sans mot de passe.</p>
