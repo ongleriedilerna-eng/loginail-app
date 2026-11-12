@@ -119,8 +119,14 @@
   }, true);
   document.addEventListener("change", e => { if (e.target.id === "cg-du" || e.target.id === "cg-au") { CG.du = $("#cg-du", E).value; CG.au = $("#cg-au", E).value; if (CG.au < CG.du) CG.au = CG.du; feuilleConges(); } });
 
+  /* ---------- la semaine coulisse : on glisse à gauche ou à droite sur les jours ---------- */
+  { let sx = null, sy = 0; E.addEventListener("touchstart", e => { const z = e.target.closest(".semaine,.nav-sem"); sx = z && e.touches.length === 1 ? e.touches[0].clientX : null; sy = e.touches[0].clientY; }, { passive: true });
+    E.addEventListener("touchend", async e => { if (sx == null) return; const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy; sx = null; if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+      const n = dx < 0 ? 7 : -7; S.lundi = plusJours(S.lundi, n); S.jour = plusJours(S.jour, n); avale = Date.now(); await chargeSemaine(); rendu(); }, { passive: true });
+    document.addEventListener("click", e => { if (Date.now() - avale < 400 && e.target.closest && e.target.closest(".semaine")) { e.stopPropagation(); e.preventDefault(); } }, true); }
+  let avale = 0;
   /* ---------- faire glisser un rendez-vous dans l'agenda (on reste appuyée, puis on monte ou on descend) ---------- */
-  let G = null, avale = 0;
+  let G = null;
   const debutG = (el, y) => { const r = S.rdv.find(x => x.id === el.dataset.rdv); if (!r || r.statut !== "prevu") return; G = { el, r, y, dy: 0, on: false, t: setTimeout(() => { if (!G) return; G.on = true; el.classList.add("su-tient"); navigator.vibrate?.(12); }, 420) }; };
   const bougeG = (y, ev) => { if (!G) return; if (!G.on) { if (Math.abs(y - G.y) > 8) { clearTimeout(G.t); G = null; } return; } ev.preventDefault(); const pas = R / 2; G.dy = Math.round((y - G.y) / pas) * pas; G.el.style.transform = `translateY(${G.dy}px)`;
     const d = new Date(+new Date(G.r.debut) + G.dy / R * 30 * 60000); let b = G.el.querySelector("strong"); if (b) b.textContent = hm(d) + " – " + hm(new Date(+d + (new Date(G.r.fin) - new Date(G.r.debut)))); };

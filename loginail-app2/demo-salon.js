@@ -40,8 +40,9 @@
     sites: [{ pro_id: U.id, slug: "les-ongles-de-cerise", en_ligne: true, maj: iso(jour(-1, 18)), donnees }] };
 
   /* ce qu'on ajoute dans la démonstration est gardé dans le téléphone jusqu'au lendemain (ou jusqu'à « Se déconnecter ») */
-  const AUJ = now.toDateString(), garde = () => { try { localStorage.setItem("loginail-demo-db2", JSON.stringify({ j: AUJ, DB })); } catch (e) {} };
-  try { const g = JSON.parse(localStorage.getItem("loginail-demo-db2") || "null"); if (g && g.j === AUJ && g.DB && g.DB.clientes) DB = g.DB; } catch (e) {}
+  const AUJ = now.toDateString(), garde = () => { if (/[?&]salon-neuf/.test(location.search)) return; try { localStorage.setItem("loginail-demo-db2", JSON.stringify({ j: AUJ, DB })); } catch (e) {} };
+  const NEUF = /[?&]salon-neuf/.test(location.search); if (NEUF) { DB.prestations = []; DB.clientes = []; DB.rendez_vous = []; DB.sites = []; DB.profils[0].nom_salon = ""; try { localStorage.removeItem("loginail-brouillon"); } catch (e) {} }
+  try { const g = NEUF ? null : JSON.parse(localStorage.getItem("loginail-demo-db2") || "null"); if (g && g.j === AUJ && g.DB && g.DB.clientes) DB = g.DB; } catch (e) {}
   let nid = 1000 + Math.floor(Math.random() * 9e5), numero = 12; const uid = () => "d" + (++nid), copie = o => JSON.parse(JSON.stringify(o));
   const joint = (t, r) => { const o = copie(r); if (t === "rendez_vous") { const c = DB.clientes.find(x => x.id === r.cliente_id), p = DB.prestations.find(x => x.id === r.prestation_id);
     o.clientes = c ? { id: c.id, prenom: c.prenom, nom: c.nom, telephone: c.telephone } : null; o.prestations = p ? { id: p.id, nom: p.nom } : null; } return o; };
@@ -68,7 +69,8 @@
     from: t => new Q(t),
     functions: { invoke: async () => ({ data: { demo: true }, error: null }) },
     rpc: async n => n === "prochain_numero" ? { data: ++numero, error: null } : { data: null, error: null },
-    auth: { getSession: async () => ({ data: { session: { user: U } }, error: null }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+    auth: { /* on attend que toute la page soit chargée (sinon l'appli démarre avant ses modules, puisqu'ici rien ne passe par internet) */
+      getSession: () => new Promise(r => { const go = () => setTimeout(() => r({ data: { session: { user: U } }, error: null }), 0); document.readyState === "complete" ? go() : addEventListener("load", go); }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
       signOut: async () => { sortir(); return { error: null }; }, signInWithOtp: async () => ({ error: null }), verifyOtp: async () => ({ data: { session: { user: U } }, error: null }) }
   };
 })();
