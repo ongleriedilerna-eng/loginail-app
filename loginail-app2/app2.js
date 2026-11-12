@@ -58,7 +58,7 @@ function ecranConnexion(envoye) {
       <button class="btn" data-a="cx-code">Me connecter</button><button class="lien-t" data-a="cx-retour">Changer d’adresse</button>`
     : `<h1>Votre espace pro.</h1><p>Entrez votre adresse e-mail : nous vous envoyons un code pour vous connecter, sans mot de passe.</p>
       <input id="cx-mail" type="email" inputmode="email" autocomplete="email" placeholder="votre@adresse.fr"><button class="btn" data-a="cx-envoi">Recevoir mon code</button>
-      ${/^https?:$/.test(location.protocol) ? `<div class="cx-neuve" style="margin-top:26px;border-radius:18px;background:#fff;padding:14px 16px;font-size:13.5px;line-height:1.5;text-align:left"><b style="font-weight:500">Pas encore de compte ?</b><br>Votre espace pro se crée en même temps que votre site, en 3 minutes.<a href="https://loginail.fr" style="display:block;margin-top:8px;font-weight:500;text-decoration:underline;text-underline-offset:3px;color:inherit">Créer mon site sur loginail.fr ›</a></div>` : ""}`}
+      ${/^https?:$/.test(location.protocol) && !/[?&]parcours/.test(location.search) ? `<div class="cx-neuve" style="margin-top:26px;border-radius:18px;background:#fff;padding:14px 16px;font-size:13.5px;line-height:1.5;text-align:left"><b style="font-weight:500">Pas encore de compte ?</b><br>Votre espace pro se crée en même temps que votre site, en 3 minutes.<a href="https://loginail.fr" style="display:block;margin-top:8px;font-weight:500;text-decoration:underline;text-underline-offset:3px;color:inherit">Créer mon site sur loginail.fr ›</a></div>` : ""}`}
     <p class="cx-legal" style="margin-top:22px;font-size:12px;line-height:1.5;opacity:.7">En vous connectant, vous acceptez nos <a data-a="lien3" style="text-decoration:underline">conditions</a> et notre <a data-a="lien2" style="text-decoration:underline">politique de confidentialité</a>.</p>
     </div></div><div class="toast"></div>`;
 }
@@ -161,7 +161,7 @@ function vueClientes() {
       const init = c => { const l = String(c.prenom || "#").normalize("NFD").replace(/[\u0300-\u036f]/g, "")[0].toUpperCase(); return /[A-Z]/.test(l) ? l : "#"; }, G = {}; L.forEach(c => (G[init(c)] = G[init(c)] || []).push(c));
       const lettres = Object.keys(G).sort((x, y) => x === "#" ? 1 : y === "#" ? -1 : x.localeCompare(y));
       return `<div class="k">Toutes mes clientes</div><div class="carte" style="margin-right:16px">${lettres.map(l => G[l].map((c, i) => i ? ligne(c) : ligne(c).replace('<div class="cli"', `<div class="cli" id="L-${l === "#" ? "0" : l}"`)).join("")).join("")}</div>`
-        + `<div class="idx" style="position:fixed;right:1px;top:50%;transform:translateY(-50%);z-index:15;display:flex;flex-direction:column;align-items:center;padding:6px 3px;touch-action:none;user-select:none;-webkit-user-select:none">${"ABCDEFGHIJKLMNOPQRSTUVWXYZ#".split("").map(l => `<span data-l="${l}" style="font-size:10.5px;font-weight:600;line-height:14px;width:16px;text-align:center;color:${G[l] ? "#1E1C1B" : "rgba(30,28,27,.28)"}">${l}</span>`).join("")}</div>`; })()
+        + ""; })()
     ?? (`<div class="blanche vide"><b>${q ? "Personne avec ce nom" : "Pas encore de clientes"}</b><span>${q ? "Essayez un autre nom." : "Elles s’ajoutent toutes seules quand elles réservent sur votre site."}</span></div>`));
 }
 
