@@ -182,7 +182,7 @@ function vueReglages() {
       ${L("Mes prestations", S.prestations.length ? S.prestations.length + " prestation" + (S.prestations.length > 1 ? "s" : "") : "À ajouter", "prestas")}</div>`
     + `<div class="k">Mes réservations</div><div class="liste">${L("Réservation en ligne", S.site ? (S.site.en_ligne ? "Vos clientes réservent sur votre site" : "Fermée : votre site s’affiche, sans réservation") : "Mettez d’abord votre site en ligne", S.site ? null : "site", S.site ? `<button class="sw${S.site.en_ligne ? " on" : ""}" data-a="resa-sw" aria-label="Réservation en ligne"></button>` : undefined)}
       ${L("Acompte, retard, annulation", (regles.acompte === false ? "Sans acompte" : "Acompte " + (regles.montant || "15 €")) + " · annulation " + (regles.annulation || "48 h avant"), "ms-bon")}</div>`
-    + `<div class="k">SMS à mes clientes</div><div class="liste">${L("Confirmation et rappel la veille", "Voir les messages envoyés", "sms-info")}</div>`
+    + `<div class="k">SMS à mes clientes</div><div class="liste">${L("Rappel la veille", "Voir le message et recevoir un essai", "sms-info")}</div>`
     + `<div class="k">Ma caisse</div><div class="liste">${L("Ma caisse", CAISSE() ? "Encaissé ce mois-ci : " + (euros(totalMois()) || "0 €") : "Pas utilisée", "caisse")}</div>`
     + `<div class="k">Mes données</div><div class="liste">${L("Télécharger mes données", "Clientes, rendez-vous, tickets, site", "export")}${L("Supprimer mon compte", "Tout est effacé, pour toujours", "suppr")}</div>`
     + `<div class="k">Aide et infos</div><div class="liste">${L("Besoin d’aide ?", "Écrire à Loginail sur WhatsApp", "aide")}${L("Mentions légales", "", "lien", "")}${L("Confidentialité", "", "lien2", "")}</div>`
@@ -249,6 +249,7 @@ function feuilleCliente(id) {
     <label>Prénom<input id="c-p" value="${esc(c.prenom)}" autocomplete="off"></label><label>Nom<input id="c-n" value="${esc(c.nom)}" autocomplete="off"></label>
     <label>Téléphone<input id="c-t" value="${esc(c.telephone)}" inputmode="tel"></label><label>E-mail<input id="c-e" value="${esc(c.email)}" inputmode="email"></label>
     <label>Anniversaire <small>facultatif</small><input id="c-a" type="date" value="${esc(c.anniversaire || "")}"></label></div>
+    <label style="display:flex;align-items:center;gap:10px;margin:12px 2px 0;font-size:13.5px;text-align:left"><input id="c-oka" type="checkbox" ${c.ok_sms_anniv ? "checked" : ""} style="width:20px;height:20px;flex:none">Lui envoyer un SMS pour son anniversaire (elle est d’accord)</label>
     <div class="lab2">Notes</div><textarea class="msg" id="c-no" placeholder="Par exemple : aime les formes amande">${esc(c.notes)}</textarea>
     <button class="btn" data-a="cli-ok" data-id="${id || ""}">${id ? "Enregistrer" : "Ajouter"}</button>`);
 }
@@ -403,10 +404,15 @@ E.addEventListener("click", async ev => {
       ferme(); await chargeSemaine(); rendu(); dit({ fini: "C’est noté ✓", absente: "Marquée pas venue", annule: "Rendez-vous annulé", prevu: "Remis comme prévu" }[a.dataset.s]); }
     else if (k === "tri-menu") { S.triOuvert = !S.triOuvert; rendu(); }
     else if (k === "tri") { S.tri = a.dataset.t; S.triOuvert = false; try { localStorage.setItem("loginail-tri", S.tri); } catch (x) {} rendu(); }
-    else if (k === "sms-info") ouvre(`<h3>SMS à mes clientes</h3><div class="sous">Vos clientes reçoivent deux messages, sans que vous ayez rien à faire.</div>
-      <div class="lab2">À la réservation</div><div class="blanche" style="font-size:13.5px;line-height:1.5;padding:12px 14px;text-align:left">Bonjour Jade, votre rendez-vous chez ${esc(S.profil.nom_salon || "votre salon")} est confirmé pour le vendredi 13 novembre à 9h00. À bientôt !</div>
-      <div class="lab2">La veille</div><div class="blanche" style="font-size:13.5px;line-height:1.5;padding:12px 14px;text-align:left">Bonjour Jade, petit rappel : votre rendez-vous chez ${esc(S.profil.nom_salon || "votre salon")} est demain à 9h00. À demain !</div>
-      <div class="sous" style="margin-top:12px;font-size:12px">Ce sont des exemples. Les messages partent quand le service SMS de votre salon est activé.</div>`);
+    else if (k === "sms-info") ouvre(`<h3>Rappel la veille</h3><div class="sous">La veille au soir, chaque cliente qui a rendez-vous le lendemain reçoit un SMS. Vous n’avez rien à faire.</div>
+      <div class="lab2">Le message</div><div class="blanche" style="font-size:13.5px;line-height:1.5;padding:12px 14px;text-align:left">Bonjour Jade ! RDV demain 9h00, ${esc([S.profil.adresse, S.profil.ville].filter(Boolean).join(" ") || "l’adresse de votre salon")}.${S.profil.telephone ? " Tél " + esc(S.profil.telephone) + "." : ""}</div>
+      <div class="sous" style="margin-top:10px;font-size:12px">Il faut le numéro de portable de la cliente dans sa fiche.</div>
+      <button class="btn" data-a="sms-test" style="margin-top:16px">Recevoir un essai sur mon téléphone</button>
+      <div class="sous" style="margin-top:8px;font-size:12px">L’essai arrive sur le numéro de votre salon${S.profil.telephone ? " (" + esc(S.profil.telephone) + ")" : ""}. 3 essais par jour au plus.</div>`);
+    else if (k === "sms-test") { if (!S.profil.telephone) return dit("Ajoutez d’abord votre numéro dans « Mon salon »"); a.disabled = true; a.textContent = "Envoi…";
+      let r = null; try { r = sb.functions ? await sb.functions.invoke("sms", { body: { action: "test" } }) : { data: { demo: true } }; } catch (x) { r = { error: x }; }
+      a.disabled = false; a.textContent = "Recevoir un essai sur mon téléphone"; const d = r && r.data;
+      dit(d && d.demo ? "Dans le salon d’essai, aucun SMS ne part" : d && d.envoye ? "SMS envoyé : regardez votre téléphone ✓" : d && d.erreur ? d.erreur : "L’essai n’est pas parti. Réessayez plus tard."); }
     else if (k === "decaler") { const r = S.rdv.find(x => x.id === a.dataset.id); if (!r) return; const d = new Date(r.debut), p2 = n => String(n).padStart(2, "0");
       ouvre(`<h3>Décaler le rendez-vous</h3><div class="sous">${esc(nomRdv(r))} · ${esc(titreRdv(r))}</div>
         <div class="lab2">Nouveau jour</div><input class="champ" id="dc-j" type="date" value="${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}" style="font-size:16px;width:100%;min-width:0;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block">
@@ -419,7 +425,7 @@ E.addEventListener("click", async ev => {
       const { error } = await sb.from("rendez_vous").update({ debut: deb.toISOString(), fin: fin.toISOString() }).eq("id", r.id); if (error) { a.disabled = false; return oups(error); }
       await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit("Rendez-vous décalé ✓"); }
     else if (k === "cli-nouv") feuilleCliente(null);
-    else if (k === "cli-ok") { const v = { prenom: $("#c-p", E).value.trim(), nom: $("#c-n", E).value.trim() || null, telephone: $("#c-t", E).value.trim() || null, email: $("#c-e", E).value.trim() || null, anniversaire: $("#c-a", E).value || null, notes: $("#c-no", E).value.trim() || null };
+    else if (k === "cli-ok") { const v = { prenom: $("#c-p", E).value.trim(), nom: $("#c-n", E).value.trim() || null, telephone: $("#c-t", E).value.trim() || null, email: $("#c-e", E).value.trim() || null, anniversaire: $("#c-a", E).value || null, notes: $("#c-no", E).value.trim() || null, ok_sms_anniv: !!($("#c-oka", E) && $("#c-oka", E).checked) };
       if (!v.prenom) return dit("Écrivez au moins le prénom"); const id = a.dataset.id;
       const { error } = id ? await sb.from("clientes").update(v).eq("id", id) : await sb.from("clientes").insert(v); if (error) return oups(error);
       const { data } = await sb.from("clientes").select("*").order("prenom"); S.clientes = data || []; rendu(); if (id) feuilleCliente(id); else ferme(); dit("C’est enregistré ✓"); }
@@ -466,11 +472,18 @@ E.addEventListener("click", async ev => {
 });
 
 /* ---------- démarrage ---------- */
+/* 12/11 (Marie) : l'appli se ferme si l'abonnement n'est pas actif (règle : on s'abonne sur le site, jamais ici, donc aucun lien d'achat).
+   ÉTEINT pour l'instant (false) : tant que le paiement n'est pas en service, personne n'a d'abonnement « actif » et tout le monde serait bloqué.
+   À passer à true le jour où Stripe est en vrai. Le serveur répond par la fonction SQL compte_actif(). */
+const BLOCAGE_ABONNEMENT = false;
+async function compteBloque() { if (!BLOCAGE_ABONNEMENT || window.SB_DEMO) return false; try { const { data, error } = await sb.rpc("compte_actif"); return !error && data === false; } catch (e) { return false; } }
+const ecranInactif = () => { E.innerHTML = `<div class="vue on"><div class="cx"><div class="marque">LOGINAIL</div><h1>Votre compte n’est pas actif.</h1><p>Votre abonnement est arrêté ou n’a pas encore commencé.</p>
+  <button class="btn" data-a="reessayer">Réessayer</button><button class="lien-t" data-a="deco">Se déconnecter</button></div><div class="toast"></div></div>`; };
 async function demarre(session) {
   if (!session) { S.user = null; ecranConnexion(); return; }
   if (S.user?.id === session.user.id && E.querySelector(".ong")) return;
   S.user = session.user; E.innerHTML = '<div class="charge">LOGINAIL</div>';
-  try { await chargeTout(); squelette(); rendu(); } catch (e) { console.error(e); E.innerHTML = '<div class="charge" style="flex-direction:column;gap:14px">Connexion impossible<span style="font-size:13px;letter-spacing:0;opacity:.7;text-transform:none">Vérifiez votre connexion internet.</span><button class="btn" data-a="reessayer" style="width:auto;padding:12px 26px">Réessayer</button><button class="lien-t" data-a="deco">Se déconnecter</button></div>'; }
+  try { if (await compteBloque()) return ecranInactif(); await chargeTout(); squelette(); rendu(); } catch (e) { console.error(e); E.innerHTML = '<div class="charge" style="flex-direction:column;gap:14px">Connexion impossible<span style="font-size:13px;letter-spacing:0;opacity:.7;text-transform:none">Vérifiez votre connexion internet.</span><button class="btn" data-a="reessayer" style="width:auto;padding:12px 26px">Réessayer</button><button class="lien-t" data-a="deco">Se déconnecter</button></div>'; }
 }
 sb.auth.onAuthStateChange((_e, s) => setTimeout(() => demarre(s), 0));
 sb.auth.getSession().then(({ data }) => demarre(data.session));

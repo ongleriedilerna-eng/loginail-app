@@ -66,6 +66,7 @@
   const sortir = () => { try { localStorage.removeItem("loginail-demo"); localStorage.removeItem("loginail-demo-db2"); localStorage.removeItem("loginail-brouillon"); } catch (e) {} setTimeout(() => location.replace(location.pathname), 50); };
   window.SB_DEMO = {
     from: t => new Q(t),
+    functions: { invoke: async () => ({ data: { demo: true }, error: null }) },
     rpc: async n => n === "prochain_numero" ? { data: ++numero, error: null } : { data: null, error: null },
     auth: { getSession: async () => ({ data: { session: { user: U } }, error: null }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
       signOut: async () => { sortir(); return { error: null }; }, signInWithOtp: async () => ({ error: null }), verifyOtp: async () => ({ data: { session: { user: U } }, error: null }) }
