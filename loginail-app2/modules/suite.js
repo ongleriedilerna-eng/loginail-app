@@ -196,9 +196,9 @@
       <label class="btn" style="display:block;margin-top:16px;text-align:center;cursor:pointer">Choisir un fichier<input type="file" id="s5-fic" accept=".vcf,.csv,.txt,text/vcard,text/csv,text/plain" hidden></label>
       <details style="margin-top:10px;font-size:13px;line-height:1.5;color:#6B625C"><summary style="cursor:pointer;font-weight:500;color:#1E1C1B">Comment récupérer mes clientes ?</summary>
         <p style="margin:8px 0 0"><b>Depuis les contacts de mon iPhone :</b> ouvrez Contacts, touchez une liste (ou créez-en une « Clientes »), restez appuyée dessus, puis « Exporter » et « Enregistrer dans Fichiers ». Revenez ici et choisissez ce fichier.</p>
-        <p style="margin:8px 0 0"><b>Depuis une autre appli de réservation :</b> demandez-lui l’export de vos clientes (souvent un fichier Excel). Ouvrez-le, « Enregistrer sous » en CSV, puis choisissez-le ici.</p></details>
-      <div class="lab2" style="margin-top:16px">Ou écrivez-les : une par ligne</div>
-      <textarea class="msg" id="s5-liste" style="height:150px" placeholder="Jade Martin 06 12 34 56 78&#10;Inès Moreau&#10;Sarah Benali 0611223344"></textarea>
+        <p style="margin:8px 0 0"><b>Depuis une autre appli de réservation :</b> écrivez à son service client et demandez « l’export de mon fichier clientes ». Ce sont vos données : elle doit vous les rendre. Vous recevez en général un fichier Excel : ouvrez-le, « Enregistrer sous » en CSV, puis choisissez-le ici.</p></details>
+      <div class="lab2" style="margin-top:16px">Ou écrivez-les : une par ligne</div><div class="sous" style="text-align:left;margin:-2px 0 8px;font-size:12.5px">D’abord le prénom, puis le nom, puis le numéro. Le nom et le numéro ne sont pas obligatoires.</div>
+      <textarea class="msg" id="s5-liste" style="height:150px" placeholder="Prénom Nom Téléphone&#10;&#10;Par exemple :&#10;Jade Martin 06 12 34 56 78&#10;Inès Moreau&#10;Sarah"></textarea>
       <button class="btn" data-s5="pl-ok" style="margin-top:12px" disabled>Ajouter</button>`);
   document.addEventListener("change", e => { if (e.target.id !== "s5-fic") return; const f = e.target.files && e.target.files[0]; if (!f) return; const r = new FileReader();
     r.onload = () => { const t = String(r.result || ""), l = /BEGIN:VCARD/i.test(t) ? deVcf(t) : deCsv(t), z = E.querySelector("#s5-liste"); if (!l) return dit("Aucune cliente trouvée dans ce fichier"); z.value = (z.value.trim() ? z.value.trim() + "\n" : "") + l; z.dispatchEvent(new Event("input", { bubbles: true })); dit("Vérifiez la liste, puis touchez « Ajouter »"); };
