@@ -58,6 +58,7 @@ function ecranConnexion(envoye) {
       <button class="btn" data-a="cx-code">Me connecter</button><button class="lien-t" data-a="cx-retour">Changer d’adresse</button>`
     : `<h1>Votre espace pro.</h1><p>Entrez votre adresse e-mail : nous vous envoyons un code pour vous connecter, sans mot de passe.</p>
       <input id="cx-mail" type="email" inputmode="email" autocomplete="email" placeholder="votre@adresse.fr"><button class="btn" data-a="cx-envoi">Recevoir mon code</button>`}
+    <p class="cx-legal" style="margin-top:22px;font-size:12px;line-height:1.5;opacity:.7">En vous connectant, vous acceptez nos <a data-a="lien3" style="text-decoration:underline">conditions</a> et notre <a data-a="lien2" style="text-decoration:underline">politique de confidentialité</a>.</p>
     </div></div><div class="toast"></div>`;
 }
 
@@ -137,7 +138,7 @@ function vueSite() {
   const s = S.site, b = brouillon();
   return tete("Mon site", s?.en_ligne ? "En ligne" : "Pas encore en ligne")
     + `<div class="noire siteb"><small>Mon site</small><div class="ms-nom"><b>${esc((b && b.nom) || S.profil?.nom_salon || "Votre salon")}</b><span>${s ? esc(s.slug) : "Pas encore d’adresse"}</span></div><div class="enl"><i></i>${s?.en_ligne ? "En ligne · réservations ouvertes" : "Hors ligne"}</div>
-      <div class="bts">${s?.en_ligne ? `<button class="plein" data-href="${location.hostname === "app.loginail.fr" ? "https://loginail.fr/" : ""}loginail-creer/pret.html?public&s=${esc(s.slug)}" data-neuf>Voir mon site</button>` : ""}<button data-a="site">${s?.en_ligne ? "Mettre à jour" : "Mettre en ligne"}</button></div></div>`
+      <div class="bts">${s?.en_ligne ? `<button class="plein" data-href="${(/^https?:$/.test(location.protocol) && location.hostname !== "app.loginail.fr") ? "" : "https://loginail.fr/"}loginail-creer/pret.html?public&s=${esc(s.slug)}" data-neuf>Voir mon site</button>` : ""}<button data-a="site">${s?.en_ligne ? "Mettre à jour" : "Mettre en ligne"}</button></div></div>`
     + (b ? `<div class="k">Mon style</div><div class="liste">${[["style", "Changer de style", "Des sites à glisser : gardez vos coups de cœur"], ["perso", "Personnaliser", "La forme, le fond, les couleurs, l’écriture"], ["charms", "Mes charms", (b.stickers || []).length ? b.stickers.length + " charm" + (b.stickers.length > 1 ? "s" : "") + " posé" + (b.stickers.length > 1 ? "s" : "") : "Posez-les où vous voulez sur votre site"]].map(l => `<div class="ligne" data-pont="${l[0]}"><div class="t">${l[1]}<span>${l[2]}</span></div><span class="fl">›</span></div>`).join("")}</div>` : "")
     + (b ? "" : `<div class="blanche vide" style="margin-top:12px"><b>Créez d’abord votre site</b><span>Sur loginail.fr, en 3 étapes : il apparaîtra ici.</span></div>`);
 }
@@ -149,7 +150,7 @@ function vueReglages() {
       ${L("Mes prestations", S.prestations.length ? S.prestations.length + " prestation" + (S.prestations.length > 1 ? "s" : "") : "À ajouter", "prestas")}</div>`
     + `<div class="k">Mes réservations</div><div class="liste">${L("Réservation en ligne", S.site ? (S.site.en_ligne ? "Vos clientes réservent sur votre site" : "Fermée : votre site s’affiche, sans réservation") : "Mettez d’abord votre site en ligne", S.site ? null : "site", S.site ? `<button class="sw${S.site.en_ligne ? " on" : ""}" data-a="resa-sw" aria-label="Réservation en ligne"></button>` : undefined)}
       ${L("Acompte, retard, annulation", (regles.acompte === false ? "Sans acompte" : "Acompte " + (regles.montant || "15 €")) + " · annulation " + (regles.annulation || "48 h avant"), "ms-bon")}</div>`
-    + `<div class="k">SMS à mes clientes</div><div class="liste">${L("Confirmation et rappel la veille", "Arrivent avec le service SMS (bientôt)")}</div>`
+    + `<div class="k">SMS à mes clientes</div><div class="liste">${L("Confirmation et rappel la veille", "Envoyés quand le service SMS de votre salon est activé")}</div>`
     + `<div class="k">Ma caisse</div><div class="liste">${L("Ma caisse", CAISSE() ? "Encaissé ce mois-ci : " + (euros(totalMois()) || "0 €") : "Pas utilisée", "caisse")}</div>`
     + `<div class="k">Mes données</div><div class="liste">${L("Télécharger mes données", "Clientes, rendez-vous, tickets, site", "export")}${L("Supprimer mon compte", "Tout est effacé, pour toujours", "suppr")}</div>`
     + `<div class="k">Aide et infos</div><div class="liste">${L("Besoin d’aide ?", "Écrire à Loginail sur WhatsApp", "aide")}${L("Mentions légales", "", "lien", "")}${L("Confidentialité", "", "lien2", "")}</div>`
@@ -183,7 +184,7 @@ function msFond() {
   const pose = () => { const i = window.F100 && F100.idx[fo]; if (i == null) { E.classList.remove("ms-f"); return; } F100.poseFond(document, i, false); E.dataset.msFond = fo; };
   if (window.F100) return pose();
   if (!F100P) F100P = new Promise(r => { addEventListener("f100", r, { once: true }); const sc = document.createElement("script");
-    sc.src = (location.hostname === "app.loginail.fr" ? "https://loginail.fr/" : "../") + "loginail-site/fonds-100.js"; sc.onerror = r; document.head.appendChild(sc); });
+    sc.src = ((/^https?:$/.test(location.protocol) && location.hostname !== "app.loginail.fr") ? "../" : "https://loginail.fr/") + "loginail-site/fonds-100.js"; sc.onerror = r; document.head.appendChild(sc); });
   F100P.then(pose);
 }
 
@@ -192,7 +193,7 @@ function feuilleRdv(id) {
   const r = S.rdv.find(x => x.id === id); if (!r) return; const d = new Date(r.debut), f = new Date(r.fin), t = r.clientes?.telephone?.replace(/\s/g, "");
   ouvre(`<div class="fiche-t"><div><h3 style="text-align:left;margin:0">${esc(nomRdv(r))}</h3><div class="sous" style="text-align:left;margin:2px 0 0">${[hm(d) + " – " + hm(f), esc(titreRdv(r)), r.prix ? euros(r.prix) : ""].filter(Boolean).join(" · ")}</div></div>
     ${t ? `<div class="ronds"><button data-href="tel:${esc(t)}" aria-label="Appeler">${I.tel}</button><button data-href="sms:${esc(t)}" aria-label="Message">${I.msg}</button></div>` : ""}</div>
-    ${r.source === "en_ligne" ? `<div class="sous" style="text-align:left;margin:10px 0 0">Réservé en ligne${r.acompte ? " · acompte de " + euros(r.acompte) + (r.acompte_paye ? " payé" : " (paiement en ligne bientôt)") : ""}</div>` : ""}
+    ${r.source === "en_ligne" ? `<div class="sous" style="text-align:left;margin:10px 0 0">Réservé en ligne${r.acompte ? " · acompte de " + euros(r.acompte) + (r.acompte_paye ? " payé" : " (à régler au salon)") : ""}</div>` : ""}
     ${CAISSE() && r.cliente_id && r.statut !== "annule" && r.statut !== "absente" ? (ticketDe(r) ? `<div class="sous" style="text-align:left;margin:12px 0 0">Encaissé ✓ · ticket n° ${esc(ticketDe(r).numero)}</div><button class="btn clair" data-a="qr-voir" data-t="${ticketDe(r).id}" style="margin-top:10px">Revoir son ticket</button>`
       : `<button class="btn" data-a="encaisser" data-id="${r.id}" style="margin-top:16px">Encaisser · ${euros(resteDe(r))}</button>`) : ""}
     ${r.statut === "prevu" ? `<button class="btn${CAISSE() && r.cliente_id ? " clair" : ""}" data-a="statut" data-s="fini" data-id="${r.id}" style="margin-top:${CAISSE() && r.cliente_id ? 8 : 16}px">C’est fini</button>
@@ -244,7 +245,7 @@ function feuillePresta(id) {
 }
 
 /* ---------- la caisse (06/11) : encaisser, le ticket (QR code ou e-mail), ma caisse, le livre des recettes ---------- */
-const TICKET_URL = id => location.origin + "/loginail-creer/ticket.html?t=" + id;   /* plus tard : https://loginail.fr/ticket?t=… */
+const TICKET_URL = id => (/^https?:$/.test(location.protocol) ? location.origin : "https://app.loginail.fr") + "/loginail-creer/ticket.html?t=" + id;   /* plus tard : https://loginail.fr/ticket?t=… */
 const MOYENS = [["virement", "Par virement"], ["especes", "En espèces"], ["carte", "Par carte"]];
 const NOM_MOYEN = { especes: "espèces", carte: "carte", virement: "virement", en_ligne: "en ligne" };
 const CAISSE = () => S.profil.caisse_active !== false;
@@ -337,8 +338,8 @@ E.addEventListener("click", async ev => {
     if (k.startsWith("ms-") && MSF[k]) return ouvre(MSF[k](a));
     if (k === "fermer") ferme();
     else if (k === "cx-envoi") { const m = $("#cx-mail", E).value.trim(); if (!/^\S+@\S+\.\S+$/.test(m)) return dit("Vérifiez votre adresse e-mail");
-      a.disabled = true; a.textContent = "Envoi…"; const { error } = await sb.auth.signInWithOtp({ email: m, options: { emailRedirectTo: location.origin + location.pathname } });
-      if (error) { a.disabled = false; a.textContent = "Recevoir mon code"; return dit(error.status === 429 ? "Attendez une minute avant de redemander" : "Oups, réessayez"); } ecranConnexion(m); }
+      a.disabled = true; a.textContent = "Envoi…"; const { error } = await sb.auth.signInWithOtp({ email: m, options: { shouldCreateUser: false, emailRedirectTo: /^https?:$/.test(location.protocol) ? location.origin + location.pathname : "https://app.loginail.fr/" } });
+      if (error) { a.disabled = false; a.textContent = "Recevoir mon code"; return dit(error.status === 429 ? "Attendez une minute avant de redemander" : /signups? not allowed|not found|otp_disabled/i.test((error.code || "") + " " + (error.message || "")) ? "Aucun compte avec cette adresse" : "Oups, réessayez"); } ecranConnexion(m); }
     else if (k === "cx-retour") ecranConnexion();
     else if (k === "cx-code") { const c = $("#cx-code", E), code = c.value.replace(/\D/g, ""); if (code.length < 6) return dit("Tapez les chiffres du code");
       a.disabled = true; a.textContent = "Un instant…"; const { data, error } = await sb.auth.verifyOtp({ email: c.dataset.mail, token: code, type: "email" });
@@ -396,6 +397,8 @@ E.addEventListener("click", async ev => {
     else if (k === "aide") window.open("https://wa.me/33745073235?text=" + encodeURIComponent("Bonjour Loginail, j’ai besoin d’aide : "), "_blank", "noopener");   /* 12/11 (Marie) : WhatsApp, son numéro pour commencer */
     else if (k === "lien") window.open("https://loginail.fr/mentions-legales.html", "_blank", "noopener");
     else if (k === "lien2") window.open("https://loginail.fr/confidentialite.html", "_blank", "noopener");
+    else if (k === "lien3") window.open("https://loginail.fr/conditions-abonnement.html", "_blank", "noopener");
+    else if (k === "reessayer") { const { data } = await sb.auth.getSession(); S.user = null; demarre(data.session); }
     else if (k === "deco") { await sb.auth.signOut(); S.user = null; ecranConnexion(); }
   } catch (e) { oups(e); }
 });
@@ -405,7 +408,7 @@ async function demarre(session) {
   if (!session) { S.user = null; ecranConnexion(); return; }
   if (S.user?.id === session.user.id && E.querySelector(".ong")) return;
   S.user = session.user; E.innerHTML = '<div class="charge">LOGINAIL</div>';
-  try { await chargeTout(); squelette(); rendu(); } catch (e) { console.error(e); E.innerHTML = '<div class="charge">Connexion impossible</div>'; }
+  try { await chargeTout(); squelette(); rendu(); } catch (e) { console.error(e); E.innerHTML = '<div class="charge" style="flex-direction:column;gap:14px">Connexion impossible<span style="font-size:13px;letter-spacing:0;opacity:.7;text-transform:none">Vérifiez votre connexion internet.</span><button class="btn" data-a="reessayer" style="width:auto;padding:12px 26px">Réessayer</button><button class="lien-t" data-a="deco">Se déconnecter</button></div>'; }
 }
 sb.auth.onAuthStateChange((_e, s) => setTimeout(() => demarre(s), 0));
 sb.auth.getSession().then(({ data }) => demarre(data.session));
@@ -414,7 +417,7 @@ setInterval(async () => { if (!S.user || document.hidden || E.classList.contains
 
 /* ---------- 09/11 (Marie) : « Mon site » → les pages de loginail.fr (cartes à glisser, personnalisation, présentoir des charms), par-dessus l'appli.
    On leur passe son site ; elles le renvoient modifié ; on l'enregistre (et il part en ligne tout seul). ---------- */
-{ const SITE = location.hostname === "app.loginail.fr" ? "https://loginail.fr/" : "../", SITEO = location.hostname === "app.loginail.fr" ? "https://loginail.fr" : location.origin;
+{ const SITE = (/^https?:$/.test(location.protocol) && location.hostname !== "app.loginail.fr") ? "../" : "https://loginail.fr/", SITEO = (/^https?:$/.test(location.protocol) && location.hostname !== "app.loginail.fr") ? location.origin : "https://loginail.fr";
   const st = document.createElement("style");
   st.textContent = `.pont{position:absolute;inset:0;z-index:200;border-radius:inherit;overflow:hidden;background:#F6F3EF;animation:monte .3s both}.pont iframe{width:100%;height:100%;border:0;display:block}
   .pont-x{position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;z-index:2;width:38px;height:38px;border-radius:50%;border:0;background:rgba(30,28,27,.82);color:#fff;font-size:22px;line-height:38px;padding:0;cursor:pointer}`;

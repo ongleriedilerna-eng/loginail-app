@@ -63,7 +63,7 @@
     +(DEMO?'':'<div class="k">Mon contenu</div><div class="liste">'
     +[["Prestations et prix",(b.prestations||[]).length+" prestations","ms-presta"],["Photos de mes ongles",(b.photos||[]).filter((p,i)=>i!==b.salon).length+" photos","ms-photos"],["Photo de mon salon",(b.salon!=null&&b.photos&&b.photos[b.salon]?"Ajoutée":"Facultatif"),"ms-salon"],["Horaires","","ms-horaires"],["Adresse","","ms-adresse"],["À propos de moi","","ms-apropos"],["Ma photo",(b.quiPhoto?"Ajoutée":"Facultatif · dans « À propos de moi »"),"ms-photo"],["Bon à savoir","Acompte, retard, annulation","ms-bon"]].map(l=>`<div class="ligne" data-a="${l[2]}"><div class="t">${l[0]}${l[1]?`<span>${l[1]}</span>`:""}</div><span class="fl">›</span></div>`).join("")+'</div>'
     +'<div class="k">Faire connaître mon site</div><div class="liste">'
-    +[["QR code à imprimer","Pour le salon, les cartes de visite","qr"],["Lien pour ma bio Instagram","","bio"],["Aperçu quand je partage le lien","Ce que voient les gens sur WhatsApp","apercu"]].map(l=>`<div class="ligne" data-a="${l[2]}"><div class="t">${l[0]}${l[1]?`<span>${l[1]}</span>`:""}</div><span class="fl">›</span></div>`).join("")+'</div>')};
+    +[["Copier le lien de mon site","Pour ma bio Instagram, mes messages","bio"]].map(l=>`<div class="ligne" data-a="${l[2]}"><div class="t">${l[0]}${l[1]?`<span>${l[1]}</span>`:""}</div><span class="fl">›</span></div>`).join("")+'</div>')};
   /* DÉMO : on touche, le site change au-dessus, tout de suite. Les univers forts en premier. */
   const ORDRE=[0,2,3,5,1,4];
   const PAGED=()=>{const b=lit();return tete("Mon site","En ligne")
@@ -128,7 +128,7 @@ html.demo-ms .ms2-dots{grid-template-columns:repeat(9,1fr);margin-bottom:4px}
     const f=o.querySelector("iframe");f.onload=()=>{try{if(tab){const bt=f.contentDocument.querySelector('[data-tab="'+tab+'"]');bt&&setTimeout(()=>bt.click(),600)}}catch(_){}};
     o.querySelector(".ms2-x").onclick=()=>ferme(e)};
   /* 09/11 : les pages de loginail.fr (cartes à glisser, personnalisation, présentoir) s'ouvrent par-dessus l'appli ; on leur passe le site, elles le renvoient modifié */
-  const SITE=location.hostname==="app.loginail.fr"?"https://loginail.fr/":"../",SITEO=location.hostname==="app.loginail.fr"?"https://loginail.fr":location.origin;
+  const LOCAL=/^https?:$/.test(location.protocol)&&location.hostname!=="app.loginail.fr",SITE=LOCAL?"../":"https://loginail.fr/",SITEO=LOCAL?location.origin:"https://loginail.fr";
   const ouvre=(e,v)=>{let o=e.querySelector(".ms2-grand");if(o)o.remove();o=document.createElement("div");o.className="ms2-grand";
     o.innerHTML=`<iframe title="Mon site" src="${SITE}appli-pont.html?p=${v}&t=${Date.now()}"></iframe><button class="ms2-x" aria-label="Fermer">×</button>`;e.appendChild(o);
     o.querySelector(".ms2-x").onclick=()=>ferme(e)};
@@ -155,3 +155,8 @@ html.demo-ms .ms2-dots{grid-template-columns:repeat(9,1fr);margin-bottom:4px}
     if(k==="univ"){document.querySelectorAll('[data-ms2]').forEach(y=>{const kk=y.dataset.ms2,vv=y.dataset.v;const on=kk==="univ"?vv===v:kk==="style"?+vv===forme(b):kk==="couleur"?vv===b.couleur:kk==="mode"?vv===(b.mode||"jour"):kk==="fond"?vv===(b.fond||""):kk==="police"?vv===b.police:kk==="paillettes"?vv===b.paillettes:kk==="charmsoui"?(vv==="1")===!!(b.charms||[]).length:y.classList.contains("on");y.classList.toggle("on",on)})}
   },true);
 })();
+
+/* 12/11 : « Copier le lien de mon site » */
+document.addEventListener("click",async e=>{const a=e.target.closest&&e.target.closest('[data-a="bio"]');if(!a)return;
+  try{const st=typeof S!=="undefined"&&S.site;if(!st||!st.en_ligne||!st.slug){dit("Mettez d’abord votre site en ligne");return}
+    await navigator.clipboard.writeText("https://loginail.fr/loginail-creer/pret.html?public&s="+st.slug);dit("Lien copié ✓")}catch(x){try{dit("Impossible de copier, réessayez")}catch(y){}}},true);
