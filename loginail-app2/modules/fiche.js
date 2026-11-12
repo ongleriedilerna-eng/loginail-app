@@ -48,7 +48,7 @@
     <button class="fi-rond" data-fi="modifier" aria-label="Modifier la fiche">${IC.crayon}</button></div>
     <div class="fi-sw"><button data-fi="ong" data-o="fiche" class="${ONG === "fiche" ? "on" : ""}">Fiche</button><button data-fi="ong" data-o="notes" class="${ONG === "notes" ? "on" : ""}">Notes</button></div>`;
   function pageFiche(c) { if (!RDV) return `<div class="sous" style="padding:30px 0">Un instant…</div>`;
-    const now = new Date().toISOString(), ok = RDV.filter(r => r.statut !== "annule"), proch = ok.filter(r => r.fin >= now && r.statut === "prevu").sort((a, b) => a.debut.localeCompare(b.debut)), hist = ok.filter(r => r.fin < now);
+    const now = new Date().toISOString(), ok = RDV.filter(r => r.statut !== "annule"), proch = ok.filter(r => r.fin >= now && r.statut === "prevu").sort((a, b) => a.debut.localeCompare(b.debut)), hist = ok.filter(r => r.fin < now || r.statut === "fini" || r.statut === "absente");
     const venues = hist.filter(r => r.statut !== "absente"), e = etatFid(venues.length), d = x => new Date(x), jj = x => `${JOURS3[d(x).getDay()]} ${jourCourt(x)}`;
     let h = "";
     if (proch[0]) { const x = d(proch[0].debut), pn = (proch[0].prestations && proch[0].prestations.nom) || proch[0].titre;

@@ -71,7 +71,7 @@ label.btn{display:flex!important;align-items:center;justify-content:center}
 
 /* ===== 13/11 (Marie) : Clientes — importer par l'icône du haut ; les lettres A-Z posées à part, comme sur l'iPhone ===== */
 (function () {
-  const IMP = `<button class="ai-b" data-s5="plusieurs" aria-label="Importer mes clientes"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><path d="M18 8v7M14.5 11.5h7"/></svg></button>`;
+  const IMP = `<button class="ai-b" data-s5="plusieurs" aria-label="Importer mes clientes"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.6" cy="8.4" r="2.1" opacity=".55"/><path d="M1.8 17c.4-2.2 1.8-3.5 3.8-3.5" opacity=".55"/><circle cx="16.6" cy="8.4" r="2.1" opacity=".55"/><path d="M20.6 17c-.3-1.6-1.1-2.7-2.3-3.2" opacity=".55"/><circle cx="11" cy="7.6" r="2.7"/><path d="M6 19c.5-3 2.4-4.8 5-4.8s4.5 1.8 5 4.8"/><path d="M19.3 17.2v4.6M17 19.5h4.6"/></svg></button>`;
   const cl0 = VUES.cl;
   VUES.cl = () => { let h = cl0().replace(/<button class="s5-plus" data-s5="plusieurs">[^<]*<\/button>/, ""); const i = h.indexOf("</h1></div>");
     if (i >= 0) h = h.slice(0, i + 11) + IMP + h.slice(i + 11);
@@ -99,4 +99,20 @@ label.btn{display:flex!important;align-items:center;justify-content:center}
     IX.addEventListener("touchend", fin); IX.addEventListener("touchcancel", fin);
     let bas = false; IX.addEventListener("mousedown", e => { bas = true; va(e.clientY); e.preventDefault(); }); document.addEventListener("mousemove", e => { if (bas) va(e.clientY); }); document.addEventListener("mouseup", () => { if (bas) { bas = false; fin(); } }); }
   const r0 = rendu; rendu = function () { r0.apply(this, arguments); try { pose(); } catch (e) {} };
+})();
+
+/* ===== 13/11 (Marie) : supprimer une cliente (dans sa fiche, avec le crayon) ===== */
+(function () {
+  const ID = () => { const b = document.querySelector('.fc [data-a="cli-ok"]'); return b && b.dataset.id; };
+  new MutationObserver(() => { const b = document.querySelector('.fc [data-a="cli-ok"]'); if (!b || !b.dataset.id || document.querySelector(".fc [data-sup]")) return;
+    b.insertAdjacentHTML("afterend", `<button class="lien-t" data-sup="1" style="display:block;margin:14px auto 0;color:#A33A2E">Supprimer cette cliente</button>`); }).observe(document.body, { childList: true, subtree: true });
+  document.addEventListener("click", async e => { const a = e.target.closest && e.target.closest("[data-sup]"); if (!a) return; e.stopPropagation(); const id = ID(), c = S.clientes.find(x => x.id === id); if (!c) return;
+    if (a.dataset.sup === "1") { const n = (S.tous || []).filter(r => r.cliente_id === id && r.statut === "prevu" && new Date(r.debut) > new Date()).length;
+      a.outerHTML = `<div class="blanche" style="margin-top:14px;padding:14px 16px;text-align:center;font-size:14px;line-height:1.5"><b style="font-weight:500">Supprimer ${esc(nomCli(c))} ?</b><br>Sa fiche et ses notes seront effacées pour toujours.${n ? `<br>Ses ${n > 1 ? n + " rendez-vous à venir seront annulés" : "rendez-vous à venir sera annulé"}.` : ""}
+        <div style="display:flex;gap:8px;margin-top:12px"><button class="btn clair" data-sup="non" style="flex:1;margin:0">Non</button><button class="btn" data-sup="oui" style="flex:1;margin:0;background:#A33A2E">Oui, supprimer</button></div></div>`; return; }
+    if (a.dataset.sup === "non") { feuilleCliente(id); return; }
+    a.disabled = true; const maint = new Date().toISOString();
+    await sb.from("rendez_vous").update({ statut: "annule" }).eq("cliente_id", id).eq("statut", "prevu").gte("debut", maint);
+    const { error } = await sb.from("clientes").delete().eq("id", id); if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessayez."); }
+    S.clientes = S.clientes.filter(x => x.id !== id); await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit("Cliente supprimée"); }, true);
 })();

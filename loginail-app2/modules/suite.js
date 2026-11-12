@@ -77,9 +77,9 @@
     return out; };
   const feuilleReprendre = () => { const r = REP.r, cs = creneaux(r, REP.sem), d0 = new Date(r.debut);
     ouvre(`<h3>Son prochain rendez-vous ?</h3><div class="sous">${esc(nomRdv(r))}${titreRdv(r) ? " · " + esc(titreRdv(r)) : ""}</div>
-      <div class="su-puces">${[2, 3, 4, 5].map(n => `<button data-su="rep-sem" data-n="${n}" class="${REP.sem === n ? "on" : ""}">Dans ${n} sem.</button>`).join("")}</div>
+      <div class="su-puces" style="flex-wrap:nowrap">${[2, 3, 4].map(n => `<button data-su="rep-sem" data-n="${n}" class="${REP.sem === n ? "on" : ""}" style="flex:1;padding-left:6px;padding-right:6px">${n} sem.</button>`).join("")}<button data-su="rep-sem" data-n="${REP.sem > 4 ? REP.sem + 1 : 5}" class="${REP.sem > 4 ? "on" : ""}" style="flex:1;padding-left:6px;padding-right:6px">${REP.sem > 4 ? REP.sem + " sem. +" : "+"}</button></div>
       <div class="k">Créneaux libres</div><div class="su-carte">${cs.length ? cs.map(c => `<div class="su-lg"><div style="text-transform:capitalize">${JOURS[(c.getDay() + 6) % 7]} ${c.getDate()} ${MOIS[c.getMonth()]}<span style="text-transform:none">${hh(c)}${c.getDay() === d0.getDay() && c.getHours() === d0.getHours() && c.getMinutes() === d0.getMinutes() ? " · comme aujourd’hui" : ""}</span></div><button class="su-b" data-su="rep-ok" data-d="${c.toISOString()}">Choisir</button></div>`).join("") : `<div class="su-lg"><div>Rien de libre cette semaine-là<span>Essayez une autre semaine.</span></div></div>`}</div>
-      <button class="btn clair" data-a="fermer" style="margin-top:14px">Plus tard</button>`); };
+      <button class="btn clair" data-su="plustard" style="margin-top:14px">Plus tard</button>`); };
 
   /* ---------- G · poser des congés ---------- */
   let CG = { raison: "Vacances" };
@@ -94,6 +94,7 @@
   VUES.ag = () => { const h = ag0().replace(/<strong>00:00 – 23:59<\/strong> /g, ""), rep = '<button data-a="mois"';
     return h.includes(rep) ? h.replace(rep, `<button data-su="conges" aria-label="Fermer mon salon (congés)" style="width:46px;height:46px;border-radius:50%;border:0;display:grid;place-items:center;padding:0;background:#fff"><svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6.5 17.5l11-11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>` + rep) : h; };
 
+  document.addEventListener("loginail-reprendre", e => { REP = { r: e.detail, sem: 3 }; feuilleReprendre(); });
   /* ---------- les gestes ---------- */
   document.addEventListener("click", async e => { const t = e.target.closest ? e.target : null; if (!t) return;
     /* H : on retient le rendez-vous qu'elle vient de finir */
@@ -105,7 +106,8 @@
     else if (k === "msg-ok") { const v = ($("#su-msg", E).value || "").trim(); if (!v) return dit("Écrivez votre message"); try { localStorage.setItem("loginail-msg-relance", v); } catch (x) {} ferme(); dit("C’est enregistré ✓"); }
     else if (k === "msg-def") { try { localStorage.removeItem("loginail-msg-relance"); } catch (x) {} feuilleMsg(); }
     else if (k === "bilan") feuilleBilan();
-    else if (k === "rep-sem") { REP.sem = +a.dataset.n; feuilleReprendre(); }
+    else if (k === "rep-sem") { REP.sem = Math.min(12, +a.dataset.n); feuilleReprendre(); }
+    else if (k === "plustard") { ferme(); dit("D’accord : pensez à la relancer plus tard"); }
     else if (k === "rep-ok") { const r = REP.r, deb = new Date(a.dataset.d), fin = new Date(+deb + (new Date(r.fin) - new Date(r.debut))); a.disabled = true;
       const { error } = await sb.from("rendez_vous").insert({ cliente_id: r.cliente_id, prestation_id: r.prestation_id || null, titre: r.titre || titreRdv(r) || null, debut: deb.toISOString(), fin: fin.toISOString(), prix: r.prix ?? null });
       if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessayez."); } await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit("Rendez-vous pris ✓"); }
@@ -150,6 +152,9 @@
   const p2 = n => String(n).padStart(2, "0"), hM = m => Math.floor(m / 60) + "h" + p2(m % 60);
   /* 1 · toucher ailleurs ferme le mois / le tri */
   document.addEventListener("click", e => { const t = e.target; if (!t.closest) return;
+    /* seulement si le panneau est vraiment à l'écran (sinon l'état restait « ouvert » et tous les touchers étaient avalés) */
+    if (S.moisOuvert && !E.querySelector(".vue.on .calm")) S.moisOuvert = false;
+    if (S.triOuvert && !E.querySelector(".vue.on .tris")) S.triOuvert = false;
     if (S.moisOuvert && !t.closest(".calm,[data-a='mois']")) { S.moisOuvert = false; rendu(); e.stopPropagation(); e.preventDefault(); return; }
     if (S.triOuvert && !t.closest(".tris,[data-a='tri-menu']")) { S.triOuvert = false; rendu(); e.stopPropagation(); e.preventDefault(); } }, true);
 
@@ -208,7 +213,7 @@
   document.addEventListener("input", e => { if (e.target.id !== "s5-liste") return; const n = lis(e.target.value).length, b = E.querySelector('[data-s5="pl-ok"]'); if (b) { b.disabled = !n; b.textContent = n ? `Ajouter ${n} cliente${n > 1 ? "s" : ""}` : "Ajouter"; } });
 
   document.addEventListener("click", async e => { const t = e.target; if (!t.closest) return;
-    const cr = t.closest('.pap .pl[data-a="creneau"]'); if (cr && !S.moisOuvert) { e.stopPropagation(); e.preventDefault(); return feuilleCreneau(+cr.dataset.m); }
+    const cr = t.closest('.pap .pl[data-a="creneau"]'); if (cr && !E.querySelector(".vue.on .calm")) { e.stopPropagation(); e.preventDefault(); return feuilleCreneau(+cr.dataset.m); }
     const a = t.closest("[data-s5]"); if (!a) return; e.stopPropagation(); const k = a.dataset.s5;
     if (k === "rdv") feuilleNouveau(BL.m);
     else if (k === "bloquer") feuilleBloquer();

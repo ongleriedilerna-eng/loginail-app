@@ -24,7 +24,7 @@ const I = {
   msg: '<svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></svg>' };
 const ONG = [["acc", "Accueil"], ["ag", "Agenda"], ["cl", "Clientes"], ["si", "Mon site"], ["re", "Réglages"]];
 const S = { user: null, profil: {}, prestations: [], clientes: [], rdv: [], site: null, onglet: "acc", lundi: lundiDe(new Date()), jour: new Date(), cherche: "", vis: {}, tri: (() => { try { return localStorage.getItem("loginail-tri") || "az"; } catch (e) { return "az"; } })() };
-const OUV = 8 * 60, FERM = 20 * 60, R = 30;
+let OUV = 8 * 60, FERM = 20 * 60; const R = 30;
 /* les modules « Mon site » de la démo (style, contenu, photos, légal…) s'appuient sur ces trois-là */
 const MSF = {}, MS = {}, croix = "";
 /* tout ce que ces modules enregistrent (dans le brouillon du téléphone) part aussi dans le coffre */
@@ -78,7 +78,7 @@ async function chargeTout() {
 /* 12/11 (Marie) : pour chaque cliente — combien de fois elle est venue, sa dernière visite, son prochain rendez-vous */
 async function chargeVisites() { try { const { data } = await sb.from("rendez_vous").select("id,cliente_id,prestation_id,titre,debut,fin,prix,statut,source,cree_le"); S.tous = data || []; const m = {}, n = new Date().toISOString();
     (data || []).forEach(r => { if (!r.cliente_id || r.statut === "annule" || r.statut === "absente") return; const v = m[r.cliente_id] || (m[r.cliente_id] = { n: 0, der: "", proch: "" });
-      if (r.fin < n) { v.n++; if (r.debut > v.der) v.der = r.debut; } else if (!v.proch || r.debut < v.proch) v.proch = r.debut; });
+      if (r.fin < n || r.statut === "fini") { v.n++; if (r.debut > v.der) v.der = r.debut; } else if (!v.proch || r.debut < v.proch) v.proch = r.debut; });
     S.vis = m; if (S.onglet === "cl" && E.querySelector(".ong") && !E.querySelector(".feuille.on,.voile.on")) rendu(); } catch (e) {} }
 const TRIS = [["az", "A à Z"], ["vues", "Vues récemment"], ["proch", "Prochain rendez-vous"], ["neuves", "Ajoutées récemment"]];
 const MOISC = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."], jourCourt = d => { const x = new Date(d); return x.getDate() + " " + MOISC[x.getMonth()]; };
@@ -94,7 +94,7 @@ async function chargeSemaine() {
 /* ce qu'on propose quand on ajoute un rendez-vous : les prestations de l'appli, sinon celles du site */
 const prestasDispo = () => S.prestations.length ? S.prestations.map(p => ({ id: p.id, nom: p.nom, duree: p.duree_min, prix: p.prix }))
   : ((S.site && S.site.donnees && S.site.donnees.prestations) || []).map(p => ({ id: null, nom: p.nom, duree: p.duree || 60, prix: p.prix }));
-const titreRdv = r => r.prestations?.nom || (r.clientes ? r.titre : "") || "";
+const titreRdv = r => (r.clientes && r.titre) || r.prestations?.nom || "";   /* 13/11 : titre = « Pose gel + Nail art » quand il y a plusieurs prestations */
 const nomRdv = r => r.clientes ? nomCli(r.clientes) : (r.titre || "Bloqué");
 
 /* ---------- les pages ---------- */
@@ -127,6 +127,11 @@ function calMois() { const v = S.moisVu || (S.moisVu = new Date(S.jour.getFullYe
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center">${["L", "M", "M", "J", "V", "S", "D"].map(l => `<small style="font-size:10.5px;font-weight:500;opacity:.5;padding:4px 0">${l}</small>`).join("")}${c}</div></div>`; }
 function vueAgenda() {
   const L = S.lundi, F = plusJours(L, 6), j = S.jour;
+  /* 13/11 (Marie) : la journée suit ses horaires (ceux de son site) ; s'il y a un rendez-vous plus tôt ou plus tard, on l'affiche quand même */
+  const hor = ((S.site && S.site.donnees && S.site.donnees.horaires) || (brouillon() || {}).horaires || [])[(j.getDay() + 6) % 7], mn = t => +String(t).slice(0, 2) * 60 + +String(t).slice(3, 5);
+  const fermeJ = hor === null, duJ = S.rdv.filter(r => memeJour(new Date(r.debut), j) && r.statut !== "annule");
+  OUV = hor && hor.d ? Math.floor(mn(hor.d) / 60) * 60 : 9 * 60; FERM = hor && hor.f ? Math.ceil(mn(hor.f) / 60) * 60 : 19 * 60;
+  duJ.forEach(r => { const a = new Date(r.debut), b = new Date(r.fin); if (b - a > 20 * 3600000) return; OUV = Math.min(OUV, Math.floor((a.getHours() * 60 + a.getMinutes()) / 60) * 60); FERM = Math.max(FERM, Math.ceil((b.getHours() * 60 + b.getMinutes()) / 60) * 60); });
   const rond = "width:46px;height:46px;border-radius:50%;border:0;display:grid;place-items:center;padding:0";
   let h = tete("Agenda", `${MOIS[j.getMonth()]} ${j.getFullYear()}`, `<div style="display:flex;gap:8px;position:relative"><button data-a="mois" aria-label="Voir le mois" style="${rond};background:#fff"><svg viewBox="0 0 24 24" width="20" height="20"><rect x="4" y="5.5" width="16" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><button data-a="nouveau" aria-label="Nouveau rendez-vous" style="${rond};background:var(--noir,#1E1C1B);color:#fff;font-size:26px;font-weight:300;line-height:1">+</button>${S.moisOuvert ? calMois() : ""}</div>`);
   h += `<div class="nav-sem"><button data-a="sem" data-n="-7" aria-label="Semaine d’avant">‹</button><span>Du ${L.getDate()} ${MOIS[L.getMonth()]} au ${F.getDate()} ${MOIS[F.getMonth()]}</span><button data-a="sem" data-n="7" aria-label="Semaine d’après">›</button></div>`;
@@ -134,6 +139,7 @@ function vueAgenda() {
     return `<button class="${n ? "plein" : ""}${memeJour(d, j) ? " on" : ""}" data-jour="${d.toISOString()}"><small>${COURT[i]}</small><b>${d.getDate()}</b><i></i></button>`; }).join("") + "</div>";
   const duJour = S.rdv.filter(r => memeJour(new Date(r.debut), j));
   h += `<div class="k">${JOURS[(j.getDay() + 6) % 7]} ${j.getDate()} ${MOIS[j.getMonth()]} · ${duJour.filter(r => r.statut !== "annule").length} rendez-vous</div>`;
+  if (fermeJ) h += `<div class="blanche" style="margin:-4px 0 10px;padding:11px 14px;font-size:13px;color:#6B625C;text-align:left">Votre salon est fermé ce jour-là (vos horaires). Vous pouvez quand même ajouter un rendez-vous.</div>`;
   let g = '<div class="pap">';
   for (let m = OUV; m < FERM; m += 30) g += `<div class="pl${m % 60 ? "" : " plein"}" data-a="creneau" data-m="${m}">${m % 60 ? "" : `<span>${m / 60}h</span>`}</div>`;
   duJour.forEach(r => { const d = new Date(r.debut), f = new Date(r.fin), m0 = d.getHours() * 60 + d.getMinutes(), m1 = f.getHours() * 60 + f.getMinutes();
@@ -313,7 +319,7 @@ async function encaisser() {
   const { data: t, error } = await sb.from("tickets").insert({ rendez_vous_id: r.id, numero, total: +r.prix || 0, acompte_deduit: r.acompte_paye ? +r.acompte || 0 : 0, paye_au_salon: reste, moyen: K.moyen, envoye_par: K.envoi, details }).select().single();
   if (error) return oups(error);
   if (r.statut === "prevu") await sb.from("rendez_vous").update({ statut: "fini" }).eq("id", r.id);
-  await chargeSemaine(); rendu();
+  await chargeSemaine(); chargeVisites(); rendu();
   if (K.envoi === "qr") return montreQR(t);
   const mail = S.clientes.find(c => c.id === r.cliente_id)?.email || "";
   const corps = `Bonjour ${r.clientes?.prenom || ""},\n\nVoici votre ticket n° ${t.numero} :\n${TICKET_URL(t.id)}\n\nMerci et à bientôt !\n${lg.salon}`;
@@ -405,7 +411,7 @@ E.addEventListener("click", async ev => {
       const { error } = await sb.from("rendez_vous").insert({ cliente_id: cli?.id || null, prestation_id: p?.id || null, titre: cli ? (p?.nom || null) : (saisie || "Bloqué"), debut: deb.toISOString(), fin: fin.toISOString(), prix: p?.prix ?? null });
       if (error) return oups(error); ferme(); await chargeSemaine(); rendu(); dit("Rendez-vous enregistré ✓"); }
     else if (k === "statut") { const { error } = await sb.from("rendez_vous").update({ statut: a.dataset.s }).eq("id", a.dataset.id); if (error) return oups(error);
-      ferme(); await chargeSemaine(); rendu(); dit({ fini: "C’est noté ✓", absente: "Marquée pas venue", annule: "Rendez-vous annulé", prevu: "Remis comme prévu" }[a.dataset.s]); }
+      ferme(); await chargeSemaine(); chargeVisites(); rendu(); dit({ fini: "C’est noté ✓", absente: "Marquée pas venue", annule: "Rendez-vous annulé", prevu: "Remis comme prévu" }[a.dataset.s]); }
     else if (k === "tri-menu") { S.triOuvert = !S.triOuvert; rendu(); }
     else if (k === "tri") { S.tri = a.dataset.t; S.triOuvert = false; try { localStorage.setItem("loginail-tri", S.tri); } catch (x) {} rendu(); }
     else if (k === "sms-info") ouvre(`<h3>Rappel la veille</h3><div class="sous">La veille au soir, chaque cliente qui a rendez-vous le lendemain reçoit un SMS. Vous n’avez rien à faire.</div>
