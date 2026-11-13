@@ -45,9 +45,9 @@
     sites: [{ pro_id: U.id, slug: "les-ongles-de-cerise", en_ligne: true, maj: iso(jour(-1, 18)), donnees }] };
 
   /* ce qu'on ajoute dans la démonstration est gardé dans le téléphone jusqu'au lendemain (ou jusqu'à « Se déconnecter ») */
-  const AUJ = now.toDateString(), garde = () => { if (PARCOURS || /[?&]salon-neuf/.test(location.search)) return; try { localStorage.setItem("loginail-demo-db3", JSON.stringify({ j: AUJ, DB })); } catch (e) {} };
+  const AUJ = now.toDateString(), garde = () => { if (PARCOURS || /[?&]salon-neuf/.test(location.search)) return; try { localStorage.setItem("loginail-demo-db4", JSON.stringify({ j: AUJ, DB })); } catch (e) {} };
   const NEUF = PARCOURS || /[?&]salon-neuf/.test(location.search); if (NEUF) { DB.prestations = []; DB.clientes = []; DB.rendez_vous = []; DB.sites = []; DB.profils[0].nom_salon = ""; if (PARCOURS) { DB.profils[0].prenom = ""; DB.profils[0].ville = ""; DB.profils[0].telephone = ""; } try { localStorage.removeItem("loginail-brouillon"); } catch (e) {} }
-  try { const g = NEUF ? null : JSON.parse(localStorage.getItem("loginail-demo-db3") || "null"); if (g && g.j === AUJ && g.DB && g.DB.clientes && !/[?&]dix/.test(location.search)) DB = g.DB; } catch (e) {}
+  try { const g = NEUF ? null : JSON.parse(localStorage.getItem("loginail-demo-db4") || "null"); if (g && g.j === AUJ && g.DB && g.DB.clientes && !/[?&]dix/.test(location.search)) DB = g.DB; } catch (e) {}
   let nid = 1000 + Math.floor(Math.random() * 9e5), numero = 12; const uid = () => "d" + (++nid), copie = o => JSON.parse(JSON.stringify(o));
   const joint = (t, r) => { const o = copie(r); if (t === "rendez_vous") { const c = DB.clientes.find(x => x.id === r.cliente_id), p = DB.prestations.find(x => x.id === r.prestation_id);
     o.clientes = c ? { id: c.id, prenom: c.prenom, nom: c.nom, telephone: c.telephone } : null; o.prestations = p ? { id: p.id, nom: p.nom } : null; } return o; };
@@ -69,7 +69,7 @@
       if (this.lim) rows = rows.slice(0, this.lim);
       return { data: this.un ? rows[0] || null : rows, error: null }; }
   };
-  const sortir = () => { try { localStorage.removeItem("loginail-demo"); localStorage.removeItem("loginail-demo-db3"); localStorage.removeItem("loginail-brouillon"); } catch (e) {} setTimeout(() => location.replace(location.pathname), 50); };
+  const sortir = () => { try { localStorage.removeItem("loginail-demo"); localStorage.removeItem("loginail-demo-db4"); localStorage.removeItem("loginail-brouillon"); } catch (e) {} setTimeout(() => location.replace(location.pathname), 50); };
   window.SB_DEMO = {
     from: t => new Q(t),
     functions: { invoke: async () => ({ data: { demo: true }, error: null }) },
