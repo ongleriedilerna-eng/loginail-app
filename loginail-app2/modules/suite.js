@@ -129,16 +129,17 @@
   let avale = 0;
   /* ---------- faire glisser un rendez-vous dans l'agenda (on reste appuyée, puis on monte ou on descend) ---------- */
   let G = null;
-  const debutG = (el, y) => { const r = S.rdv.find(x => x.id === el.dataset.rdv); if (!r || r.statut !== "prevu") return; G = { el, r, y, dy: 0, on: false, t: setTimeout(() => { if (!G) return; G.on = true; el.classList.add("su-tient"); navigator.vibrate?.(12); }, 420) }; };
+  const debutG = (el, y) => { const r = S.rdv.find(x => x.id === el.dataset.rdv); if (!r || r.statut !== "prevu") return; G = { el, r, y, dy: 0, on: false, t: setTimeout(() => { if (!G) return; G.on = true; el.classList.add("su-tient"); navigator.vibrate?.(12); /* 13/11 (iPhone) : on bloque le défilement de la page pendant qu'on tient le rendez-vous */ const sc = el.closest(".vue"); if (sc) { G.sc = sc; G.ov = sc.style.overflowY; sc.style.overflowY = "hidden"; } }, 380) }; };
   const bougeG = (y, ev) => { if (!G) return; if (!G.on) { if (Math.abs(y - G.y) > 8) { clearTimeout(G.t); G = null; } return; } ev.preventDefault(); const pas = R / 2; G.dy = Math.round((y - G.y) / pas) * pas; G.el.style.transform = `translateY(${G.dy}px)`;
     const d = new Date(+new Date(G.r.debut) + G.dy / R * 30 * 60000); let b = G.el.querySelector("strong"); if (b) b.textContent = hm(d) + " – " + hm(new Date(+d + (new Date(G.r.fin) - new Date(G.r.debut)))); };
-  const finG = async () => { if (!G) return; clearTimeout(G.t); const g = G; G = null; if (!g.on) return; avale = Date.now(); g.el.classList.remove("su-tient");
+  const finG = async () => { if (!G) return; clearTimeout(G.t); const g = G; G = null; if (g.sc) g.sc.style.overflowY = g.ov || ""; if (!g.on) return; avale = Date.now(); g.el.classList.remove("su-tient");
     const mn = g.dy / R * 30; if (!mn) { g.el.style.transform = ""; return; } const deb = new Date(+new Date(g.r.debut) + mn * 60000), fin = new Date(+new Date(g.r.fin) + mn * 60000);
     if (!memeJour(deb, new Date(g.r.debut)) || deb.getHours() * 60 + deb.getMinutes() < OUV || !libre(deb, fin, g.r.id)) { rendu(); return dit(libre(deb, fin, g.r.id) ? "Trop tôt ou trop tard" : "Ce créneau est déjà pris"); }
     const { error } = await sb.from("rendez_vous").update({ debut: deb.toISOString(), fin: fin.toISOString() }).eq("id", g.r.id); if (error) { rendu(); return dit("Oups, ça n’a pas marché. Réessayez."); }
     await chargeSemaine(); chargeVisites(); rendu(); dit("Décalé à " + hh(deb) + " ✓"); };
   E.addEventListener("touchstart", e => { const el = e.target.closest(".pap .pr[data-rdv]"); if (el && e.touches.length === 1) debutG(el, e.touches[0].clientY); }, { passive: true });
   E.addEventListener("touchmove", e => bougeG(e.touches[0].clientY, e), { passive: false });
+  document.addEventListener("touchmove", e => { if (G && G.on && e.cancelable) e.preventDefault(); }, { passive: false });
   E.addEventListener("touchend", finG); E.addEventListener("touchcancel", finG);
   E.addEventListener("mousedown", e => { const el = e.target.closest(".pap .pr[data-rdv]"); if (el) debutG(el, e.clientY); });
   document.addEventListener("mousemove", e => { if (G) bougeG(e.clientY, e); }); document.addEventListener("mouseup", finG);
@@ -229,4 +230,23 @@
       const { error } = await sb.from("clientes").insert(l); if (error) { a.disabled = false; a.textContent = "Ajouter"; return dit("Oups, ça n’a pas marché. Réessayez."); }
       const { data } = await sb.from("clientes").select("*").order("prenom"); S.clientes = data || []; ferme(); rendu(); dit(l.length > 1 ? l.length + " clientes ajoutées ✓" : "Cliente ajoutée ✓"); }
   }, true);
+})();
+
+/* ===== 13/11 (Marie, essai sur iPhone) : « Réservé en ligne » en noir · le mois se change en glissant · la barre du bas rétrécit quand on descend ===== */
+(function () {
+  const st = document.createElement("style");
+  st.textContent = `.en-ligne{background:#1E1C1B!important;color:#fff!important}.pr.ligne-en{box-shadow:inset 3px 0 0 #1E1C1B!important}
+.ong.o1{transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s;transform-origin:50% 100%}.ong.o1.mini{transform:scale(.8);opacity:.94}`;
+  document.head.appendChild(st);
+  /* le mois : glisser à gauche = mois d'après, à droite = mois d'avant */
+  let mx = null, my = 0;
+  E.addEventListener("touchstart", e => { mx = e.target.closest && e.target.closest(".calm") && e.touches.length === 1 ? e.touches[0].clientX : null; my = e.touches[0].clientY; }, { passive: true });
+  E.addEventListener("touchend", e => { if (mx == null) return; const t = e.changedTouches[0], dx = t.clientX - mx, dy = t.clientY - my; mx = null;
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+    const b = E.querySelector(`.vue.on .calm [data-a="mois-nav"][data-n="${dx < 0 ? 1 : -1}"]`); if (b) { e.preventDefault(); b.click(); } }, { passive: false });
+  /* la barre du bas : plus petite quand on descend, normale quand on remonte ou tout en haut */
+  let dernier = 0;
+  E.addEventListener("scroll", e => { const v = e.target; if (!v.classList || !v.classList.contains("vue")) return; const y = v.scrollTop, n = E.querySelector(".ong.o1"); if (!n) return;
+    if (y < 20) n.classList.remove("mini"); else if (y > dernier + 6) n.classList.add("mini"); else if (y < dernier - 6) n.classList.remove("mini");
+    dernier = y; }, true);
 })();
