@@ -71,6 +71,10 @@
   };
   const sortir = () => { try { localStorage.removeItem("loginail-demo"); localStorage.removeItem("loginail-demo-db5"); localStorage.removeItem("loginail-brouillon"); } catch (e) {} setTimeout(() => location.replace(location.pathname), 50); };
   const FICH = {};
+  /* 13/11 : Inès a 15 photos de ses poses, pour voir ce que ça donne */
+  { const im = ["beige-coffin.webp", "bordeaux-bagues.webp", "bordeaux-court.webp", "bordeaux-stiletto.webp", "cerise-amande.webp", "chocolat-coffin.webp", "classique.webp", "french-amande.webp", "french-lait.webp", "magazine.webp", "ombre-blanc.webp", "stiletto-nude.webp", "r1.jpg", "r2.jpg", "r3.jpg"];
+    DB.photos_clientes = DB.photos_clientes || []; im.forEach((f, i) => { const ch = "demo/c1/" + f; FICH[ch] = "loginail-site/exemple-dilerna/" + f;
+      if (!DB.photos_clientes.some(x => x.chemin === ch)) DB.photos_clientes.push({ id: "ph" + i, pro_id: U.id, cliente_id: "c1", rendez_vous_id: null, chemin: ch, cree_le: iso(jour(-i * 21, 11)) }); }); }
   window.SB_DEMO = {
     from: t => new Q(t),
     /* 13/11 : les photos des ongles, gardées en mémoire le temps de l'essai */

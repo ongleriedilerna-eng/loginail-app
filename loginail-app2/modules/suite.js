@@ -406,10 +406,10 @@ h3 .lap{font-size:11px;vertical-align:4px}
 .ph-rang button{flex:none;width:76px;height:76px;border:0;padding:0;border-radius:14px;overflow:hidden;background:#EFE9E2}
 .ph-rang img{width:100%;height:100%;object-fit:cover;display:block}
 .ph-rang .att{display:grid;place-items:center;font-size:11px;opacity:.6}
-.ph-vue{position:absolute;inset:0;z-index:300;background:rgba(15,14,13,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top) + 60px) 16px calc(env(safe-area-inset-bottom) + 24px);box-sizing:border-box}
+.ph-vue{position:absolute;inset:0;z-index:300;background:#0F0E0D;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top) + 60px) 16px calc(env(safe-area-inset-bottom) + 24px);box-sizing:border-box}
 .ph-vue img{max-width:100%;max-height:100%;border-radius:16px;object-fit:contain;flex:1;min-height:0}
 .ph-vue .x{position:absolute;top:calc(env(safe-area-inset-top) + 12px);right:14px;width:40px;height:40px;border-radius:50%;border:0;background:#fff;color:#1E1C1B;font-size:24px;line-height:40px;padding:0}
-.ph-vue .d{margin-top:14px;font-size:12.5px;color:rgba(255,255,255,.7)}
+.ph-vue .d{margin-top:14px;font-size:12.5px;color:rgba(255,255,255,.7)}.ph-vue .n{position:absolute;top:calc(env(safe-area-inset-top) + 22px);left:50%;transform:translateX(-50%);color:#fff;font-size:13px;letter-spacing:.08em}
 .ph-vue .sup{margin-top:12px;border:0;background:none;color:#F2A8A2;font:inherit;font-size:13.5px;text-decoration:underline;text-underline-offset:3px}`;
   document.head.appendChild(st);
   const ICO = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
@@ -445,12 +445,16 @@ h3 .lap{font-size:11px;vertical-align:4px}
       hist.insertAdjacentHTML("beforebegin", bloc("Ses poses en photo", c.id)); const z = E.querySelector(".fc .ph-bloc"); charge(c.id, z.querySelector(".ph-rang")); }
   }).observe(E, { childList: true, subtree: true });
   /* les clics : ajouter, voir en grand, supprimer */
-  const vue = document.createElement("div"); vue.className = "ph-vue";
+  const vue = document.createElement("div"); vue.className = "ph-vue"; let LISTE = [], IDX = 0;
+  const montreN = () => { const p = LISTE[IDX]; if (!p) return; const d = new Date(p.d);
+    vue.innerHTML = `<button class="x" data-ph="fermer" aria-label="Fermer">×</button>${LISTE.length > 1 ? `<div class="n">${IDX + 1} / ${LISTE.length}</div>` : ""}<img src="${p.u}" alt="Photo de la pose" draggable="false"><div class="d">${d.getDate()} ${MOIS[d.getMonth()]} ${d.getFullYear()}${LISTE.length > 1 ? " · glissez pour voir les autres" : ""}</div><button class="sup" data-ph="sup" data-id="${p.id}" data-c="${p.c}">Supprimer cette photo</button>`; };
+  { let x0 = null, y0 = 0; vue.addEventListener("touchstart", e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+    vue.addEventListener("touchend", e => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null; if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+      const n = IDX + (dx < 0 ? 1 : -1); if (n < 0 || n >= LISTE.length) return; IDX = n; montreN(); }, { passive: true }); }
   document.addEventListener("click", async e => { const t = e.target; if (!t.closest) return;
     const aj = t.closest('[data-ph="ajout"]'); if (aj) { e.stopPropagation(); e.preventDefault(); const z = aj.closest(".ph-bloc"); CIBLE = { cliente_id: z.dataset.cliPh, rendez_vous_id: z.dataset.rdv || null, rangee: z.querySelector(".ph-rang") }; inp.click(); return; }
-    const vo = t.closest('[data-ph="voir"]'); if (vo) { e.stopPropagation(); e.preventDefault(); const d = new Date(vo.dataset.d);
-      vue.innerHTML = `<button class="x" data-ph="fermer" aria-label="Fermer">×</button><img src="${vo.dataset.u}" alt="Photo de la pose"><div class="d">${d.getDate()} ${MOIS[d.getMonth()]} ${d.getFullYear()}</div><button class="sup" data-ph="sup" data-id="${vo.dataset.id}" data-c="${vo.dataset.c}">Supprimer cette photo</button>`;
-      vue.dataset.cli = vo.closest(".ph-bloc")?.dataset.cliPh || ""; E.appendChild(vue); return; }
+    const vo = t.closest('[data-ph="voir"]'); if (vo) { e.stopPropagation(); e.preventDefault(); LISTE = [...vo.closest(".ph-rang").querySelectorAll('[data-ph="voir"]')].map(x => ({ ...x.dataset })); IDX = LISTE.findIndex(x => x.id === vo.dataset.id);
+      vue.dataset.cli = vo.closest(".ph-bloc")?.dataset.cliPh || ""; montreN(); E.appendChild(vue); return; }
     if (t.closest('[data-ph="fermer"]')) { e.stopPropagation(); vue.remove(); return; }
     const su = t.closest('[data-ph="sup"]'); if (su) { e.stopPropagation(); if (su.dataset.ok !== "1") { su.dataset.ok = "1"; su.textContent = "Touchez encore pour supprimer"; return; }
       await sb.storage.from(BUCKET).remove([su.dataset.c]); const { error } = await sb.from("photos_clientes").delete().eq("id", su.dataset.id); vue.remove();
