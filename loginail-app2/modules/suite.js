@@ -378,7 +378,7 @@
   st.textContent = `.lap{display:inline-flex;align-items:center;gap:4px;margin-left:7px;padding:2px 8px;border-radius:99px;background:#F6E3E1;color:#9A2E25;font-size:10.5px;font-weight:500;font-style:normal;letter-spacing:.02em;vertical-align:2px;white-space:nowrap}
 h3 .lap{font-size:11px;vertical-align:4px}
 .hors{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 34px);z-index:200;transform:translate(-50%,-60px);transition:transform .3s;display:flex;align-items:center;gap:7px;background:#fff;color:#1E1C1B;border-radius:99px;padding:6px 13px 6px 11px;font-size:12px;letter-spacing:.02em;white-space:nowrap;box-shadow:0 6px 18px -8px rgba(0,0,0,.35)}
-.hors.on{transform:translate(-50%,0)}.hors i{flex:none;width:7px;height:7px;border-radius:50%;background:#E5484D}.ecran.horsl .toast{top:calc(env(safe-area-inset-top) + 72px)!important}`;
+.hors.on{transform:translate(-50%,0)}.hors i{flex:none;width:7px;height:7px;border-radius:50%;background:#E5484D}.ecran.horsl .toast{top:calc(env(safe-area-inset-top) + 72px)!important}.ecran.horsl .vue{padding-top:calc(max(62px, env(safe-area-inset-top) + 40px) + 34px)!important;transition:padding-top .3s}`;
   document.head.appendChild(st);
   /* combien de fois elle n'est pas venue */
   const lapins = id => (S.tous || S.rdv || []).filter(r => r.cliente_id === id && r.statut === "absente").length;
