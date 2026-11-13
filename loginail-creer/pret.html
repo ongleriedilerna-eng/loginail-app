@@ -1752,6 +1752,8 @@ if(location.search.includes("iphone")){
 if(location.search.includes("public"))document.documentElement.classList.add("public");
 /* 06/11 : ?appli = ouvert depuis l'appli (Mon site) : « Enregistrer » referme et revient à l'appli */
 if(/[?&]appli=1(&|$)/.test(location.search))document.documentElement.classList.add("dansappli");
+/* 13/11 (Marie, règle Apple) : vu depuis l'appli, jamais de prix, d'abonnement ni de lien « Créez votre site » */
+if(/[?&]appli=/.test(location.search)){document.documentElement.classList.add("vuappli");var vaS=document.createElement("style");vaS.textContent="html.vuappli #act,html.vuappli .cr-a,html.vuappli .cr-b,html.vuappli .cr-c,html.vuappli a.cree{display:none!important}";document.head.appendChild(vaS);}
 /* Infos : sa fiche Google + sa bio Insta lue via la recherche. Les prix/durées (ex:true) sont des EXEMPLES, marqués comme tels. */
 const DPLEIN={
   nom:"Votre onglerie",ville:"Votre ville",note:"5,0",nb:24,
