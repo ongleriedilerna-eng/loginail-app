@@ -66,7 +66,7 @@ label.btn{display:flex!important;align-items:center;justify-content:center}
     return h.slice(0, j) + `<button class="ai-b" data-ai="ouvrir" aria-label="L’assistante Loginail"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 3.5V17H6.5A2.5 2.5 0 0 1 4 14.5z"/><path d="M12 7.6l.9 2 2 .9-2 .9-.9 2-.9-2-2-.9 2-.9z" fill="currentColor" stroke="none"/></svg></button>` + h.slice(j); };
   document.addEventListener("click", e => { const a = e.target.closest && e.target.closest("[data-ai]"); if (!a) return; e.stopPropagation(); const k = a.dataset.ai;
     if (k === "ouvrir") feuilleAide(); else if (k === "sug") demande(a.textContent.trim());
-    else if (k === "autre") window.open("https://wa.me/33745073235?text=" + encodeURIComponent("Bonjour Loginail, j’ai une question : "), "_blank", "noopener"); }, true);
+    else if (k === "autre") window.open("https://wa.me/33745266189?text=" + encodeURIComponent("Bonjour Loginail, j’ai une question : "), "_blank", "noopener"); }, true);
 })();
 
 /* ===== 13/11 (Marie) : Clientes — importer par l'icône du haut ; les lettres A-Z posées à part, comme sur l'iPhone ===== */

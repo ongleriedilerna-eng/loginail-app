@@ -473,7 +473,7 @@ E.addEventListener("click", async ev => {
     else if (k === "suppr-ok") { if (($("#suppr-ok", E).value || "").trim().toUpperCase() !== "SUPPRIMER") return dit("Écrivez SUPPRIMER pour confirmer");
       a.disabled = true; a.textContent = "Suppression…"; const { error } = await sb.rpc("supprimer_mon_compte"); if (error) { a.disabled = false; a.textContent = "Supprimer définitivement"; return oups(error); }
       try { localStorage.removeItem("loginail-brouillon"); } catch (e) {} await sb.auth.signOut(); S.user = null; ecranConnexion(); }
-    else if (k === "aide") window.open("https://wa.me/33745073235?text=" + encodeURIComponent("Bonjour Loginail, j’ai besoin d’aide : "), "_blank", "noopener");   /* 12/11 (Marie) : WhatsApp, son numéro pour commencer */
+    else if (k === "aide") window.open("https://wa.me/33745266189?text=" + encodeURIComponent("Bonjour Loginail, j’ai besoin d’aide : "), "_blank", "noopener");   /* 12/11 (Marie) : WhatsApp, son numéro pour commencer */
     else if (k === "lien") window.open("https://loginail.fr/mentions-legales.html", "_blank", "noopener");
     else if (k === "lien2") window.open("https://loginail.fr/confidentialite.html", "_blank", "noopener");
     else if (k === "lien3") window.open("https://loginail.fr/conditions-abonnement.html", "_blank", "noopener");
