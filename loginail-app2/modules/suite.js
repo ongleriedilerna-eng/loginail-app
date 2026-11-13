@@ -371,3 +371,27 @@
       S.profil = data; try { localStorage.setItem("loginail-caisse-choisi", "1"); } catch (x) {} rendu(); return dit(on ? "Caisse activée · elle reste dans Réglages › Ma caisse" : "Caisse arrêtée · vous pourrez la remettre dans Réglages › Ma caisse"); }
     if (t.closest('[data-su="acc-caisse-x"]')) { e.stopPropagation(); e.preventDefault(); try { localStorage.setItem("loginail-caisse-choisi", "1"); } catch (x) {} rendu(); } }, true);
 })();
+
+/* ===== 13/11 (Marie) : l'étiquette « lapin » (rendez-vous où elle n'est pas venue) · un message clair quand il n'y a pas de réseau ===== */
+(function () {
+  const st = document.createElement("style");
+  st.textContent = `.lap{display:inline-flex;align-items:center;gap:4px;margin-left:7px;padding:2px 8px;border-radius:99px;background:#F6E3E1;color:#9A2E25;font-size:10.5px;font-weight:500;font-style:normal;letter-spacing:.02em;vertical-align:2px;white-space:nowrap}
+h3 .lap{font-size:11px;vertical-align:4px}
+.hors{position:absolute;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 8px);z-index:200;background:#1E1C1B;color:#fff;border-radius:16px;padding:11px 14px;font-size:13px;line-height:1.35;display:flex;gap:10px;align-items:center;box-shadow:0 12px 30px -12px rgba(0,0,0,.5);transform:translateY(-140%);transition:transform .3s}
+.hors.on{transform:none}.ecran.horsl .toast{top:calc(env(safe-area-inset-top) + 96px)!important}.hors i{flex:none;width:8px;height:8px;border-radius:50%;background:#E5484D}`;
+  document.head.appendChild(st);
+  /* combien de fois elle n'est pas venue */
+  const lapins = id => (S.tous || S.rdv || []).filter(r => r.cliente_id === id && r.statut === "absente").length;
+  const tag = n => `<em class="lap" title="Rendez-vous où elle n’est pas venue">${n > 1 ? n + " lapins" : "1 lapin"}</em>`;
+  const pose = () => {
+    E.querySelectorAll(".vue.on .cli[data-cli]").forEach(l => { if (l.dataset.lap) return; l.dataset.lap = "1"; const n = lapins(l.dataset.cli), b = l.querySelector(".t b"); if (n && b) b.insertAdjacentHTML("beforeend", tag(n)); });
+    const fh = E.querySelector(".feuille .fi-haut h3"); if (fh && !fh.dataset.lap) { fh.dataset.lap = "1"; const id = (S.clientes.find(c => nomCli(c) === fh.textContent.trim()) || {}).id; const n = id ? lapins(id) : 0; if (n) fh.insertAdjacentHTML("beforeend", tag(n)); }
+    const rh = E.querySelector(".feuille .fiche-t h3[data-cli]"); if (rh && !rh.dataset.lap) { rh.dataset.lap = "1"; const n = lapins(rh.dataset.cli); if (n) rh.insertAdjacentHTML("beforeend", tag(n)); } };
+  new MutationObserver(pose).observe(E, { childList: true, subtree: true });
+  /* pas de réseau : un bandeau en haut, et des messages qui disent vraiment pourquoi */
+  const ban = document.createElement("div"); ban.className = "hors"; ban.innerHTML = "<i></i><span>Pas de connexion internet. Vérifiez le Wi-Fi ou le réseau : rien n’est enregistré tant que la connexion n’est pas revenue.</span>";
+  const montre = () => { if (!ban.isConnected) E.appendChild(ban); ban.classList.toggle("on", navigator.onLine === false); E.classList.toggle("horsl", navigator.onLine === false); };
+  addEventListener("offline", montre); addEventListener("online", () => { montre(); if (S.user) { try { chargeSemaine().then(() => { chargeVisites(); rendu(); }); } catch (e) {} dit("La connexion est revenue ✓"); } });
+  setTimeout(montre, 1500);
+  const dit0 = dit; dit = t => dit0(navigator.onLine === false && /Oups|pas marché|Réessayez|Pas enregistré/i.test(t) ? "Pas de connexion : ce n’est pas enregistré. Réessayez quand le réseau revient." : t);
+})();

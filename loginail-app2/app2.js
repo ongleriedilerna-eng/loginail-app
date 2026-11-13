@@ -47,7 +47,7 @@ function squelette() {
 /* 13/11 (Apple) : sur iPhone, un fichier ne se télécharge pas : on l'ouvre avec « Partager » (Enregistrer dans Fichiers, Mail…) */
 async function partageFichier(blob, nom, fait) { try { const f = new File([blob], nom, { type: blob.type }); if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: nom }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nom; document.body.appendChild(a); a.click(); a.remove(); dit(fait); }
-const dit = t => { const z = $(".toast", E); if (!z) return; z.textContent = t; z.classList.add("on"); clearTimeout(z._t); z._t = setTimeout(() => z.classList.remove("on"), 2200); };
+let dit = t => { const z = $(".toast", E); if (!z) return; z.textContent = t; z.classList.add("on"); clearTimeout(z._t); z._t = setTimeout(() => z.classList.remove("on"), 2200); };
 const ouvre = h => { $(".feuille .fc", E).innerHTML = '<button class="fe-x" data-a="fermer" aria-label="Fermer">×</button>' + h; E.classList.add("fe"); $(".feuille", E).scrollTop = 0; };
 const ferme = () => E.classList.remove("fe");
 const oups = e => { console.error(e); dit("Oups, ça n’a pas marché. Réessayez."); };
