@@ -70,8 +70,15 @@
       return { data: this.un ? rows[0] || null : rows, error: null }; }
   };
   const sortir = () => { try { localStorage.removeItem("loginail-demo"); localStorage.removeItem("loginail-demo-db5"); localStorage.removeItem("loginail-brouillon"); } catch (e) {} setTimeout(() => location.replace(location.pathname), 50); };
+  const FICH = {};
   window.SB_DEMO = {
     from: t => new Q(t),
+    /* 13/11 : les photos des ongles, gardées en mémoire le temps de l'essai */
+    storage: { from: () => ({
+      upload: async (p, b) => { FICH[p] = await new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(b); }); return { data: { path: p }, error: null }; },
+      createSignedUrls: async ps => ({ data: ps.map(p => ({ path: p, signedUrl: FICH[p] || null })), error: null }),
+      createSignedUrl: async p => ({ data: { signedUrl: FICH[p] || null }, error: null }),
+      remove: async ps => { ps.forEach(p => delete FICH[p]); return { data: null, error: null }; } }) },
     functions: { invoke: async () => ({ data: { demo: true }, error: null }) },
     rpc: async n => n === "prochain_numero" ? { data: ++numero, error: null } : { data: null, error: null },
     auth: { /* on attend que toute la page soit chargée (sinon l'appli démarre avant ses modules, puisqu'ici rien ne passe par internet) */

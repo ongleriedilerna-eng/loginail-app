@@ -395,3 +395,64 @@ h3 .lap{font-size:11px;vertical-align:4px}
   setTimeout(montre, 1500);
   const dit0 = dit; dit = t => dit0(navigator.onLine === false && /Oups|pas marché|Réessayez|Pas enregistré/i.test(t) ? "Pas de connexion : ce n’est pas enregistré. Réessayez quand le réseau revient." : t);
 })();
+
+/* ===== 13/11 (Marie) : les photos des ongles — après « C'est fini » et dans la fiche (privées : rangées dans photos-clientes/<sa pro>/<cliente>/) ===== */
+(function () {
+  const st = document.createElement("style");
+  st.textContent = `.ph-bloc{background:#fff;border-radius:20px;padding:12px;margin:14px 0 0}
+.ph-bloc .t{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px}
+.ph-bloc .t button,.ph-plus{flex:none;border:0;background:var(--acc,#1E1C1B);color:#fff;border-radius:99px;padding:8px 13px;font:inherit;font-size:12.5px;display:inline-flex;align-items:center;gap:6px}
+.ph-rang{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-top:10px}.ph-rang::-webkit-scrollbar{display:none}.ph-rang:empty{display:none}
+.ph-rang button{flex:none;width:76px;height:76px;border:0;padding:0;border-radius:14px;overflow:hidden;background:#EFE9E2}
+.ph-rang img{width:100%;height:100%;object-fit:cover;display:block}
+.ph-rang .att{display:grid;place-items:center;font-size:11px;opacity:.6}
+.ph-vue{position:absolute;inset:0;z-index:300;background:rgba(15,14,13,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top) + 60px) 16px calc(env(safe-area-inset-bottom) + 24px);box-sizing:border-box}
+.ph-vue img{max-width:100%;max-height:100%;border-radius:16px;object-fit:contain;flex:1;min-height:0}
+.ph-vue .x{position:absolute;top:calc(env(safe-area-inset-top) + 12px);right:14px;width:40px;height:40px;border-radius:50%;border:0;background:#fff;color:#1E1C1B;font-size:24px;line-height:40px;padding:0}
+.ph-vue .d{margin-top:14px;font-size:12.5px;color:rgba(255,255,255,.7)}
+.ph-vue .sup{margin-top:12px;border:0;background:none;color:#F2A8A2;font:inherit;font-size:13.5px;text-decoration:underline;text-underline-offset:3px}`;
+  document.head.appendChild(st);
+  const ICO = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+  const BUCKET = "photos-clientes";
+  let CIBLE = null; /* { cliente_id, rendez_vous_id, rangee } */
+  const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*"; inp.multiple = true; inp.style.display = "none"; document.body.appendChild(inp);
+  /* une photo plus légère (1600 px au plus), en JPEG */
+  const allege = async f => { try { const bm = await createImageBitmap(f); const k = Math.min(1, 1600 / Math.max(bm.width, bm.height)), c = document.createElement("canvas"); c.width = Math.round(bm.width * k); c.height = Math.round(bm.height * k);
+    c.getContext("2d").drawImage(bm, 0, 0, c.width, c.height); return await new Promise(r => c.toBlob(b => r(b || f), "image/jpeg", .85)); } catch (e) { return f; } };
+  const liens = async chemins => { if (!chemins.length) return {}; const { data } = await sb.storage.from(BUCKET).createSignedUrls(chemins, 3600); const m = {}; (data || []).forEach(x => { if (x && x.signedUrl) m[x.path] = x.signedUrl; }); return m; };
+  const charge = async (cliente_id, rangee) => { if (!rangee) return; const { data } = await sb.from("photos_clientes").select("*").eq("cliente_id", cliente_id).order("cree_le", { ascending: false }).limit(30);
+    const l = data || [], u = await liens(l.map(p => p.chemin)); const ok = l.filter(p => u[p.chemin]);
+    rangee.innerHTML = ok.map(p => `<button data-ph="voir" data-id="${p.id}" data-c="${esc(p.chemin)}" data-u="${esc(u[p.chemin])}" data-d="${p.cree_le}"><img src="${esc(u[p.chemin])}" alt="Photo de la pose" loading="lazy"></button>`).join("");
+    const n = rangee.closest(".ph-bloc")?.querySelector(".nb"); if (n) n.textContent = ok.length ? ok.length + " photo" + (ok.length > 1 ? "s" : "") : "Aucune photo pour l’instant"; };
+  inp.addEventListener("change", async () => { const fs = [...inp.files].slice(0, 10); inp.value = ""; if (!fs.length || !CIBLE) return; const c = CIBLE;
+    if (navigator.onLine === false) return dit("Pas de connexion : la photo n’est pas enregistrée.");
+    c.rangee && c.rangee.insertAdjacentHTML("afterbegin", fs.map(() => '<button class="att"><span>…</span></button>').join("")); let ok = 0;
+    for (const f of fs) { const b = await allege(f), chemin = `${S.user.id}/${c.cliente_id}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.jpg`;
+      const { error } = await sb.storage.from(BUCKET).upload(chemin, b, { contentType: "image/jpeg", upsert: false }); if (error) continue;
+      const r = await sb.from("photos_clientes").insert({ cliente_id: c.cliente_id, rendez_vous_id: c.rendez_vous_id || null, chemin }); if (!r.error) ok++; }
+    await charge(c.cliente_id, c.rangee); dit(ok ? (ok > 1 ? ok + " photos ajoutées ✓" : "Photo ajoutée ✓") : "Oups, la photo n’est pas passée. Réessayez."); });
+  const bloc = (titre, cliente_id) => `<div class="ph-bloc" data-cli-ph="${cliente_id}"><div class="t"><div>${titre}<div class="nb" style="font-size:12px;opacity:.55;margin-top:2px">…</div></div><button data-ph="ajout">${ICO}Ajouter</button></div><div class="ph-rang"></div></div>`;
+  /* 1 · juste après « C'est fini » : la feuille « Son prochain rendez-vous ? » propose la photo */
+  let DERNIER = null; document.addEventListener("loginail-reprendre", e => { DERNIER = e.detail; });
+  addEventListener("click", e => { const f = e.target.closest && e.target.closest('[data-s="fini"][data-id]'); if (f) DERNIER = S.rdv.find(x => x.id === f.dataset.id) || DERNIER; }, true);
+  /* 2 · dans sa fiche, avant l'historique */
+  new MutationObserver(() => {
+    const h = E.querySelector(".feuille .fc h3"); if (!h) return;
+    if (/Son prochain rendez-vous/.test(h.textContent) && DERNIER && DERNIER.cliente_id && !E.querySelector(".fc .ph-bloc")) { const so = h.nextElementSibling;
+      (so || h).insertAdjacentHTML("afterend", bloc("Une photo de la pose ?", DERNIER.cliente_id)); const z = E.querySelector(".fc .ph-bloc"); z.dataset.rdv = DERNIER.id; charge(DERNIER.cliente_id, z.querySelector(".ph-rang")); }
+    const fh = E.querySelector(".feuille .fi-haut h3"), hist = [...E.querySelectorAll(".feuille .fi-k")].find(x => /Historique/.test(x.textContent));
+    if (fh && hist && !E.querySelector(".fc .ph-bloc")) { const nom = fh.childNodes[0] ? fh.childNodes[0].textContent.trim() : fh.textContent.trim(), c = S.clientes.find(x => nomCli(x) === nom); if (!c) return;
+      hist.insertAdjacentHTML("beforebegin", bloc("Ses poses en photo", c.id)); const z = E.querySelector(".fc .ph-bloc"); charge(c.id, z.querySelector(".ph-rang")); }
+  }).observe(E, { childList: true, subtree: true });
+  /* les clics : ajouter, voir en grand, supprimer */
+  const vue = document.createElement("div"); vue.className = "ph-vue";
+  document.addEventListener("click", async e => { const t = e.target; if (!t.closest) return;
+    const aj = t.closest('[data-ph="ajout"]'); if (aj) { e.stopPropagation(); e.preventDefault(); const z = aj.closest(".ph-bloc"); CIBLE = { cliente_id: z.dataset.cliPh, rendez_vous_id: z.dataset.rdv || null, rangee: z.querySelector(".ph-rang") }; inp.click(); return; }
+    const vo = t.closest('[data-ph="voir"]'); if (vo) { e.stopPropagation(); e.preventDefault(); const d = new Date(vo.dataset.d);
+      vue.innerHTML = `<button class="x" data-ph="fermer" aria-label="Fermer">×</button><img src="${vo.dataset.u}" alt="Photo de la pose"><div class="d">${d.getDate()} ${MOIS[d.getMonth()]} ${d.getFullYear()}</div><button class="sup" data-ph="sup" data-id="${vo.dataset.id}" data-c="${vo.dataset.c}">Supprimer cette photo</button>`;
+      vue.dataset.cli = vo.closest(".ph-bloc")?.dataset.cliPh || ""; E.appendChild(vue); return; }
+    if (t.closest('[data-ph="fermer"]')) { e.stopPropagation(); vue.remove(); return; }
+    const su = t.closest('[data-ph="sup"]'); if (su) { e.stopPropagation(); if (su.dataset.ok !== "1") { su.dataset.ok = "1"; su.textContent = "Touchez encore pour supprimer"; return; }
+      await sb.storage.from(BUCKET).remove([su.dataset.c]); const { error } = await sb.from("photos_clientes").delete().eq("id", su.dataset.id); vue.remove();
+      const z = E.querySelector(`.fc .ph-bloc[data-cli-ph="${vue.dataset.cli}"]`); if (z) charge(vue.dataset.cli, z.querySelector(".ph-rang")); dit(error ? "Oups, réessayez." : "Photo supprimée"); } }, true);
+})();
