@@ -259,11 +259,11 @@
   st.textContent = `.fc .chips{display:grid!important;grid-template-columns:1fr 1fr;gap:8px}
 .fc .chips .chip{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;text-align:left;min-height:52px;padding:9px 12px;border-radius:16px;font-size:13.5px;line-height:1.2;width:100%;box-sizing:border-box}
 .fc .chips .chip span{font-size:11.5px;opacity:.6}
-.su-auj{border:0;background:var(--acc,var(--noir));color:#fff;border-radius:99px;padding:7px 14px;font:inherit;font-size:13px;white-space:nowrap}`;
+.su-auj2{width:46px;height:46px;border-radius:50%;border:1.5px solid var(--acc,#1E1C1B);background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;line-height:1;color:var(--acc,#1E1C1B)}.su-auj2 b{font-weight:500;font-size:15px}.su-auj2 small{font-size:8px;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}`;
   document.head.appendChild(st);
   const auj = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
   const ag0 = VUES.ag; VUES.ag = () => { let h = ag0(); if (memeJour(S.jour, new Date())) return h;
-    const d = new Date(); return h.replace(/(<div class="nav-sem">[\s\S]*?)<span>[^<]*<\/span>/, `$1<button class="su-auj" data-su="auj">↺ Aujourd’hui · ${["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."][d.getDay()]} ${d.getDate()}</button>`); };
+    const d = new Date(); return h.replace('<button data-a="mois"', `<button data-su="auj" aria-label="Revenir à aujourd’hui" class="su-auj2"><b>${d.getDate()}</b><small>auj.</small></button><button data-a="mois"`); };
   const re0 = VUES.re; VUES.re = () => { const h = re0(), on = localStorage.getItem("loginail-agenda-horaires") !== "non";
     const l = `<div class="ligne"><div class="t">Mon agenda suit mes horaires<span>${on ? "L’agenda montre seulement vos heures d’ouverture" : "L’agenda montre toute la journée, de 8h à 20h"}</span></div><button class="sw${on ? " on" : ""}" data-su="ag-hor" aria-label="Mon agenda suit mes horaires"></button></div>`;
     for (const rep of ['<div class="k">Mes réservations</div><div class="liste">', '<div class="k">Mon salon</div><div class="liste">', '<div class="k">Mes données</div><div class="liste">']) if (h.includes(rep)) return h.replace(rep, rep + l);
@@ -464,4 +464,37 @@ h3 .lap{font-size:11px;vertical-align:4px}
     v.querySelectorAll(".pap .pl span.maint").forEach(s => { if (!memeJour(S.jour, now) || +s.parentElement.dataset.m !== m) s.classList.remove("maint"); });
     if (!memeJour(S.jour, now)) return; const s = v.querySelector(`.pap .pl[data-m="${m}"] span`); if (s && !s.classList.contains("maint")) s.classList.add("maint"); };
   new MutationObserver(marque).observe(E, { childList: true, subtree: true }); setInterval(marque, 60000);
+})();
+
+/* ===== 13/11 (Marie) : « Nouvelle réservation » sur l'iPhone — seulement dans l'appli installée (pas sur le web), et seulement si elle accepte ===== */
+(function () {
+  const PN = () => window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform() && Capacitor.Plugins && Capacitor.Plugins.PushNotifications;
+  const CLE = "loginail-notif"; const lit = () => { try { return localStorage.getItem(CLE); } catch (e) { return null; } }, ecrit = v => { try { localStorage.setItem(CLE, v); } catch (e) {} };
+  let jeton = null, branche = false;
+  const brancher = () => { const p = PN(); if (!p || branche) return; branche = true;
+    p.addListener("registration", async t => { jeton = t.value; if (!S.user) return; await sb.from("appareils").upsert({ jeton: t.value, pro_id: S.user.id, plateforme: "ios", maj_le: new Date().toISOString() }); });
+    p.addListener("registrationError", () => dit("Les notifications n’ont pas pu s’activer. Réessayez plus tard."));
+    p.addListener("pushNotificationActionPerformed", async a => { const id = a && a.notification && a.notification.data && a.notification.data.rdv; if (!S.user) return;
+      try { await chargeSemaine(); } catch (e) {} let r = id && S.rdv.find(x => x.id === id);
+      if (!r && id) { const { data } = await sb.from("rendez_vous").select("debut").eq("id", id).maybeSingle(); if (data) { const d = new Date(data.debut); d.setHours(0, 0, 0, 0); S.jour = d; S.lundi = plusJours(d, -((d.getDay() + 6) % 7)); await chargeSemaine(); r = S.rdv.find(x => x.id === id); } }
+      S.onglet = "ag"; ferme(); rendu(); if (r) { const el = E.querySelector(`.pap .pr[data-rdv="${id}"]`); if (el) el.click(); } }); };
+  const activer = async () => { const p = PN(); if (!p) return false; brancher(); let perm = await p.checkPermissions();
+    if (perm.receive === "prompt" || perm.receive === "prompt-with-rationale") perm = await p.requestPermissions();
+    if (perm.receive !== "granted") { ecrit("non"); dit("Vous pourrez les activer dans Réglages › Notifications de l’iPhone"); return false; }
+    await p.register(); ecrit("oui"); return true; };
+  const arreter = async () => { const p = PN(); ecrit("non"); if (jeton) await sb.from("appareils").delete().eq("jeton", jeton); try { await p.unregister(); } catch (e) {} };
+  /* au démarrage : si elle a dit oui, on redonne le jeton (il peut changer) */
+  const t0 = setInterval(() => { if (!S.user || !PN()) return; clearInterval(t0); if (lit() === "oui") activer(); }, 1500);
+  /* Réglages : l'interrupteur */
+  const re0 = VUES.re; VUES.re = () => { const h = re0(); if (!PN()) return h; const on = lit() === "oui";
+    const l = `<div class="ligne"><div class="t">Être prévenue des réservations<span>Une notification quand une cliente réserve sur votre site</span></div><button class="sw${on ? " on" : ""}" data-su="notif-sw" aria-label="Notifications de réservation"></button></div>`;
+    for (const rep of ['<div class="k">Mes réservations</div><div class="liste">', '<div class="k">Mon salon</div><div class="liste">']) if (h.includes(rep)) return h.replace(rep, rep + l); return h; };
+  /* l'accueil : une seule fois, on lui propose */
+  const acc0 = VUES.acc; VUES.acc = () => { const h = acc0(); if (!PN() || lit()) return h;
+    const b = `<div class="acc-caisse"><div class="t">Être prévenue quand une cliente réserve ?<span>Une notification sur votre iPhone à chaque réservation sur votre site.</span></div><button class="pil noir" data-su="notif-oui" style="flex:none;border:0;background:var(--acc,#1E1C1B);color:#fff;border-radius:99px;padding:8px 13px;font:inherit;font-size:12.5px">Activer</button><button class="x" data-su="notif-x" aria-label="Plus tard">×</button></div>`;
+    for (const rep of ['<div class="su-t3">', '<div class="k">Encore libre', '<div class="k">Aujourd’hui']) if (h.includes(rep)) return h.replace(rep, b + rep); return h + b; };
+  document.addEventListener("click", async e => { const t = e.target; if (!t.closest) return;
+    if (t.closest('[data-su="notif-sw"]')) { e.stopPropagation(); e.preventDefault(); if (lit() === "oui") { await arreter(); dit("Notifications arrêtées"); } else if (await activer()) dit("C’est activé ✓ Vous serez prévenue à chaque réservation"); rendu(); return; }
+    if (t.closest('[data-su="notif-oui"]')) { e.stopPropagation(); e.preventDefault(); if (await activer()) dit("C’est activé ✓ Vous serez prévenue à chaque réservation"); rendu(); return; }
+    if (t.closest('[data-su="notif-x"]')) { e.stopPropagation(); e.preventDefault(); ecrit("plus-tard"); rendu(); } }, true);
 })();
