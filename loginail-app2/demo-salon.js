@@ -12,8 +12,8 @@
 
   const prestations = [["Pose gel - Première pose", 55, 90], ["Pose gel - Remplissage", 45, 75], ["Semi-permanent mains", 30, 45], ["French", 10, 15], ["Nail art (par ongle)", 3, 10], ["Dépose", 15, 20], ["Beauté des mains", 25, 30], ["Semi-permanent pieds", 30, 45]]
     .map((p, i) => ({ id: "p" + (i + 1), nom: p[0], prix: p[1], duree_min: p[2], ordre: i, cree_le: iso(jour(-60, 9)) }));
-  const clientes = [["Inès", "Moreau", "03-14", "Aime les cerises et le rouge."], ["Sarah", "Benali", "07-02", ""], ["Lina", "Rossi", "11-20", "French verte, ongles courts."], ["Jade", "Martin", "01-09", ""], ["Camille", "Leroy", "05-27", "Vient toutes les trois semaines."], ["Manon", "Garcia", "09-15", ""], ["Emma", "Petit", "12-03", "Préfère le matin."], ["Léa", "Dubois", "04-18", ""]]
-    .map((c, i) => ({ id: "c" + (i + 1), prenom: c[0], nom: c[1], telephone: "06 00 00 00 0" + (i + 1), email: null, anniversaire: "1998-" + c[2], notes: c[3] || null, cree_le: iso(jour(-40 + i, 10)) }));
+  const clientes = [["Inès", "Moreau", "03-14", "Aime les cerises et le rouge."], ["Sarah", "Benali", "07-02", ""], ["Lina", "Rossi", "11-20", "French verte, ongles courts."], ["Jade", "Martin", "01-09", ""], ["Camille", "Leroy", "05-27", "Vient toutes les trois semaines."], ["Manon", "Garcia", "09-15", ""], ["Emma", "Petit", "12-03", "Préfère le matin."], ["Léa", "Dubois", "04-18", ""], ["Alice", "Bernard", "01-01", ""], ["Anaïs", "Roux", "02-08", ""], ["Chloé", "Fournier", "03-15", ""], ["Clara", "Girard", "04-22", ""], ["Diane", "Bonnet", "05-02", ""], ["Elsa", "Lambert", "06-09", ""], ["Eva", "Fontaine", "07-16", ""], ["Fanny", "Mercier", "08-23", ""], ["Gaëlle", "Blanc", "09-03", ""], ["Hélène", "Guerin", "10-10", ""], ["Inaya", "Faure", "11-17", ""], ["Julie", "Andre", "12-24", ""], ["Kenza", "Chevalier", "01-04", ""], ["Laura", "Robin", "02-11", ""], ["Louise", "Masson", "03-18", ""], ["Maëlys", "Sanchez", "04-25", ""], ["Marine", "Henry", "05-05", ""], ["Mila", "Perrin", "06-12", ""], ["Nina", "Morin", "07-19", ""], ["Océane", "Mathieu", "08-26", ""], ["Pauline", "Clement", "09-06", ""], ["Rose", "Gauthier", "10-13", ""], ["Salomé", "Dumont", "11-20", ""], ["Sofia", "Lopez", "12-27", ""], ["Tess", "Fontaine", "01-07", ""], ["Victoire", "Muller", "02-14", ""], ["Yasmine", "Lefevre", "03-21", ""], ["Zoé", "Roussel", "04-01", ""], ["Agathe", "Nicolas", "05-08", ""], ["Bérénice", "Brun", "06-15", ""], ["Céline", "Picard", "07-22", ""], ["Ophélie", "Lucas", "08-02", ""]]
+    .map((c, i) => ({ id: "c" + (i + 1), prenom: c[0], nom: c[1], telephone: "06 00 00 " + String(10 + i).padStart(2, "0") + " " + String(31 + i).padStart(2, "0"), email: null, anniversaire: "1998-" + c[2], notes: c[3] || null, cree_le: iso(jour(-40 + i, 10)) }));
   const rendez_vous = []; let k = 0;
   for (let dj = -3; dj <= 5; dj++) {
     if (jour(dj, 12).getDay() === 0) continue;   /* fermé le dimanche */
@@ -41,9 +41,9 @@
     sites: [{ pro_id: U.id, slug: "les-ongles-de-cerise", en_ligne: true, maj: iso(jour(-1, 18)), donnees }] };
 
   /* ce qu'on ajoute dans la démonstration est gardé dans le téléphone jusqu'au lendemain (ou jusqu'à « Se déconnecter ») */
-  const AUJ = now.toDateString(), garde = () => { if (PARCOURS || /[?&]salon-neuf/.test(location.search)) return; try { localStorage.setItem("loginail-demo-db2", JSON.stringify({ j: AUJ, DB })); } catch (e) {} };
+  const AUJ = now.toDateString(), garde = () => { if (PARCOURS || /[?&]salon-neuf/.test(location.search)) return; try { localStorage.setItem("loginail-demo-db3", JSON.stringify({ j: AUJ, DB })); } catch (e) {} };
   const NEUF = PARCOURS || /[?&]salon-neuf/.test(location.search); if (NEUF) { DB.prestations = []; DB.clientes = []; DB.rendez_vous = []; DB.sites = []; DB.profils[0].nom_salon = ""; if (PARCOURS) { DB.profils[0].prenom = ""; DB.profils[0].ville = ""; DB.profils[0].telephone = ""; } try { localStorage.removeItem("loginail-brouillon"); } catch (e) {} }
-  try { const g = NEUF ? null : JSON.parse(localStorage.getItem("loginail-demo-db2") || "null"); if (g && g.j === AUJ && g.DB && g.DB.clientes) DB = g.DB; } catch (e) {}
+  try { const g = NEUF ? null : JSON.parse(localStorage.getItem("loginail-demo-db3") || "null"); if (g && g.j === AUJ && g.DB && g.DB.clientes) DB = g.DB; } catch (e) {}
   let nid = 1000 + Math.floor(Math.random() * 9e5), numero = 12; const uid = () => "d" + (++nid), copie = o => JSON.parse(JSON.stringify(o));
   const joint = (t, r) => { const o = copie(r); if (t === "rendez_vous") { const c = DB.clientes.find(x => x.id === r.cliente_id), p = DB.prestations.find(x => x.id === r.prestation_id);
     o.clientes = c ? { id: c.id, prenom: c.prenom, nom: c.nom, telephone: c.telephone } : null; o.prestations = p ? { id: p.id, nom: p.nom } : null; } return o; };
@@ -65,7 +65,7 @@
       if (this.lim) rows = rows.slice(0, this.lim);
       return { data: this.un ? rows[0] || null : rows, error: null }; }
   };
-  const sortir = () => { try { localStorage.removeItem("loginail-demo"); localStorage.removeItem("loginail-demo-db2"); localStorage.removeItem("loginail-brouillon"); } catch (e) {} setTimeout(() => location.replace(location.pathname), 50); };
+  const sortir = () => { try { localStorage.removeItem("loginail-demo"); localStorage.removeItem("loginail-demo-db3"); localStorage.removeItem("loginail-brouillon"); } catch (e) {} setTimeout(() => location.replace(location.pathname), 50); };
   window.SB_DEMO = {
     from: t => new Q(t),
     functions: { invoke: async () => ({ data: { demo: true }, error: null }) },

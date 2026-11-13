@@ -32,7 +32,7 @@
       prisLe(now).map(r => [new Date(r.debut), new Date(r.fin)]).map(x => [x[0].getHours() * 60 + x[0].getMinutes(), x[1].getHours() * 60 + x[1].getMinutes()]).sort((a, b) => a[0] - b[0]).forEach(x => { if (x[0] - c >= 30) trous.push([c, x[0]]); c = Math.max(c, x[1]); });
       if (o[1] - c >= 30) trous.push([c, o[1]]);
       const f = m => Math.floor(m / 60) + "h" + p2(m % 60), du = m => m >= 60 ? Math.floor(m / 60) + " h" + (m % 60 ? " " + p2(m % 60) : "") : m + " min";
-      if (trous.length) bloc += `<div class="k">Encore libre aujourd’hui</div><div class="su-carte">${trous.slice(0, 4).map(t => `<div class="su-lg"><div>${f(t[0])} – ${f(t[1])}<span>${du(t[1] - t[0])}</span></div><button class="su-b" data-su="libre" data-m="${t[0]}">Ajouter</button></div>`).join("")}</div>`; }
+      if (trous.length) bloc += `<div class="k">Encore libre aujourd’hui</div><div class="su-carte">${trous.slice(0, 4).map(t => `<div class="su-lg"><div>${f(t[0])} – ${f(t[1])}<span>${du(t[1] - t[0])}</span></div><button class="su-b" data-su="libre" data-m="${t[0]}">+ Rendez-vous</button></div>`).join("")}</div>`; }
     const rep = '<div class="k">Aujourd’hui'; return bloc && h.includes(rep) ? h.replace(rep, bloc + rep) : h + bloc; };
 
   /* ---------- J · à relancer ---------- */
@@ -251,4 +251,24 @@
   E.addEventListener("scroll", e => { const v = e.target; if (!v.classList || !v.classList.contains("vue")) return; const y = v.scrollTop, n = E.querySelector(".ong.o1"); if (!n) return;
     if (y < 20) n.classList.remove("mini"); else if (y > dernier + 6) n.classList.add("mini"); else if (y < dernier - 6) n.classList.remove("mini");
     dernier = y; }, true);
+})();
+
+/* ===== 13/11 (Marie, essai iPhone 2) : prestations alignées · bouton « Aujourd'hui » dans l'agenda · réglage « Mon agenda suit mes horaires » ===== */
+(function () {
+  const st = document.createElement("style");
+  st.textContent = `.fc .chips{display:grid!important;grid-template-columns:1fr 1fr;gap:8px}
+.fc .chips .chip{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;text-align:left;min-height:52px;padding:9px 12px;border-radius:16px;font-size:13.5px;line-height:1.2;width:100%;box-sizing:border-box}
+.fc .chips .chip span{font-size:11.5px;opacity:.6}
+.su-auj{border:0;background:var(--acc,var(--noir));color:#fff;border-radius:99px;padding:7px 14px;font:inherit;font-size:13px;white-space:nowrap}`;
+  document.head.appendChild(st);
+  const auj = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+  const ag0 = VUES.ag; VUES.ag = () => { let h = ag0(); if (memeJour(S.jour, new Date())) return h;
+    const d = new Date(); return h.replace(/(<div class="nav-sem">[\s\S]*?)<span>[^<]*<\/span>/, `$1<button class="su-auj" data-su="auj">↺ Aujourd’hui · ${["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."][d.getDay()]} ${d.getDate()}</button>`); };
+  const re0 = VUES.re; VUES.re = () => { const h = re0(), on = localStorage.getItem("loginail-agenda-horaires") !== "non";
+    const l = `<div class="ligne"><div class="t">Mon agenda suit mes horaires<span>${on ? "L’agenda montre seulement vos heures d’ouverture" : "L’agenda montre toute la journée, de 8h à 20h"}</span></div><button class="sw${on ? " on" : ""}" data-su="ag-hor" aria-label="Mon agenda suit mes horaires"></button></div>`;
+    for (const rep of ['<div class="k">Mes réservations</div><div class="liste">', '<div class="k">Mon salon</div><div class="liste">', '<div class="k">Mes données</div><div class="liste">']) if (h.includes(rep)) return h.replace(rep, rep + l);
+    return h; };
+  document.addEventListener("click", async e => { const t = e.target; if (!t.closest) return;
+    if (t.closest('[data-su="auj"]')) { e.stopPropagation(); e.preventDefault(); const d = auj(); S.jour = d; S.lundi = plusJours(d, -((d.getDay() + 6) % 7)); await chargeSemaine(); rendu(); return; }
+    if (t.closest('[data-su="ag-hor"]')) { e.stopPropagation(); e.preventDefault(); const on = localStorage.getItem("loginail-agenda-horaires") !== "non"; localStorage.setItem("loginail-agenda-horaires", on ? "non" : "oui"); rendu(); dit(on ? "L’agenda montre toute la journée" : "L’agenda suit vos horaires"); } }, true);
 })();

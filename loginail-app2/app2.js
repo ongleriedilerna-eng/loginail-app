@@ -48,7 +48,7 @@ function squelette() {
 async function partageFichier(blob, nom, fait) { try { const f = new File([blob], nom, { type: blob.type }); if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: nom }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nom; document.body.appendChild(a); a.click(); a.remove(); dit(fait); }
 const dit = t => { const z = $(".toast", E); if (!z) return; z.textContent = t; z.classList.add("on"); clearTimeout(z._t); z._t = setTimeout(() => z.classList.remove("on"), 2200); };
-const ouvre = h => { $(".fc", E).innerHTML = '<button class="fe-x" data-a="fermer" aria-label="Fermer">×</button>' + h; E.classList.add("fe"); $(".feuille", E).scrollTop = 0; };
+const ouvre = h => { $(".feuille .fc", E).innerHTML = '<button class="fe-x" data-a="fermer" aria-label="Fermer">×</button>' + h; E.classList.add("fe"); $(".feuille", E).scrollTop = 0; };
 const ferme = () => E.classList.remove("fe");
 const oups = e => { console.error(e); dit("Oups, ça n’a pas marché. Réessayez."); };
 const tete = (t, s, d) => `<div class="tete"><div><small>${s || ""}</small><h1>${t}</h1></div>${d || ""}</div>`;
@@ -131,9 +131,9 @@ function calMois() { const v = S.moisVu || (S.moisVu = new Date(S.jour.getFullYe
 function vueAgenda() {
   const L = S.lundi, F = plusJours(L, 6), j = S.jour;
   /* 13/11 (Marie) : la journée suit ses horaires (ceux de son site) ; s'il y a un rendez-vous plus tôt ou plus tard, on l'affiche quand même */
-  const hor = ((S.site && S.site.donnees && S.site.donnees.horaires) || (brouillon() || {}).horaires || [])[(j.getDay() + 6) % 7], mn = t => +String(t).slice(0, 2) * 60 + +String(t).slice(3, 5);
+  const suitH = localStorage.getItem("loginail-agenda-horaires") !== "non", hor = !suitH ? undefined : ((S.site && S.site.donnees && S.site.donnees.horaires) || (brouillon() || {}).horaires || [])[(j.getDay() + 6) % 7], mn = t => +String(t).slice(0, 2) * 60 + +String(t).slice(3, 5);
   const fermeJ = hor === null, duJ = S.rdv.filter(r => memeJour(new Date(r.debut), j) && r.statut !== "annule");
-  OUV = hor && hor.d ? Math.floor(mn(hor.d) / 60) * 60 : 9 * 60; FERM = hor && hor.f ? Math.ceil(mn(hor.f) / 60) * 60 : 19 * 60;
+  OUV = hor && hor.d ? Math.floor(mn(hor.d) / 60) * 60 : (suitH ? 9 : 8) * 60; FERM = hor && hor.f ? Math.ceil(mn(hor.f) / 60) * 60 : (suitH ? 19 : 20) * 60;
   duJ.forEach(r => { const a = new Date(r.debut), b = new Date(r.fin); if (b - a > 20 * 3600000) return; OUV = Math.min(OUV, Math.floor((a.getHours() * 60 + a.getMinutes()) / 60) * 60); FERM = Math.max(FERM, Math.ceil((b.getHours() * 60 + b.getMinutes()) / 60) * 60); });
   const rond = "width:46px;height:46px;border-radius:50%;border:0;display:grid;place-items:center;padding:0";
   let h = tete("Agenda", `${MOIS[j.getMonth()]} ${j.getFullYear()}`, `<div style="display:flex;gap:8px;position:relative"><button data-a="mois" aria-label="Voir le mois" style="${rond};background:#fff"><svg viewBox="0 0 24 24" width="20" height="20"><rect x="4" y="5.5" width="16" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><button data-a="nouveau" aria-label="Nouveau rendez-vous" style="${rond};background:var(--noir,#1E1C1B);color:#fff;font-size:26px;font-weight:300;line-height:1">+</button>${S.moisOuvert ? calMois() : ""}</div>`);
@@ -212,7 +212,7 @@ function feuilleSuppr() {
 }
 const VUES = { acc: vueAccueil, ag: vueAgenda, cl: vueClientes, si: vueSite, re: vueReglages };
 function rendu() {
-  E.querySelectorAll(".vue").forEach(v => { const on = v.dataset.p === S.onglet; v.classList.toggle("on", on); if (on) v.innerHTML = VUES[v.dataset.p](); });
+  E.querySelectorAll(".vue").forEach(v => { const on = v.dataset.p === S.onglet; v.classList.toggle("on", on); if (on) v.innerHTML = VUES[v.dataset.p](); else if (v.firstChild) v.innerHTML = ""; /* 13/11 (iPhone) : les pages cachées sont vidées, sinon l'iPhone envoyait parfois le toucher sur la page d'avant */ });
   E.querySelectorAll("[data-go]").forEach(b => b.classList.toggle("on", b.dataset.go === S.onglet && !!b.closest(".ong")));
   try { msFond(); } catch (e) { console.warn(e); }
 }
@@ -246,7 +246,7 @@ function feuilleNouveau(m) {
   const j = new Date(S.jour); j.setHours(0, 0, 0, 0); N = { jour: j, m: m ?? 9 * 60, cli: null, presta: null };
   const P = prestasDispo();
   ouvre(`<h3>Nouveau rendez-vous</h3><div class="sous">${JOURS[(j.getDay() + 6) % 7]} ${j.getDate()} ${MOIS[j.getMonth()]}</div>
-    <div class="lab2">Heure</div><input class="champ" id="n-h" type="time" value="${String(Math.floor(N.m / 60)).padStart(2, "0")}:${String(N.m % 60).padStart(2, "0")}" step="900">
+    <div class="lab2">Heure</div><input class="champ" id="n-h" type="time" value="${String(Math.floor(N.m / 60)).padStart(2, "0")}:${String(N.m % 60).padStart(2, "0")}" step="900" style="font-size:16px;width:100%;min-width:0;max-width:100%;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block;text-align:left">
     <div class="lab2">Cliente</div><input class="champ" id="n-cli" list="n-cl" placeholder="Prénom et nom" autocomplete="off"><datalist id="n-cl">${S.clientes.map(c => `<option value="${esc(nomCli(c))}">`).join("")}</datalist>
     <button class="lien-t" data-a="n-neuve" id="n-neuve" style="display:block;margin:8px 0 0;padding:4px 0;text-align:left">+ Nouvelle cliente, avec son numéro</button>
     <div id="n-neuve-z" hidden><div class="lab2">Son téléphone <small style="text-transform:none;letter-spacing:0;opacity:.6">facultatif</small></div><input class="champ" id="n-tel" inputmode="tel" placeholder="06 12 34 56 78" autocomplete="off"></div>
