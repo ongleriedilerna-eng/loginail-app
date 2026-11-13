@@ -44,6 +44,9 @@ function squelette() {
     + `<nav class="ong o1">${ONG.map(o => `<button data-go="${o[0]}">${I[o[0]]}<span>${o[1]}</span></button>`).join("")}</nav>`
     + '<div class="voile" data-a="fermer"></div><div class="feuille"><div class="poig"></div><div class="fc"></div></div><div class="toast"></div>';
 }
+/* 13/11 (Apple) : sur iPhone, un fichier ne se télécharge pas : on l'ouvre avec « Partager » (Enregistrer dans Fichiers, Mail…) */
+async function partageFichier(blob, nom, fait) { try { const f = new File([blob], nom, { type: blob.type }); if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: nom }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nom; document.body.appendChild(a); a.click(); a.remove(); dit(fait); }
 const dit = t => { const z = $(".toast", E); if (!z) return; z.textContent = t; z.classList.add("on"); clearTimeout(z._t); z._t = setTimeout(() => z.classList.remove("on"), 2200); };
 const ouvre = h => { $(".fc", E).innerHTML = '<button class="fe-x" data-a="fermer" aria-label="Fermer">×</button>' + h; E.classList.add("fe"); $(".feuille", E).scrollTop = 0; };
 const ferme = () => E.classList.remove("fe");
@@ -198,8 +201,7 @@ function vueReglages() {
 async function exporteDonnees() {
   const t = ["profils", "prestations", "clientes", "rendez_vous", "tickets", "sites"], out = { exporte_le: new Date().toISOString(), compte: S.user.email };
   for (const n of t) { const { data, error } = await sb.from(n).select("*"); if (error) return oups(error); out[n] = data; }
-  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" }));
-  a.download = "mes-donnees-loginail-" + new Date().toISOString().slice(0, 10) + ".json"; a.click(); dit("Vos données sont téléchargées ✓");
+  partageFichier(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" }), "mes-donnees-loginail-" + new Date().toISOString().slice(0, 10) + ".json", "Vos données sont téléchargées ✓");
 }
 function feuilleSuppr() {
   ouvre(`<h3>Supprimer mon compte</h3><div class="sous">Votre site, vos clientes, vos rendez-vous et vos tickets seront effacés <b>pour toujours</b>. Pensez à télécharger vos données avant.</div>
@@ -349,8 +351,7 @@ function livreDesRecettes() {
   const q = v => '"' + String(v ?? "").replace(/"/g, '""') + '"', n = v => String(Math.round((+v || 0) * 100) / 100).replace(".", ",");
   const lignes = [["Date", "Ticket", "Cliente", "Prestation", "Montant", "Mode de règlement"].map(q).join(";")]
     .concat(L.map(t => [new Date(t.cree_le).toLocaleDateString("fr-FR"), t.numero, t.details?.cliente, (t.details?.lignes || []).map(l => l.nom).join(" + "), n(t.total), (NOM_MOYEN[t.moyen] || "") + (+t.acompte_deduit ? " (dont acompte en ligne " + n(t.acompte_deduit) + ")" : "")].map(q).join(";")));
-  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + lignes.join("\r\n")], { type: "text/csv;charset=utf-8" }));
-  a.download = `livre-des-recettes-${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, "0")}.csv`; a.click(); dit("Livre des recettes téléchargé ✓");
+  partageFichier(new Blob(["﻿" + lignes.join("\r\n")], { type: "text/csv;charset=utf-8" }), `livre-des-recettes-${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, "0")}.csv`, "Livre des recettes téléchargé ✓");
 }
 
 /* ---------- Photos de mes ongles (réalisations) : ajouter, enlever ---------- */
