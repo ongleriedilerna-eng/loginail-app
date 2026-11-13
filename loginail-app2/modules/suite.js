@@ -272,3 +272,55 @@
     if (t.closest('[data-su="auj"]')) { e.stopPropagation(); e.preventDefault(); const d = auj(); S.jour = d; S.lundi = plusJours(d, -((d.getDay() + 6) % 7)); await chargeSemaine(); rendu(); return; }
     if (t.closest('[data-su="ag-hor"]')) { e.stopPropagation(); e.preventDefault(); const on = localStorage.getItem("loginail-agenda-horaires") !== "non"; localStorage.setItem("loginail-agenda-horaires", on ? "non" : "oui"); rendu(); dit(on ? "L’agenda montre toute la journée" : "L’agenda suit vos horaires"); } }, true);
 })();
+
+/* ===== 13/11 (Marie, essai iPhone 3) : heures bien centrées · cliente qu'on retrouve en tapant la 1re lettre · accueil : 5 rendez-vous puis « voir les autres »,
+   les anniversaires du jour · « Mon site » : un vrai écran d'attente et une croix propre ===== */
+(function () {
+  const st = document.createElement("style");
+  st.textContent = `.ecran input[type=time],.ecran input[type=date]{-webkit-appearance:none!important;appearance:none!important;height:52px!important;min-height:52px;line-height:52px!important;padding-top:0!important;padding-bottom:0!important;box-sizing:border-box}
+.ecran input[type=time]::-webkit-date-and-time-value,.ecran input[type=date]::-webkit-date-and-time-value{text-align:left;line-height:52px;margin:0;min-height:52px}
+.n-sug{display:flex;flex-direction:column;gap:6px;margin-top:6px}.n-sug:empty{display:none}
+.n-sug button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:#fff;border-radius:14px;padding:10px 12px;font:inherit;font-size:14.5px;text-align:left;color:inherit}
+.n-sug button i{flex:none;width:30px;height:30px;border-radius:50%;background:#EFE9E2;display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:500}
+.n-sug button span{margin-left:auto;font-size:12px;opacity:.5}
+.acc-plus{display:block;width:100%;border:0;background:none;padding:12px 0 4px;font:inherit;font-size:13.5px;text-decoration:underline;text-underline-offset:3px;color:#6B625C}
+.anv{display:flex;align-items:center;gap:12px;background:#fff;border-radius:20px;padding:12px 14px;margin:0 0 10px}
+.anv .ic{flex:none;width:38px;height:38px;border-radius:50%;background:var(--acc,#1E1C1B);color:#fff;display:grid;place-items:center}
+.anv .t{flex:1;min-width:0;font-size:14px;line-height:1.3}.anv .t span{display:block;font-size:12px;opacity:.6;margin-top:2px}
+.anv a,.anv button{flex:none;border:0;background:var(--acc,#1E1C1B);color:#fff;border-radius:99px;padding:8px 13px;font:inherit;font-size:12.5px;text-decoration:none}
+.ms2-grand{padding-top:env(safe-area-inset-top);box-sizing:border-box}
+.ms2-x{top:calc(env(safe-area-inset-top) + 10px)!important;right:12px!important;width:40px!important;height:40px!important;background:#fff!important;color:#1E1C1B!important;box-shadow:0 8px 20px -8px rgba(0,0,0,.45);font-size:24px!important;line-height:40px!important;z-index:5!important}
+.ms2-att{position:absolute;inset:0;z-index:4;background:#F6F3EF;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .35s}
+.ms2-att.parti{opacity:0;pointer-events:none}
+.ms2-att i{width:62px;height:62px;display:block;animation:ms2p 1.1s ease-in-out infinite}.ms2-att i svg{width:100%;height:100%;display:block}
+.ms2-att span{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#8C847D}
+@keyframes ms2p{0%,100%{transform:scale(.92);opacity:.85}50%{transform:scale(1);opacity:1}}`;
+  document.head.appendChild(st);
+  const sansAcc = t => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+  /* la cliente : on tape A → toutes celles dont le prénom ou le nom commence par A */
+  const propose = () => { const inp = E.querySelector("#n-cli"), z = E.querySelector("#n-sug"); if (!inp || !z) return; const q = sansAcc(inp.value);
+    if (!q) { z.innerHTML = ""; return; }
+    const l = S.clientes.filter(c => { const n = sansAcc(nomCli(c)); return n.startsWith(q) || sansAcc(c.prenom).startsWith(q) || sansAcc(c.nom).startsWith(q); })
+      .sort((a, b) => (sansAcc(b.prenom).startsWith(q) - sansAcc(a.prenom).startsWith(q)) || nomCli(a).localeCompare(nomCli(b), "fr"));
+    if (l.length === 1 && sansAcc(nomCli(l[0])) === q) { z.innerHTML = ""; return; }
+    z.innerHTML = l.slice(0, 8).map(c => `<button type="button" data-su="n-pick" data-n="${esc(nomCli(c))}"><i>${esc(((c.prenom || "")[0] || "") + ((c.nom || "")[0] || "")).toUpperCase()}</i>${esc(nomCli(c))}${c.telephone ? `<span>${esc(c.telephone)}</span>` : ""}</button>`).join("")
+      + (l.length > 8 ? `<div class="sous" style="font-size:12px">+ ${l.length - 8} autres : tapez la suite du prénom</div>` : "")
+      + (!l.length ? `<div class="sous" style="font-size:12.5px;text-align:left">Aucune cliente à ce nom : elle sera créée.</div>` : ""); };
+  document.addEventListener("input", e => { if (e.target.id === "n-cli") propose(); });
+  /* l'accueil : les anniversaires du jour, au-dessus de « Aujourd'hui » */
+  const acc1 = VUES.acc; VUES.acc = () => { const h = acc1(), t = new Date(), md = String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0");
+    const l = S.clientes.filter(c => c.anniversaire && String(c.anniversaire).slice(5, 10) === md); if (!l.length) return h;
+    const gateau = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M5 20v-6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v6M5 16c1.5 1 3 1 4.5 0s3-1 4.5 0 3 1 4.5 0M12 12V8M12 5.5c.8-.8.8-1.7 0-2.5-.8.8-.8 1.7 0 2.5z"/></svg>';
+    const salon = (S.profil && S.profil.nom_salon) || "votre salon";
+    const b = l.map(c => { const tel = (c.telephone || "").replace(/\s/g, ""), txt = encodeURIComponent(`Joyeux anniversaire ${c.prenom || ""} ! Très belle journée de la part de ${salon}.`);
+      return `<div class="anv"><div class="ic">${gateau}</div><div class="t">C’est l’anniversaire de <b>${esc(nomCli(c))}</b><span>${c.ok_sms_anniv ? "Elle reçoit votre SMS d’anniversaire aujourd’hui ✓" : tel ? "Envoyez-lui un petit mot, elle va adorer" : "Ajoutez son numéro pour lui écrire"}</span></div>${!c.ok_sms_anniv && tel ? `<a href="sms:${esc(tel)}&body=${txt}">Lui écrire</a>` : ""}</div>`; }).join("");
+    for (const rep of ['<div class="su-t3">', '<div class="k">Encore libre', '<div class="k">Aujourd’hui']) if (h.includes(rep)) return h.replace(rep, `<div style="margin-top:4px">${b}</div>` + rep); return h + b; };
+  document.addEventListener("click", e => { const t = e.target; if (!t.closest) return;
+    const pk = t.closest('[data-su="n-pick"]'); if (pk) { e.stopPropagation(); e.preventDefault(); const inp = E.querySelector("#n-cli"); if (inp) { inp.value = pk.dataset.n; inp.dispatchEvent(new Event("change", { bubbles: true })); } E.querySelector("#n-sug").innerHTML = ""; return; }
+    if (t.closest('[data-su="acc-plus"]')) { e.stopPropagation(); e.preventDefault(); S.accTout = !S.accTout; rendu(); } }, true);
+  /* « Mon site » : écran d'attente propre jusqu'à ce que la page soit prête */
+  new MutationObserver(() => document.querySelectorAll(".ms2-grand").forEach(o => { if (o._att) return; o._att = 1; const f = o.querySelector("iframe"); if (!f) return;
+    const a = document.createElement("div"); a.className = "ms2-att"; a.innerHTML = `<i><svg viewBox="0 0 200 200"><rect width="200" height="200" rx="44" fill="#1E1C1B"/><g transform="translate(26 70) scale(.52)"><rect x="0" y="5" width="225" height="120" rx="60" fill="#F3EEE8"/><g class="ongle"><path d="M172 21H215C254 21 282 42 282 65C282 88 254 109 215 109H172A44 44 0 0 1 172 21Z" fill="#F3EEE8"/><path d="M172 28H213C247 28 274 47 274 65C274 83 247 102 213 102H172A37 37 0 0 1 172 28Z" fill="#1E1C1B"/></g></g></svg></i><span>Un instant…</span>`; o.appendChild(a);
+    const part = () => setTimeout(() => a.classList.add("parti"), 650); f.addEventListener("load", part); setTimeout(() => a.classList.add("parti"), 9000); }))
+    .observe(document.body, { childList: true, subtree: true });
+})();

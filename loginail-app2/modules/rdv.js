@@ -29,6 +29,8 @@
     let x = ""; if (r.note) x += `<div class="rv-note"><b>Note</b>${esc(r.note)}</div>`;
     if (r.statut === "annule" && r.cliente_id) x += `<button class="btn" data-rv="remplacer" data-id="${r.id}" style="margin-top:14px">Mettre une autre cliente à la place</button>`;
     if (r.cliente_id && r.statut !== "annule") x += `<button class="btn clair" data-rv="modifier" data-id="${r.id}" style="margin-top:12px">Modifier le rendez-vous</button>`;
+    /* 13/11 (Marie) : « Déplacer le rendez-vous » bien visible, à côté de Modifier (le petit « Décaler » du bas disparaît) */
+    if (r.statut === "prevu") { x += `<button class="btn clair" data-a="decaler" data-id="${r.id}" style="margin-top:8px">Déplacer le rendez-vous</button>`; const pd = document.querySelector('.fc .petits [data-a="decaler"]'); if (pd) pd.remove(); }
     z.insertAdjacentHTML("afterend", x); }).observe(document.body, { childList: true, subtree: true });
 
   let MD = null;

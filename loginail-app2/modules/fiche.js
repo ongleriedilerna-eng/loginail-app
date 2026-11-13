@@ -53,7 +53,7 @@
     let h = "";
     if (proch[0]) { const x = d(proch[0].debut), pn = (proch[0].prestations && proch[0].prestations.nom) || proch[0].titre;
       h += `<div class="fi-noire"><small>Prochain rendez-vous</small><b class="fi-jour">${JOURS[(x.getDay() + 6) % 7]} ${x.getDate()} ${MOIS[x.getMonth()]}</b><span class="fi-h">à ${x.getHours()}h${String(x.getMinutes()).padStart(2, "0")}${pn ? " · " + esc(pn) : ""}</span>
-        <div class="fi-bts"><button data-a="decaler" data-id="${proch[0].id}">Décaler</button><button data-rdv="${proch[0].id}">Voir</button></div></div>`; }
+        <div class="fi-bts"><button data-a="decaler" data-id="${proch[0].id}">Déplacer</button><button data-rdv="${proch[0].id}">Voir</button></div></div>`; }
     else h += `<div class="fi-carte"><div class="fi-lg"><div>Pas de rendez-vous prévu<span>${venues.length ? "Sa dernière visite : " + jourCourt(venues[0].debut) : "Elle n’est pas encore venue"}</span></div></div></div>`;
     if (proch.length > 1) h += `<div class="sous" style="text-align:left;margin:8px 2px 0">Et aussi : ${proch.slice(1, 3).map(r => jj(r.debut) + " à " + hm(d(r.debut))).join(" · ")}</div>`;
     h += `<div class="fi-t3"><div><small>Visites</small><b>${venues.length}</b></div>${e.f.on ? `<div><small>Fidélité</small><b>${e.fait} <em>/ ${e.f.n}</em></b></div>` : ""}<div><small>Dernière</small><b>${venues.length ? jourCourt(venues[0].debut) : "—"}</b></div></div>`;

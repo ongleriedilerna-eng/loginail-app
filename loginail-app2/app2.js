@@ -113,7 +113,7 @@ function vueAccueil() {
     h += `<div class="noire prochain" data-rdv="${proch.id}"><small>Prochain rendez-vous</small><div class="l1"><b>${hm(d)}</b><span>${mn > 0 ? "dans " + (mn >= 60 ? duree(mn) : mn + " min") : "en cours"}</span></div><div class="nom">${esc(nomRdv(proch))}</div><div class="pr">${esc(titreRdv(proch))}${proch.prix ? " · " + euros(proch.prix) : ""}</div>
       <div class="bts">${proch.clientes?.telephone ? `<button data-href="tel:${esc(proch.clientes.telephone.replace(/\s/g, ""))}">Appeler</button><button data-href="sms:${esc(proch.clientes.telephone.replace(/\s/g, ""))}">Message</button>` : ""}</div></div>`; }
   h += `<div class="k">Aujourd’hui · ${auj.length} rendez-vous <a data-go="ag">Agenda</a></div>`;
-  h += auj.length ? `<div class="carte">${auj.map(ligneRdv).join("")}</div>`
+  h += auj.length ? `<div class="carte">${auj.slice(0, S.accTout ? 999 : 5).map(ligneRdv).join("")}${auj.length > 5 ? `<button class="acc-plus" data-su="acc-plus">${S.accTout ? "Voir moins" : "Voir les " + (auj.length - 5) + " autres rendez-vous"}</button>` : ""}</div>`
     : `<div class="blanche vide2"><div class="t"><b>Pas de rendez-vous aujourd’hui</b><span>Les réservations de votre site arrivent ici toutes seules.</span></div><button class="pil noir" data-a="nouveau">Ajouter</button></div>`;
   return h;
 }
@@ -133,7 +133,7 @@ function vueAgenda() {
   /* 13/11 (Marie) : la journée suit ses horaires (ceux de son site) ; s'il y a un rendez-vous plus tôt ou plus tard, on l'affiche quand même */
   const suitH = localStorage.getItem("loginail-agenda-horaires") !== "non", hor = !suitH ? undefined : ((S.site && S.site.donnees && S.site.donnees.horaires) || (brouillon() || {}).horaires || [])[(j.getDay() + 6) % 7], mn = t => +String(t).slice(0, 2) * 60 + +String(t).slice(3, 5);
   const fermeJ = hor === null, duJ = S.rdv.filter(r => memeJour(new Date(r.debut), j) && r.statut !== "annule");
-  OUV = hor && hor.d ? Math.floor(mn(hor.d) / 60) * 60 : (suitH ? 9 : 8) * 60; FERM = hor && hor.f ? Math.ceil(mn(hor.f) / 60) * 60 : (suitH ? 19 : 20) * 60;
+  /* 13/11 (Marie) : une demi-heure de marge avant et après ses horaires (9h-18h → 8h30-18h30), c'est plus joli */ OUV = hor && hor.d ? Math.floor(mn(hor.d) / 30) * 30 - 30 : (suitH ? 9 : 8) * 60; FERM = hor && hor.f ? Math.ceil(mn(hor.f) / 30) * 30 + 30 : (suitH ? 19 : 20) * 60;
   duJ.forEach(r => { const a = new Date(r.debut), b = new Date(r.fin); if (b - a > 20 * 3600000) return; OUV = Math.min(OUV, Math.floor((a.getHours() * 60 + a.getMinutes()) / 60) * 60); FERM = Math.max(FERM, Math.ceil((b.getHours() * 60 + b.getMinutes()) / 60) * 60); });
   const rond = "width:46px;height:46px;border-radius:50%;border:0;display:grid;place-items:center;padding:0";
   let h = tete("Agenda", `${MOIS[j.getMonth()]} ${j.getFullYear()}`, `<div style="display:flex;gap:8px;position:relative"><button data-a="mois" aria-label="Voir le mois" style="${rond};background:#fff"><svg viewBox="0 0 24 24" width="20" height="20"><rect x="4" y="5.5" width="16" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><button data-a="nouveau" aria-label="Nouveau rendez-vous" style="${rond};background:var(--noir,#1E1C1B);color:#fff;font-size:26px;font-weight:300;line-height:1">+</button>${S.moisOuvert ? calMois() : ""}</div>`);
@@ -247,7 +247,7 @@ function feuilleNouveau(m) {
   const P = prestasDispo();
   ouvre(`<h3>Nouveau rendez-vous</h3><div class="sous">${JOURS[(j.getDay() + 6) % 7]} ${j.getDate()} ${MOIS[j.getMonth()]}</div>
     <div class="lab2">Heure</div><input class="champ" id="n-h" type="time" value="${String(Math.floor(N.m / 60)).padStart(2, "0")}:${String(N.m % 60).padStart(2, "0")}" step="900" style="font-size:16px;width:100%;min-width:0;max-width:100%;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block;text-align:left">
-    <div class="lab2">Cliente</div><input class="champ" id="n-cli" list="n-cl" placeholder="Prénom et nom" autocomplete="off"><datalist id="n-cl">${S.clientes.map(c => `<option value="${esc(nomCli(c))}">`).join("")}</datalist>
+    <div class="lab2">Cliente</div><input class="champ" id="n-cli" placeholder="Tapez la 1re lettre : A, B, C…" autocomplete="off" autocapitalize="words"><div id="n-sug" class="n-sug"></div><datalist id="n-cl">${S.clientes.map(c => `<option value="${esc(nomCli(c))}">`).join("")}</datalist>
     <button class="lien-t" data-a="n-neuve" id="n-neuve" style="display:block;margin:8px 0 0;padding:4px 0;text-align:left">+ Nouvelle cliente, avec son numéro</button>
     <div id="n-neuve-z" hidden><div class="lab2">Son téléphone <small style="text-transform:none;letter-spacing:0;opacity:.6">facultatif</small></div><input class="champ" id="n-tel" inputmode="tel" placeholder="06 12 34 56 78" autocomplete="off"></div>
     <div class="lab2">Prestation</div><div class="chips">${P.map((p, i) => `<button class="chip" data-np="${i}">${esc(p.nom)}<span>${duree(p.duree || 60)}</span></button>`).join("") || '<span class="sous">Ajoutez vos prestations dans Réglages</span>'}</div>
@@ -425,10 +425,10 @@ E.addEventListener("click", async ev => {
       a.disabled = false; a.textContent = "Recevoir un essai sur mon téléphone"; const d = r && r.data;
       dit(d && d.demo ? "Dans le salon d’essai, aucun SMS ne part" : d && d.envoye ? "SMS envoyé : regardez votre téléphone ✓" : d && d.erreur ? d.erreur : "L’essai n’est pas parti. Réessayez plus tard."); }
     else if (k === "decaler") { const r = S.rdv.find(x => x.id === a.dataset.id); if (!r) return; const d = new Date(r.debut), p2 = n => String(n).padStart(2, "0");
-      ouvre(`<h3>Décaler le rendez-vous</h3><div class="sous">${esc(nomRdv(r))} · ${esc(titreRdv(r))}</div>
+      ouvre(`<h3>Déplacer le rendez-vous</h3><div class="sous">${esc(nomRdv(r))} · ${esc(titreRdv(r))}</div>
         <div class="lab2">Nouveau jour</div><input class="champ" id="dc-j" type="date" value="${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}" style="font-size:16px;width:100%;min-width:0;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block">
         <div class="lab2">Nouvelle heure</div><input class="champ" id="dc-h" type="time" value="${p2(d.getHours())}:${p2(d.getMinutes())}" step="900" style="font-size:16px;width:100%;min-width:0;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block">
-        <button class="btn" data-a="decaler-ok" data-id="${r.id}" style="margin-top:16px">Décaler</button>`); }
+        <button class="btn" data-a="decaler-ok" data-id="${r.id}" style="margin-top:16px">Déplacer</button>`); }
     else if (k === "decaler-ok") { const r = S.rdv.find(x => x.id === a.dataset.id), j = $("#dc-j", E).value, h = $("#dc-h", E).value; if (!r || !j || !h) return dit("Choisissez le jour et l’heure");
       const deb = new Date(j + "T" + h + ":00"), fin = new Date(deb.getTime() + (new Date(r.fin) - new Date(r.debut))), j0 = new Date(deb); j0.setHours(0, 0, 0, 0); const j1 = plusJours(j0, 1);
       a.disabled = true; const { data: autres } = await sb.from("rendez_vous").select("id,debut,fin,statut").gte("debut", j0.toISOString()).lt("debut", j1.toISOString());
