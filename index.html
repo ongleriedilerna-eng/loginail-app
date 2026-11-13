@@ -25,6 +25,9 @@ html.plein .ecran{width:100%!important;height:100%!important;border-radius:0!imp
 @media (min-width:700px){html.plein .vue{padding-left:calc((100% - 560px)/2)!important;padding-right:calc((100% - 560px)/2)!important}
   html.plein .ong.o1{left:calc((100% - 560px)/2);right:calc((100% - 560px)/2)}html.plein .feuille{left:calc((100% - 600px)/2);right:calc((100% - 600px)/2)}}
 /* 13/11 (Marie) : iPad couché — tout en plus grand (l'appli est agrandie de 30 %) */
+/* 13/11 (Marie) : iPad debout, tout en plus grand */
+@media (min-width:700px) and (max-width:899px) and (orientation:portrait){html.plein .tel{zoom:1.2!important;width:calc(100vw / 1.2)!important;height:calc(100dvh / 1.2)!important}}
+@media (min-width:900px) and (orientation:portrait){html.plein .tel{zoom:1.45!important;width:calc(100vw / 1.45)!important;height:calc(100dvh / 1.45)!important}}
 @media (min-width:1000px) and (orientation:landscape){html.plein .tel{zoom:1.3!important;width:calc(100vw / 1.3)!important;height:calc(100dvh / 1.3)!important}
   /* 13/11 (Marie) : couché, l'appli remplit tout l'écran (plus de grandes marges sur les côtés) */
   html.plein .vue{padding-left:34px!important;padding-right:34px!important}
