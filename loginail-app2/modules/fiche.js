@@ -36,9 +36,12 @@
   const ecritFid = o => { try { localStorage.setItem("loginail-fidelite", JSON.stringify(o)); const b = JSON.parse(localStorage.getItem("loginail-brouillon") || "null"); if (b && S.site) { b.fidelite = o; S.site.donnees = Object.assign(S.site.donnees || {}, { fidelite: o }); localStorage.setItem("loginail-brouillon", JSON.stringify(b)); } } catch (e) {} };
   const etatFid = n => { const f = litFid(), k = n % f.n, pret = n > 0 && k === 0; return { f, fait: pret ? f.n : k, pret, reste: pret ? 0 : f.n - k }; };
 
+  /* 13/11 (Marie, idée B) : les points en plus, ajoutés à la main depuis le rendez-vous (gardés avec ses notes) */
+  window.__fid = { on: () => litFid().on, etat: c => etatFid((((S.vis || {})[c.id] || {}).n || 0) + litNotes(c).fp),
+    plus: async c => { const o = litNotes(c); o.fp = (o.fp || 0) + 1; await ecritNotes(c.id, o); } };
   /* ---------- les notes ---------- */
-  const litNotes = c => { const t = c.notes || ""; if (t[0] === "{") try { const o = JSON.parse(t); if (o && o.v) return { t: o.t || "", s: o.s || [] }; } catch (e) {} return { t, s: [] }; };
-  async function ecritNotes(id, o) { const notes = o.s.length ? JSON.stringify({ v: 1, t: o.t, s: o.s }) : (o.t || null); const c = S.clientes.find(x => x.id === id); if (c) c.notes = notes;
+  const litNotes = c => { const t = c.notes || ""; if (t[0] === "{") try { const o = JSON.parse(t); if (o && o.v) return { t: o.t || "", s: o.s || [], fp: +o.fp || 0 }; } catch (e) {} return { t, s: [], fp: 0 }; };
+  async function ecritNotes(id, o) { const c0 = S.clientes.find(x => x.id === id), fp = o.fp != null ? o.fp : (c0 ? litNotes(c0).fp : 0); const notes = (o.s.length || fp) ? JSON.stringify({ v: 1, t: o.t, s: o.s, fp }) : (o.t || null); const c = S.clientes.find(x => x.id === id); if (c) c.notes = notes;
     const { error } = await sb.from("clientes").update({ notes }).eq("id", id); if (error) dit("Pas enregistré, réessayez"); }
 
   /* ---------- la fiche ---------- */
@@ -49,7 +52,7 @@
     <div class="fi-sw"><button data-fi="ong" data-o="fiche" class="${ONG === "fiche" ? "on" : ""}">Fiche</button><button data-fi="ong" data-o="notes" class="${ONG === "notes" ? "on" : ""}">Notes</button></div>`;
   function pageFiche(c) { if (!RDV) return `<div class="sous" style="padding:30px 0">Un instant…</div>`;
     const now = new Date().toISOString(), ok = RDV.filter(r => r.statut !== "annule"), proch = ok.filter(r => r.fin >= now && r.statut === "prevu").sort((a, b) => a.debut.localeCompare(b.debut)), hist = ok.filter(r => r.fin < now || r.statut === "fini" || r.statut === "absente");
-    const venues = hist.filter(r => r.statut !== "absente"), e = etatFid(venues.length), d = x => new Date(x), jj = x => `${JOURS3[d(x).getDay()]} ${jourCourt(x)}`;
+    const venues = hist.filter(r => r.statut !== "absente"), e = etatFid(venues.length + litNotes(c).fp), d = x => new Date(x), jj = x => `${JOURS3[d(x).getDay()]} ${jourCourt(x)}`;
     let h = "";
     if (proch[0]) { const x = d(proch[0].debut), pn = (proch[0].prestations && proch[0].prestations.nom) || proch[0].titre;
       h += `<div class="fi-noire"><small>Prochain rendez-vous</small><b class="fi-jour">${JOURS[(x.getDay() + 6) % 7]} ${x.getDate()} ${MOIS[x.getMonth()]}</b><span class="fi-h">à ${x.getHours()}h${String(x.getMinutes()).padStart(2, "0")}${pn ? " · " + esc(pn) : ""}</span>

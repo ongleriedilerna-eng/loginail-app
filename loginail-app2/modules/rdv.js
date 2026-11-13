@@ -31,6 +31,8 @@
     if (r.cliente_id && r.statut !== "annule") x += `<button class="btn clair" data-rv="modifier" data-id="${r.id}" style="margin-top:12px">Modifier le rendez-vous</button>`;
     /* 13/11 (Marie) : « Déplacer le rendez-vous » bien visible, à côté de Modifier (le petit « Décaler » du bas disparaît) */
     if (r.statut === "prevu") { x += `<button class="btn clair" data-a="decaler" data-id="${r.id}" style="margin-top:8px">Déplacer le rendez-vous</button>`; const pd = document.querySelector('.fc .petits [data-a="decaler"]'); if (pd) pd.remove(); }
+    { const c = r.cliente_id && S.clientes.find(y => y.id === r.cliente_id); if (c && window.__fid && __fid.on() && r.statut !== "annule") { const e = __fid.etat(c);
+      x += `<div class="rv-fid"><span>Fidélité · <b>${e.fait}</b> sur ${e.f.n}${e.pret ? ` · carte complète : ${esc(e.f.cadeau)}` : ""}</span><button data-rv="fid-plus" data-id="${r.id}">+ 1 point</button></div>${r.statut === "prevu" ? `<div class="rv-fid-n">« C’est fini » ajoute aussi 1 point tout seul.</div>` : ""}`; } }
     z.insertAdjacentHTML("afterend", x); }).observe(document.body, { childList: true, subtree: true });
 
   let MD = null;
@@ -93,4 +95,18 @@
     const en = t.closest('[data-a="encaisser"]'); if (en) { ENC = en.dataset.id; return; }
     if (t.closest('[data-a="encaisser-ok"]')) { setTimeout(() => { if (ENC && !E.classList.contains("fe")) propose(); }, 1400); return; }
     const ok = t.closest('.fc [data-a="fermer"]'); if (ok && ENC && /encaiss/i.test(ok.textContent)) setTimeout(propose, 350); }, true);
+})();
+
+/* ===== 13/11 (Marie, idée B) : « + 1 point » de fidélité dans le rendez-vous ===== */
+(function () {
+  const st = document.createElement("style");
+  st.textContent = `.rv-fid{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border-radius:16px;padding:11px 12px 11px 14px;font-size:14px;margin-top:12px}
+.rv-fid b{font-weight:500}.rv-fid button{flex:none;border:0;background:var(--acc,#1E1C1B);color:#fff;border-radius:99px;padding:8px 13px;font:inherit;font-size:12.5px}
+.rv-fid-n{font-size:12px;opacity:.6;margin:6px 2px 0;text-align:left}`;
+  document.head.appendChild(st);
+  document.addEventListener("click", async e => { const a = e.target.closest && e.target.closest('[data-rv="fid-plus"]'); if (!a) return; e.stopPropagation(); e.preventDefault();
+    const r = S.rdv.find(x => x.id === a.dataset.id), c = r && S.clientes.find(y => y.id === r.cliente_id); if (!c) return; a.disabled = true;
+    await __fid.plus(c); const ev = __fid.etat(c), z = a.closest(".rv-fid");
+    if (z) z.querySelector("span").innerHTML = `Fidélité · <b>${ev.fait}</b> sur ${ev.f.n}${ev.pret ? ` · carte complète : ${esc(ev.f.cadeau)}` : ""}`;
+    a.disabled = false; dit(ev.pret ? `Carte complète ! ${ev.f.cadeau} pour ${c.prenom || "elle"}` : `+1 point · ${ev.fait} sur ${ev.f.n}`); }, true);
 })();
