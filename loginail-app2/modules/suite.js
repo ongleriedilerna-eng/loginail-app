@@ -160,6 +160,7 @@
     if (S.triOuvert && !t.closest(".tris,[data-a='tri-menu']")) { S.triOuvert = false; rendu(); e.stopPropagation(); e.preventDefault(); } }, true);
 
   /* 2 · un créneau vide : nouveau rendez-vous, ou bloquer ce créneau */
+  E.addEventListener("touchstart", e => { window.__s5t = e.target.closest ? e.target.closest(".pl") : null; window.__s5d = Date.now(); }, { passive: true, capture: true });
   let BL = { m: 0, d: 60 };
   const feuilleCreneau = m => { BL = { m, d: 60 }; const j = S.jour;
     ouvre(`<h3>${hM(m)}</h3><div class="sous" style="text-transform:capitalize">${JOURS[(j.getDay() + 6) % 7]} ${j.getDate()} ${MOIS[j.getMonth()]}</div>
@@ -214,7 +215,8 @@
   document.addEventListener("input", e => { if (e.target.id !== "s5-liste") return; const n = lis(e.target.value).length, b = E.querySelector('[data-s5="pl-ok"]'); if (b) { b.disabled = !n; b.textContent = n ? `Ajouter ${n} cliente${n > 1 ? "s" : ""}` : "Ajouter"; } });
 
   document.addEventListener("click", async e => { const t = e.target; if (!t.closest) return;
-    const cr = t.closest('.pap .pl[data-a="creneau"]'); if (cr && !E.querySelector(".vue.on .calm")) { e.stopPropagation(); e.preventDefault(); return feuilleCreneau(+cr.dataset.m); }
+    /* 13/11 (iPhone) : la fenêtre « 13h · nouveau rendez-vous · bloquer » ne s'ouvre que dans l'Agenda, sur la case vraiment touchée */
+    const cr = t.closest('.vue.on .pap .pl[data-a="creneau"]'); if (cr && S.onglet === "ag" && !E.querySelector(".vue.on .calm") && (!window.__s5t || window.__s5t === cr || Date.now() - window.__s5d > 1500)) { e.stopPropagation(); e.preventDefault(); return feuilleCreneau(+cr.dataset.m); }
     const a = t.closest("[data-s5]"); if (!a) return; e.stopPropagation(); const k = a.dataset.s5;
     if (k === "rdv") feuilleNouveau(BL.m);
     else if (k === "bloquer") feuilleBloquer();
