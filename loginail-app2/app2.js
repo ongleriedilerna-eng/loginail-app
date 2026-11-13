@@ -62,7 +62,7 @@ function ecranConnexion(envoye) {
     : `<h1>Votre espace pro.</h1><p>Entrez votre adresse e-mail : nous vous envoyons un code pour vous connecter, sans mot de passe.</p>
       <input id="cx-mail" type="email" inputmode="email" autocomplete="email" placeholder="votre@adresse.fr"><button class="btn" data-a="cx-envoi">Recevoir mon code</button>
       ${/^https?:$/.test(location.protocol) && !/[?&]parcours/.test(location.search) ? `<div class="cx-neuve" style="margin-top:26px;border-radius:18px;background:#fff;padding:14px 16px;font-size:13.5px;line-height:1.5;text-align:left"><b style="font-weight:500">Pas encore de compte ?</b><br>Votre espace pro se crée en même temps que votre site, en 3 minutes.<a href="https://loginail.fr" style="display:block;margin-top:8px;font-weight:500;text-decoration:underline;text-underline-offset:3px;color:inherit">Créer mon site sur loginail.fr ›</a></div>` : ""}`}
-    <p class="cx-legal" style="margin-top:22px;font-size:12px;line-height:1.5;opacity:.7">En vous connectant, vous acceptez nos <a data-a="lien3" style="text-decoration:underline">conditions</a> et notre <a data-a="lien2" style="text-decoration:underline">politique de confidentialité</a>.</p>
+    <p class="cx-legal" style="margin-top:22px;font-size:12px;line-height:1.5;opacity:.7">En vous connectant, vous acceptez ${/^https?:$/.test(location.protocol) ? 'nos <a data-a="lien3" style="text-decoration:underline">conditions</a> et ' : ""}notre <a data-a="lien2" style="text-decoration:underline">politique de confidentialité</a>.</p>
     </div></div><div class="toast"></div>`;
 }
 
@@ -474,9 +474,9 @@ E.addEventListener("click", async ev => {
       a.disabled = true; a.textContent = "Suppression…"; const { error } = await sb.rpc("supprimer_mon_compte"); if (error) { a.disabled = false; a.textContent = "Supprimer définitivement"; return oups(error); }
       try { localStorage.removeItem("loginail-brouillon"); } catch (e) {} await sb.auth.signOut(); S.user = null; ecranConnexion(); }
     else if (k === "aide") window.open("https://wa.me/33745266189?text=" + encodeURIComponent("Bonjour Loginail, j’ai besoin d’aide : "), "_blank", "noopener");   /* 12/11 (Marie) : WhatsApp, son numéro pour commencer */
-    else if (k === "lien") window.open("https://loginail.fr/mentions-legales.html", "_blank", "noopener");
-    else if (k === "lien2") window.open("https://loginail.fr/confidentialite.html", "_blank", "noopener");
-    else if (k === "lien3") window.open("https://loginail.fr/conditions-abonnement.html", "_blank", "noopener");
+    else if (k === "lien") window.open("https://loginail.fr/mentions-legales.html?appli=1", "_blank", "noopener");
+    else if (k === "lien2") window.open("https://loginail.fr/confidentialite.html?appli=1", "_blank", "noopener");
+    else if (k === "lien3") window.open("https://loginail.fr/conditions-abonnement.html?appli=1", "_blank", "noopener");
     else if (k === "reessayer") { const { data } = await sb.auth.getSession(); S.user = null; demarre(data.session); }
     else if (k === "deco") { await sb.auth.signOut(); S.user = null; ecranConnexion(); }
   } catch (e) { oups(e); }
