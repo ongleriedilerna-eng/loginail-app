@@ -514,21 +514,23 @@ h3 .lap{font-size:11px;vertical-align:4px}
 (function () {
   const st = document.createElement("style");
   st.textContent = `.ecran input[type=time],.ecran input[type=date]{color:#1E1C1B!important;-webkit-text-fill-color:#1E1C1B}
-.n-plus{flex:none;width:50px;height:50px;border-radius:50%;border:0;background:var(--acc,#1E1C1B);color:#fff;font-size:26px;font-weight:300;line-height:1;padding:0;display:grid;place-items:center}
+.n-plus{flex:none;width:50px;height:50px;border-radius:50%;border:0;background:var(--acc,#1E1C1B);color:#fff;padding:0;display:grid;place-items:center}
 .n-plus.on{background:#fff;color:var(--acc,#1E1C1B);box-shadow:inset 0 0 0 1.5px var(--acc,#1E1C1B)}
-.rv-fid-n.gros{display:flex;align-items:center;gap:8px;font-size:14.5px!important;font-weight:500;opacity:1!important;color:#1E1C1B;background:#F2EAD9;border-radius:14px;padding:10px 12px;margin:12px 0 0!important}
-.rv-fid-n.gros i{flex:none;font-style:normal;font-size:16px}
-.ph-carte{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:10px;border:0;border-radius:99px;padding:12px;background:#F6F3EF;font:inherit;font-size:13.5px;color:#1E1C1B}
+.rv-fid-n.gros{display:block;text-align:center;font-size:13px!important;opacity:1!important;color:#6B625C;margin:12px 0 0!important;white-space:nowrap}
+.rv-fid-n.gros b{font-weight:500;color:#1E1C1B}
+.ph-carte{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;border-radius:99px;padding:6px 6px 6px 16px;background:#F6F3EF;font-size:14px}.ph-carte b{font-weight:500}
+.ph-carte button{flex:none;border:0;border-radius:99px;background:var(--acc,#1E1C1B);color:#fff;padding:10px 16px;font:inherit;font-size:13px;display:flex;align-items:center;gap:6px}
 .semaine.suit{transition:none!important}.semaine.glisse{transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s}`;
   document.head.appendChild(st);
   const tel = t => String(t || "").replace(/\s/g, "");
   new MutationObserver(() => {
     /* le petit texte « C'est fini ajoute aussi 1 point » : en grand, juste au-dessus du bouton */
     const n = E.querySelector(".fc .rv-fid-n:not(.gros)"), fini = E.querySelector('.fc [data-s="fini"]');
-    if (n && fini) { n.classList.add("gros"); n.innerHTML = "<i>✦</i><span>« C’est fini » ajoute <b>1 point</b> de fidélité tout seul</span>"; fini.parentNode.insertBefore(n, fini); }
+    if (n && fini) { n.classList.add("gros"); n.innerHTML = "✦ « C’est fini » ajoute <b>1 point</b> de fidélité"; fini.parentNode.insertBefore(n, fini); }
     /* sous « Une photo de la pose ? » : envoyer sa carte de fidélité */
     const z = E.querySelector(".fc .ph-bloc[data-rdv]"); if (z && !z.querySelector(".ph-carte") && window.__fid && __fid.on()) { const c = S.clientes.find(x => x.id === z.dataset.cliPh);
-      if (c && c.telephone) z.insertAdjacentHTML("beforeend", `<button class="ph-carte" data-ph="carte" data-cli="${c.id}">✦ Envoyer à ${esc(c.prenom || "elle")} où en est sa carte de fidélité</button>`); }
+      if (c && c.telephone) { const v = __fid.etat(c); z.insertAdjacentHTML("beforeend", `<div class="ph-carte"><span>Sa carte de fidélité · <b class="fp">${v.fait}</b>/${v.f.n}</span><button data-ph="carte" data-cli="${c.id}">Envoyer <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg></button></div>`);
+        setTimeout(async () => { try { await chargeVisites(); } catch (x) {} const b = z.querySelector(".ph-carte .fp"); if (b) b.textContent = __fid.etat(c).fait; }, 900); } }
   }).observe(E, { childList: true, subtree: true });
   document.addEventListener("click", async e => { const b = e.target.closest && e.target.closest('[data-ph="carte"]'); if (!b) return; e.stopPropagation(); e.preventDefault();
     try { await chargeVisites(); } catch (x) {} const c = S.clientes.find(x => x.id === b.dataset.cli); if (!c) return; const v = __fid.etat(c), salon = (S.profil && S.profil.nom_salon) || "";
