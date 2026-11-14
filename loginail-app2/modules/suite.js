@@ -518,7 +518,7 @@ h3 .lap{font-size:11px;vertical-align:4px}
 .n-plus.on{background:#fff;color:var(--acc,#1E1C1B);box-shadow:inset 0 0 0 1.5px var(--acc,#1E1C1B)}
 .rv-fid-n.gros{display:block;text-align:center;font-size:13px!important;opacity:1!important;color:#6B625C;margin:12px 0 0!important;white-space:nowrap}
 .rv-fid-n.gros b{font-weight:500;color:#1E1C1B}
-.ph-carte{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;border-radius:99px;padding:6px 6px 6px 16px;background:#F6F3EF;font-size:14px}.ph-carte b{font-weight:500}
+.ph-carte{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;border-radius:20px;padding:10px 10px 10px 16px;background:#fff;font-size:14px}.ph-carte b{font-weight:500}
 .ph-carte button{flex:none;border:0;border-radius:99px;background:var(--acc,#1E1C1B);color:#fff;padding:10px 16px;font:inherit;font-size:13px;display:flex;align-items:center;gap:6px}
 .semaine.suit{transition:none!important}.semaine.glisse{transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s}`;
   document.head.appendChild(st);
@@ -528,9 +528,9 @@ h3 .lap{font-size:11px;vertical-align:4px}
     const n = E.querySelector(".fc .rv-fid-n:not(.gros)"), fini = E.querySelector('.fc [data-s="fini"]');
     if (n && fini) { n.classList.add("gros"); n.innerHTML = "✦ « C’est fini » ajoute <b>1 point</b> de fidélité"; fini.parentNode.insertBefore(n, fini); }
     /* sous « Une photo de la pose ? » : envoyer sa carte de fidélité */
-    const z = E.querySelector(".fc .ph-bloc[data-rdv]"); if (z && !z.querySelector(".ph-carte") && window.__fid && __fid.on()) { const c = S.clientes.find(x => x.id === z.dataset.cliPh);
-      if (c && c.telephone) { const v = __fid.etat(c); z.insertAdjacentHTML("beforeend", `<div class="ph-carte"><span>Sa carte de fidélité · <b class="fp">${v.fait}</b>/${v.f.n}</span><button data-ph="carte" data-cli="${c.id}">Envoyer <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg></button></div>`);
-        setTimeout(async () => { try { await chargeVisites(); } catch (x) {} const b = z.querySelector(".ph-carte .fp"); if (b) b.textContent = __fid.etat(c).fait; }, 900); } }
+    const z = E.querySelector(".fc .ph-bloc[data-rdv]"); if (z && !E.querySelector(".fc .ph-carte") && window.__fid && __fid.on()) { const c = S.clientes.find(x => x.id === z.dataset.cliPh);
+      if (c && c.telephone) { const v = __fid.etat(c); z.insertAdjacentHTML("afterend", `<div class="ph-carte"><span>Sa carte de fidélité · <b class="fp">${v.fait}</b>/${v.f.n}</span><button data-ph="carte" data-cli="${c.id}">Envoyer <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg></button></div>`);
+        setTimeout(async () => { try { await chargeVisites(); } catch (x) {} const b = E.querySelector(".fc .ph-carte .fp"); if (b) b.textContent = __fid.etat(c).fait; }, 900); } }
   }).observe(E, { childList: true, subtree: true });
   document.addEventListener("click", async e => { const b = e.target.closest && e.target.closest('[data-ph="carte"]'); if (!b) return; e.stopPropagation(); e.preventDefault();
     try { await chargeVisites(); } catch (x) {} const c = S.clientes.find(x => x.id === b.dataset.cli); if (!c) return; const v = __fid.etat(c), salon = (S.profil && S.profil.nom_salon) || "";
