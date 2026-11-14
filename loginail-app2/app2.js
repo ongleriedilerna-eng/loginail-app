@@ -247,8 +247,7 @@ function feuilleNouveau(m) {
   const P = prestasDispo();
   ouvre(`<h3>Nouveau rendez-vous</h3><div class="sous">${JOURS[(j.getDay() + 6) % 7]} ${j.getDate()} ${MOIS[j.getMonth()]}</div>
     <div class="lab2">Heure</div><input class="champ" id="n-h" type="time" value="${String(Math.floor(N.m / 60)).padStart(2, "0")}:${String(N.m % 60).padStart(2, "0")}" step="900" style="font-size:16px;width:100%;min-width:0;max-width:100%;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block;text-align:left">
-    <div class="lab2">Cliente</div><input class="champ" id="n-cli" placeholder="Tapez la 1re lettre : A, B, C…" autocomplete="off" autocapitalize="words"><div id="n-sug" class="n-sug"></div><datalist id="n-cl">${S.clientes.map(c => `<option value="${esc(nomCli(c))}">`).join("")}</datalist>
-    <button class="lien-t" data-a="n-neuve" id="n-neuve" style="display:block;margin:8px 0 0;padding:4px 0;text-align:left">+ Nouvelle cliente, avec son numéro</button>
+    <div class="lab2">Cliente</div><div style="display:flex;gap:8px;align-items:center"><button class="n-plus" data-a="n-neuve" id="n-neuve" aria-label="Nouvelle cliente">+</button><input class="champ" id="n-cli" placeholder="Tapez la 1re lettre : A, B, C…" autocomplete="off" autocapitalize="words" style="flex:1;min-width:0;margin:0"></div><div id="n-sug" class="n-sug"></div><datalist id="n-cl">${S.clientes.map(c => `<option value="${esc(nomCli(c))}">`).join("")}</datalist>
     <div id="n-neuve-z" hidden><div class="lab2">Son téléphone <small style="text-transform:none;letter-spacing:0;opacity:.6">facultatif</small></div><input class="champ" id="n-tel" inputmode="tel" placeholder="06 12 34 56 78" autocomplete="off"></div>
     <div class="lab2">Prestation</div><div class="chips">${P.map((p, i) => `<button class="chip" data-np="${i}">${esc(p.nom)}<span>${duree(p.duree || 60)}</span></button>`).join("") || '<span class="sous">Ajoutez vos prestations dans Réglages</span>'}</div>
     <button class="btn" data-a="nouveau-ok" style="margin-top:16px">Enregistrer</button>`);
@@ -400,7 +399,7 @@ E.addEventListener("click", async ev => {
     else if (k === "sem") { S.lundi = plusJours(S.lundi, +a.dataset.n); S.jour = plusJours(S.jour, +a.dataset.n); await chargeSemaine(); rendu(); }
     else if (k === "creneau") feuilleNouveau(+a.dataset.m);
     else if (k === "nouveau") feuilleNouveau(null);
-    else if (k === "n-neuve") { $("#n-neuve-z", E).hidden = false; a.hidden = true; const c = $("#n-cli", E); c.placeholder = "Son prénom et son nom"; c.removeAttribute("list"); c.focus(); }
+    else if (k === "n-neuve") { $("#n-neuve-z", E).hidden = false; a.classList.add("on"); const c = $("#n-cli", E); c.placeholder = "Nouvelle cliente : prénom et nom"; c.removeAttribute("list"); c.focus(); }
     else if (k === "mois") { S.moisOuvert = !S.moisOuvert; S.moisVu = new Date(S.jour.getFullYear(), S.jour.getMonth(), 1); rendu(); }
     else if (k === "mois-nav") { S.moisVu = new Date(S.moisVu.getFullYear(), S.moisVu.getMonth() + +a.dataset.n, 1); rendu(); }
     else if (k === "mois-j") { S.jour = new Date(a.dataset.d); S.lundi = lundiDe(S.jour); S.moisOuvert = false; await chargeSemaine(); rendu(); }

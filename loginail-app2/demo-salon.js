@@ -39,15 +39,17 @@
     apropos: { toilettes: false, parking: { freeParkingLot: true }, paiement: { acceptsCashOnly: true }, accessibilite: {}, animaux: null, enfants: false },
     site: "", prestationsTrouvees: true, tarifsVerifies: true, insta: "", presentation: "Moi, c’est Chloé ! Prothésiste ongulaire à Marseille, j’adore les cerises, le rouge et les ongles qui brillent. Je vous reçois dans mon petit salon, sur rendez-vous.",
     principale: 0, salon: 6, style: 1, couleur: "cerise", mode: "jour", exempleFictif: true, quiPhoto: P + "portrait.webp", adresseCachee: true, police: "seventies", nomc: "rougefonce", vif: "cerise", fond: "Cœurs chrome rubis sur fond ivoire" };
+  /* 14/11 : Elsa a déjà ses 3 prochains rendez-vous (dans 3, 7 et 11 semaines) */
+  [21, 49, 77].forEach(n => { const c = clientes[13], p = prestations[2], deb = jour(n, 15, 30); rendez_vous.push({ id: "r" + (++k), cliente_id: c.id, prestation_id: p.id, titre: p.nom, debut: iso(deb), fin: iso(new Date(deb.getTime() + p.duree_min * 60000)), prix: p.prix, statut: "prevu", source: null, acompte: null, cree_le: iso(jour(-1, 10)) }); });
   /* ?dix : pour voir l'accueil avec beaucoup de rendez-vous aujourd'hui */
   if (/[?&]dix/.test(location.search)) [[11, 30], [12, 15], [13, 0], [13, 45], [16, 30], [18, 0], [8, 30]].forEach((h, n) => { const c = clientes[10 + n], p = prestations[n % 4], deb = jour(0, h[0], h[1]); rendez_vous.push({ id: "r" + (++k), cliente_id: c.id, prestation_id: p.id, titre: p.nom, debut: iso(deb), fin: iso(new Date(deb.getTime() + p.duree_min * 60000)), prix: p.prix, statut: "prevu", source: "appli", acompte: null, cree_le: iso(jour(-2, 10)) }); });
   let DB = { profils: [{ id: U.id, prenom: "Chloé", nom_salon: "les Ongles de Cerise", telephone: "06 00 00 00 00", ville: "Marseille", caisse_active: true }], prestations, clientes, rendez_vous, tickets: [],
     sites: [{ pro_id: U.id, slug: "les-ongles-de-cerise", en_ligne: true, maj: iso(jour(-1, 18)), donnees }] };
 
   /* ce qu'on ajoute dans la démonstration est gardé dans le téléphone jusqu'au lendemain (ou jusqu'à « Se déconnecter ») */
-  const AUJ = now.toDateString(), garde = () => { if (PARCOURS || /[?&]salon-neuf/.test(location.search)) return; try { localStorage.setItem("loginail-demo-db5", JSON.stringify({ j: AUJ, DB })); } catch (e) {} };
+  const AUJ = now.toDateString(), garde = () => { if (PARCOURS || /[?&]salon-neuf/.test(location.search)) return; try { localStorage.setItem("loginail-demo-db6", JSON.stringify({ j: AUJ, DB })); } catch (e) {} };
   const NEUF = PARCOURS || /[?&]salon-neuf/.test(location.search); if (NEUF) { DB.prestations = []; DB.clientes = []; DB.rendez_vous = []; DB.sites = []; DB.profils[0].nom_salon = ""; if (PARCOURS) { DB.profils[0].prenom = ""; DB.profils[0].ville = ""; DB.profils[0].telephone = ""; } try { localStorage.removeItem("loginail-brouillon"); } catch (e) {} }
-  try { const g = NEUF ? null : JSON.parse(localStorage.getItem("loginail-demo-db5") || "null"); if (g && g.j === AUJ && g.DB && g.DB.clientes && !/[?&]dix/.test(location.search)) DB = g.DB; } catch (e) {}
+  try { const g = NEUF ? null : JSON.parse(localStorage.getItem("loginail-demo-db6") || "null"); if (g && g.j === AUJ && g.DB && g.DB.clientes && !/[?&]dix/.test(location.search)) DB = g.DB; } catch (e) {}
   let nid = 1000 + Math.floor(Math.random() * 9e5), numero = 12; const uid = () => "d" + (++nid), copie = o => JSON.parse(JSON.stringify(o));
   const joint = (t, r) => { const o = copie(r); if (t === "rendez_vous") { const c = DB.clientes.find(x => x.id === r.cliente_id), p = DB.prestations.find(x => x.id === r.prestation_id);
     o.clientes = c ? { id: c.id, prenom: c.prenom, nom: c.nom, telephone: c.telephone } : null; o.prestations = p ? { id: p.id, nom: p.nom } : null; } return o; };
@@ -69,7 +71,7 @@
       if (this.lim) rows = rows.slice(0, this.lim);
       return { data: this.un ? rows[0] || null : rows, error: null }; }
   };
-  const sortir = () => { try { localStorage.removeItem("loginail-demo"); localStorage.removeItem("loginail-demo-db5"); localStorage.removeItem("loginail-brouillon"); } catch (e) {} setTimeout(() => location.replace(location.pathname), 50); };
+  const sortir = () => { try { localStorage.removeItem("loginail-demo"); localStorage.removeItem("loginail-demo-db6"); localStorage.removeItem("loginail-brouillon"); } catch (e) {} setTimeout(() => location.replace(location.pathname), 50); };
   const FICH = {};
   /* 13/11 : Inès a 15 photos de ses poses, pour voir ce que ça donne */
   { const im = ["beige-coffin.webp", "bordeaux-bagues.webp", "bordeaux-court.webp", "bordeaux-stiletto.webp", "cerise-amande.webp", "chocolat-coffin.webp", "classique.webp", "french-amande.webp", "french-lait.webp", "magazine.webp", "ombre-blanc.webp", "stiletto-nude.webp", "r1.jpg", "r2.jpg", "r3.jpg"];

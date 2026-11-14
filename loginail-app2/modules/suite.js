@@ -76,6 +76,11 @@
         if (libre(deb, fin) && !out.some(x => +x === +deb)) out.push(deb); } }
     return out; };
   const feuilleReprendre = () => { const r = REP.r, cs = creneaux(r, REP.sem), d0 = new Date(r.debut);
+    /* 14/11 (Marie) : elle a déjà ses prochains rendez-vous ? on ne lui demande rien, on les affiche */
+    const fut = (S.tous || S.rdv || []).filter(x => x.cliente_id && x.cliente_id === r.cliente_id && x.id !== r.id && x.statut === "prevu" && new Date(x.debut) > new Date()).sort((a, b) => a.debut.localeCompare(b.debut));
+    if (fut.length) return ouvre(`<h3>C’est fini ✓</h3><div class="sous">${esc(nomRdv(r))}${titreRdv(r) ? " · " + esc(titreRdv(r)) : ""}</div>
+      <div class="k">${fut.length > 1 ? "Ses " + fut.length + " prochains rendez-vous" : "Son prochain rendez-vous"}</div><div class="su-carte">${fut.slice(0, 6).map(x => { const d = new Date(x.debut); return `<div class="su-lg"><div style="text-transform:capitalize">${JOURS[(d.getDay() + 6) % 7]} ${d.getDate()} ${MOIS[d.getMonth()]}<span style="text-transform:none">${hh(d)}${x.titre ? " · " + esc(x.titre) : ""}</span></div><span style="font-size:12px;opacity:.55">déjà pris ✓</span></div>`; }).join("")}</div>
+      <button class="btn" data-su="rep-fin" style="margin-top:14px">Parfait</button>`);
     ouvre(`<h3>Son prochain rendez-vous ?</h3><div class="sous">${esc(nomRdv(r))}${titreRdv(r) ? " · " + esc(titreRdv(r)) : ""}</div>
       <div class="su-puces" style="flex-wrap:nowrap">${[2, 3, 4].map(n => `<button data-su="rep-sem" data-n="${n}" class="${REP.sem === n ? "on" : ""}" style="flex:1;padding-left:6px;padding-right:6px">${n} sem.</button>`).join("")}<button data-su="rep-sem" data-n="${REP.sem > 4 ? REP.sem + 1 : 5}" class="${REP.sem > 4 ? "on" : ""}" style="flex:1;padding-left:6px;padding-right:6px">${REP.sem > 4 ? REP.sem + " sem. +" : "+"}</button></div>
       <div class="k">Créneaux libres</div><div class="su-carte">${cs.length ? cs.map(c => `<div class="su-lg"><div style="text-transform:capitalize">${JOURS[(c.getDay() + 6) % 7]} ${c.getDate()} ${MOIS[c.getMonth()]}<span style="text-transform:none">${hh(c)}${c.getDay() === d0.getDay() && c.getHours() === d0.getHours() && c.getMinutes() === d0.getMinutes() ? " · comme aujourd’hui" : ""}</span></div><button class="su-b" data-su="rep-ok" data-d="${c.toISOString()}">Choisir</button></div>`).join("") : `<div class="su-lg"><div>Rien de libre cette semaine-là<span>Essayez une autre semaine.</span></div></div>`}</div>
@@ -108,6 +113,7 @@
     else if (k === "bilan") feuilleBilan();
     else if (k === "rep-sem") { REP.sem = Math.min(12, +a.dataset.n); feuilleReprendre(); }
     else if (k === "plustard") { ferme(); dit("D’accord : pensez à la relancer plus tard"); }
+    else if (k === "rep-fin") { ferme(); }
     else if (k === "rep-ok") { const r = REP.r, deb = new Date(a.dataset.d), fin = new Date(+deb + (new Date(r.fin) - new Date(r.debut))); a.disabled = true;
       const { error } = await sb.from("rendez_vous").insert({ cliente_id: r.cliente_id, prestation_id: r.prestation_id || null, titre: r.titre || titreRdv(r) || null, debut: deb.toISOString(), fin: fin.toISOString(), prix: r.prix ?? null });
       if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessayez."); } await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit("Rendez-vous pris ✓"); }
@@ -438,7 +444,7 @@ h3 .lap{font-size:11px;vertical-align:4px}
   /* 2 · dans sa fiche, avant l'historique */
   new MutationObserver(() => {
     const h = E.querySelector(".feuille .fc h3"); if (!h) return;
-    if (/Son prochain rendez-vous/.test(h.textContent) && DERNIER && DERNIER.cliente_id && !E.querySelector(".fc .ph-bloc")) { const so = h.nextElementSibling;
+    if (/Son prochain rendez-vous|C’est fini ✓/.test(h.textContent) && DERNIER && DERNIER.cliente_id && !E.querySelector(".fc .ph-bloc")) { const so = h.nextElementSibling;
       (so || h).insertAdjacentHTML("afterend", bloc("Une photo de la pose ?", DERNIER.cliente_id)); const z = E.querySelector(".fc .ph-bloc"); z.dataset.rdv = DERNIER.id; charge(DERNIER.cliente_id, z.querySelector(".ph-rang")); }
     const fh = E.querySelector(".feuille .fi-haut h3"), hist = [...E.querySelectorAll(".feuille .fi-k")].find(x => /Historique/.test(x.textContent));
     if (fh && hist && !E.querySelector(".fc .ph-bloc")) { const nom = fh.childNodes[0] ? fh.childNodes[0].textContent.trim() : fh.textContent.trim(), c = S.clientes.find(x => nomCli(x) === nom); if (!c) return;
@@ -501,4 +507,44 @@ h3 .lap{font-size:11px;vertical-align:4px}
     if (t.closest('[data-su="notif-sw"]')) { e.stopPropagation(); e.preventDefault(); if (lit() === "oui") { await arreter(); dit("Notifications arrêtées"); } else if (await activer()) dit("C’est activé ✓ Vous serez prévenue à chaque réservation"); rendu(); return; }
     if (t.closest('[data-su="notif-oui"]')) { e.stopPropagation(); e.preventDefault(); if (await activer()) dit("C’est activé ✓ Vous serez prévenue à chaque réservation"); rendu(); return; }
     if (t.closest('[data-su="notif-x"]')) { e.stopPropagation(); e.preventDefault(); ecrit("plus-tard"); rendu(); } }, true);
+})();
+
+/* ===== 14/11 (Marie) : heure en noir · « + » nouvelle cliente · le point de fidélité bien visible au-dessus de « C'est fini » ·
+   « Envoyer à … sa carte de fidélité » sous la photo · la semaine suit le doigt ===== */
+(function () {
+  const st = document.createElement("style");
+  st.textContent = `.ecran input[type=time],.ecran input[type=date]{color:#1E1C1B!important;-webkit-text-fill-color:#1E1C1B}
+.n-plus{flex:none;width:50px;height:50px;border-radius:50%;border:0;background:var(--acc,#1E1C1B);color:#fff;font-size:26px;font-weight:300;line-height:1;padding:0;display:grid;place-items:center}
+.n-plus.on{background:#fff;color:var(--acc,#1E1C1B);box-shadow:inset 0 0 0 1.5px var(--acc,#1E1C1B)}
+.rv-fid-n.gros{display:flex;align-items:center;gap:8px;font-size:14.5px!important;font-weight:500;opacity:1!important;color:#1E1C1B;background:#F2EAD9;border-radius:14px;padding:10px 12px;margin:12px 0 0!important}
+.rv-fid-n.gros i{flex:none;font-style:normal;font-size:16px}
+.ph-carte{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:10px;border:0;border-radius:99px;padding:12px;background:#F6F3EF;font:inherit;font-size:13.5px;color:#1E1C1B}
+.semaine.suit{transition:none!important}.semaine.glisse{transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s}`;
+  document.head.appendChild(st);
+  const tel = t => String(t || "").replace(/\s/g, "");
+  new MutationObserver(() => {
+    /* le petit texte « C'est fini ajoute aussi 1 point » : en grand, juste au-dessus du bouton */
+    const n = E.querySelector(".fc .rv-fid-n:not(.gros)"), fini = E.querySelector('.fc [data-s="fini"]');
+    if (n && fini) { n.classList.add("gros"); n.innerHTML = "<i>✦</i><span>« C’est fini » ajoute <b>1 point</b> de fidélité tout seul</span>"; fini.parentNode.insertBefore(n, fini); }
+    /* sous « Une photo de la pose ? » : envoyer sa carte de fidélité */
+    const z = E.querySelector(".fc .ph-bloc[data-rdv]"); if (z && !z.querySelector(".ph-carte") && window.__fid && __fid.on()) { const c = S.clientes.find(x => x.id === z.dataset.cliPh);
+      if (c && c.telephone) z.insertAdjacentHTML("beforeend", `<button class="ph-carte" data-ph="carte" data-cli="${c.id}">✦ Envoyer à ${esc(c.prenom || "elle")} où en est sa carte de fidélité</button>`); }
+  }).observe(E, { childList: true, subtree: true });
+  document.addEventListener("click", async e => { const b = e.target.closest && e.target.closest('[data-ph="carte"]'); if (!b) return; e.stopPropagation(); e.preventDefault();
+    try { await chargeVisites(); } catch (x) {} const c = S.clientes.find(x => x.id === b.dataset.cli); if (!c) return; const v = __fid.etat(c), salon = (S.profil && S.profil.nom_salon) || "";
+    const txt = v.pret ? `Bonjour ${c.prenom || ""}, merci pour votre visite ! Votre carte de fidélité est complète : ${v.f.cadeau} à votre prochain rendez-vous. ${salon}` : `Bonjour ${c.prenom || ""}, merci pour votre visite ! Votre carte de fidélité : ${v.fait} sur ${v.f.n}. Encore ${v.reste} visite${v.reste > 1 ? "s" : ""} avant votre cadeau (${v.f.cadeau}). ${salon}`;
+    location.href = `sms:${tel(c.telephone)}&body=${encodeURIComponent(txt.trim())}`; }, true);
+  /* la semaine suit le doigt, puis la nouvelle arrive du bon côté */
+  let x0 = null, y0 = 0, sens = 0, bouge = false;
+  E.addEventListener("touchstart", e => { const z = e.target.closest && e.target.closest(".semaine,.nav-sem"); x0 = z && e.touches.length === 1 ? e.touches[0].clientX : null; y0 = e.touches[0].clientY; bouge = false; }, { passive: true });
+  E.addEventListener("touchmove", e => { if (x0 == null) return; const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0; if (!bouge && Math.abs(dx) < 8) return;
+    if (!bouge && Math.abs(dy) > Math.abs(dx)) { x0 = null; return; } bouge = true; const s = E.querySelector(".vue.on .semaine"); if (s) { s.classList.add("suit"); s.style.transform = `translateX(${dx}px)`; s.style.opacity = String(1 - Math.min(.6, Math.abs(dx) / 400)); } }, { passive: true });
+  E.addEventListener("touchend", e => { if (x0 == null || !bouge) { x0 = null; return; } const dx = e.changedTouches[0].clientX - x0; x0 = null; const s = E.querySelector(".vue.on .semaine"); if (!s) return;
+    s.classList.remove("suit"); s.classList.add("glisse");
+    if (Math.abs(dx) < 45) { s.style.transform = ""; s.style.opacity = ""; return; }   /* pas assez loin : elle revient */
+    sens = dx < 0 ? 1 : -1; s.style.transform = `translateX(${dx < 0 ? -110 : 110}%)`; s.style.opacity = "0"; }, { passive: true });
+  /* quand la nouvelle semaine est dessinée, elle arrive de l'autre côté */
+  new MutationObserver(() => { if (!sens) return; const s = E.querySelector(".vue.on .semaine"); if (!s || s.dataset.arrive) return; s.dataset.arrive = "1";
+    const d = sens; sens = 0; s.style.transition = "none"; s.style.transform = `translateX(${d > 0 ? 60 : -60}%)`; s.style.opacity = "0";
+    requestAnimationFrame(() => requestAnimationFrame(() => { s.style.transition = "transform .3s cubic-bezier(.2,.8,.2,1),opacity .3s"; s.style.transform = ""; s.style.opacity = ""; })); }).observe(E, { childList: true, subtree: true });
 })();
