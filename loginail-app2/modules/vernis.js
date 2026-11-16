@@ -76,7 +76,7 @@
     const ici = cli.find(r => new Date(r.debut) <= now && new Date(r.fin) > now && r.statut === "prevu");
     const proch = cli.find(r => r !== ici && new Date(r.fin) > now && new Date(r.debut) > now && r.statut === "prevu");
     const nouv = S.rdv.filter(r => r.source === "en_ligne" && new Date(r.cree_le) > plusJours(now, -1)).length;
-    let h = `<div class="v-haut v-haut-acc">${etoiles("acc")}<div class="tete"><div><small>${JOURS[(now.getDay() + 6) % 7]} ${now.getDate()} ${MOIS[now.getMonth()]}</small><h1>Bonjour${prenom ? ` <em>${esc(prenom)}</em>` : ""}</h1></div>${ai ? ai.outerHTML : ""}</div>`;
+    let h = `<div class="v-haut v-haut-acc">${etoiles("acc")}<div class="tete"><div><h1>${JOURS[(now.getDay() + 6) % 7]} <em>${now.getDate()} ${MOIS[now.getMonth()]}</em></h1></div>${ai ? ai.outerHTML : ""}</div>`;
     if (proch) { const d = new Date(proch.debut), mn = Math.round((d - now) / 60000), tel = (proch.clientes && proch.clientes.telephone || "").replace(/\s/g, "");
       h += `<div class="v-prochain" data-rdv="${proch.id}"><div class="v-lab">Prochaine cliente</div><div class="v-grand"><b>${hh(d)}</b><span>dans ${mn >= 60 ? duree(mn) : mn + " min"}</span></div>
         <div class="v-cli"><span class="v-av">${esc(((proch.clientes && proch.clientes.prenom) || nomRdv(proch) || "?")[0].toUpperCase())}</span><div>${esc(nomRdv(proch))}<small>${esc(titreRdv(proch))}${proch.prix ? " · " + euros(proch.prix) : ""}</small></div></div>
@@ -269,6 +269,7 @@
 #E .tete small{font-size:13px;letter-spacing:0;text-transform:none;color:var(--gris)}
 #E .tete h1{font:500 38px/1.05 'Cormorant Garamond',Georgia,serif;margin:2px 0 0;letter-spacing:0;color:var(--v-encre)}
 #E .tete h1 em{font-style:italic;color:var(--v-acc)}
+#E .v-haut-acc .tete h1{white-space:nowrap;font-size:min(38px,8.2vw)}
 #E :is(.k,.lab,.lab2,.fi-k,.form label,.noire small,.fi-noire small,.fi-t3 small,.su-t3 small,.su-b2 small,.k-tot span,.rv-note b,.su-auj2 small,.fi-fid .ht small,.abo small,.deco,.btn,.semaine button small,.tete small){text-transform:none!important;letter-spacing:0!important}
 #E .k{font-size:13px;font-weight:400;color:var(--gris);margin:26px 0 10px}
 #E .k a{font-size:13px;color:var(--v-fonce);text-decoration:none}
