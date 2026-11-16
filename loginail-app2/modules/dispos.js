@@ -20,25 +20,24 @@
   /* la prestation la plus courte (au moins 30 min : c'est le pas du site de réservation) */
   const dureeMin = () => { const l = (S.prestations.length ? S.prestations.map(p => +p.duree_min) : (donnees().prestations || []).map(p => +p.duree)).filter(x => x > 0);
     return Math.max(PAS, l.length ? Math.min(...l) : 60); };
-  /* une semaine : du lundi (ou d'aujourd'hui) au dimanche, seulement les jours ouverts */
-  async function semaine(n) {
-    const lun = plusJours(lundiDe(new Date()), 7 * n), fin = plusJours(lun, 7);
-    /* on ne demande que l'heure de début, de fin et l'état : jamais le nom ni la prestation */
-    const { data, error } = await sb.from("rendez_vous").select("debut,fin,statut").lt("debut", fin.toISOString()).gt("fin", lun.toISOString());
+  /* une période (une semaine ou un mois) : pour chaque jour, ouvert ou fermé, et ses places libres */
+  async function periode(de, a) {
+    /* on ne demande que l'heure de début, de fin, l'état et s'il y a une cliente (pour reconnaître les congés) : jamais le nom ni la prestation */
+    const { data, error } = await sb.from("rendez_vous").select("debut,fin,statut,cliente_id").lt("debut", a.toISOString()).gt("fin", de.toISOString());
     if (error) throw error;
     const pris = (data || []).filter(r => r.statut !== "annule");
     const H = horaires(), dur = dureeMin(), now = new Date(), jours = [];
-    for (let i = 0; i < 7; i++) {
-      const d = plusJours(lun, i), h = H[i];
-      if (!h || !h.d || !h.f) continue;                                   /* fermé : le jour n'apparaît pas */
+    for (let d = new Date(de); d < a; d = plusJours(d, 1)) {
+      const i = (d.getDay() + 6) % 7, h = H[i], auj = memeJour(d, now);
+      if (!h || !h.d || !h.f) { jours.push({ d, i, ferme: true, libres: [] }); continue; }
       const debut = mn(h.d), finJ = mn(h.f), pd = h.pd ? mn(h.pd) : null, pf = h.pf ? mn(h.pf) : null;
-      const auj = memeJour(d, now);
-      if (d < now && !auj) continue;                                      /* jours passés : plus rien à réserver */
+      const passe = d < now && !auj;                                       /* jours passés : plus rien à réserver */
       const deja = auj ? now.getHours() * 60 + now.getMinutes() + 60 : -1;   /* comme le site : pas dans l'heure qui vient */
-      const occ = pris.map(r => { const a = new Date(r.debut), b = new Date(r.fin);
-        return [(a - d) / 60000, (b - d) / 60000]; });                    /* en minutes depuis minuit de ce jour (marche aussi pour les congés de plusieurs jours) */
+      const occ = pris.map(r => [(new Date(r.debut) - d) / 60000, (new Date(r.fin) - d) / 60000, !r.cliente_id]);   /* en minutes depuis minuit de ce jour (marche aussi pour les congés de plusieurs jours) */
+      /* congés : un moment bloqué (sans cliente) couvre toute la journée → comme fermé */
+      if (occ.some(z => z[2] && z[0] <= debut && z[1] >= finJ)) { jours.push({ d, i, ferme: true, conges: true, libres: [] }); continue; }
       const libres = [];
-      for (let t = debut; t + dur <= finJ; t += PAS) {
+      if (!passe) for (let t = debut; t + dur <= finJ; t += PAS) {
         if (pd != null && pf != null && t < pf && t + dur > pd) continue;
         if (t < deja) continue;
         if (occ.some(z => t < z[1] && t + dur > z[0])) continue;
@@ -46,9 +45,19 @@
         if (libres.length && t < libres[libres.length - 1] + Math.ceil(dur / PAS) * PAS) continue;
         libres.push(t);
       }
-      jours.push({ d, i, libres });
+      jours.push({ d, i, passe, libres });
     }
-    return { lun, jours };
+    return jours;
+  }
+  /* une semaine : seulement les jours ouverts, à partir d'aujourd'hui */
+  async function semaine(n) {
+    const lun = plusJours(lundiDe(new Date()), 7 * n);
+    return { lun, jours: (await periode(lun, plusJours(lun, 7))).filter(j => !j.ferme && !j.passe) };
+  }
+  /* le mois suivant : tous les jours (le calendrier montre aussi les jours fermés, très effacés) */
+  async function mois() {
+    const n = new Date(), de = new Date(n.getFullYear(), n.getMonth() + 1, 1), a = new Date(n.getFullYear(), n.getMonth() + 2, 1);
+    return { mois: de.getMonth(), an: de.getFullYear(), jours: await periode(de, a) };
   }
 
   /* ---------- 2 · le site de la pro : fond, écriture du nom, couleur, charms ---------- */
@@ -146,6 +155,53 @@
     cx.fillStyle = "#fff"; cx.textBaseline = "middle"; let xx = x + 13 * K; txt.forEach((t, i) => { cx.font = `${i === txt.length - 1 && gras ? 500 : 400} ${12 * K}px Jost, sans-serif`; cx.textAlign = "left"; cx.fillText(t, xx, y + ph / 2 + 1); xx += cx.measureText(t).width; }); };
   const melange = (a, b, t) => { const p = c => { c = c.replace("#", ""); if (c.length === 3) c = c.replace(/./g, "$&$&"); return [0, 2, 4].map(i => parseInt(c.substr(i, 2), 16)); };
     try { const x = p(a), y = p(b); return "rgb(" + x.map((v, i) => Math.round(v + (y[i] - v) * t)).join(",") + ")"; } catch (e) { return a; } };
+  /* ---------- 4 bis · la story du MOIS : même carte Carnet, un calendrier lundi → dimanche ---------- */
+  const charmSur = async (cx, n, x, y, w, r) => { try { const im = await img(base() + "charms/" + n + ".png").catch(() => img(SITE + "charms/" + n + ".png")), h = w * im.naturalHeight / im.naturalWidth; cx.save(); cx.translate(x + w / 2, y + h / 2); cx.rotate(r * Math.PI / 180);
+      cx.shadowColor = "rgba(0,0,0,.25)"; cx.shadowBlur = 8 * K; cx.shadowOffsetY = 6 * K; cx.drawImage(im, -w / 2, -h / 2, w, h); cx.restore(); return true; } catch (e) { return false; } };
+  const etoileSur = (cx, x, y, sz) => { cx.save(); cx.font = `${sz}px 'Cormorant Garamond', serif`; cx.fillStyle = "#fff"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.shadowColor = "rgba(0,0,0,.3)"; cx.shadowBlur = 12; cx.fillText("✦", x, y); cx.restore(); };
+  async function dessineMois(cx, c, s, per, col) {
+    const { t, a, carte, pil } = col, TOP = 270, CB_MAX = 1250, X = 22 * K, CW = W - 2 * X, PX = 14 * K;
+    const nomM = MOIS[per.mois], dec = (new Date(per.an, per.mois, 1).getDay() + 6) % 7, rangs = Math.ceil((dec + per.jours.length) / 7);
+    const total = per.jours.reduce((n, j) => n + j.libres.length, 0);
+    const astuce = !total ? "tout est déjà pris ce mois-ci ♡" : per.mois === 11 ? "les fêtes partent vite ♡" : "réserve vite ta place ♡";
+    const police = fs => `400 ${fs}px ${s.pol[0]}, 'Great Vibes', cursive`;
+    const nom = k => { const max = CW - 2 * PX; let fs = 32 * K * k * s.pol[1]; cx.font = police(fs); while (cx.measureText(s.nom).width > max && fs > 22 * K * k * s.pol[1]) { fs -= 2; cx.font = police(fs); }
+      if (cx.measureText(s.nom).width <= max) return { l: [s.nom], fs };
+      const m = s.nom.split(" "); let best = [s.nom], e = 1e9; for (let i = 1; i < m.length; i++) { const x = [m.slice(0, i).join(" "), m.slice(i).join(" ")], d = Math.max(...x.map(y => cx.measureText(y).width)); if (d < e) { e = d; best = x; } }
+      while (Math.max(...best.map(y => cx.measureText(y).width)) > max && fs > 14 * K * k) { fs -= 2; cx.font = police(fs); } return { l: best, fs }; };
+    const haut = k => { const N = nom(k); return { N, CH: 18 * K * k + N.l.length * N.fs * 1.05 + (6 + 32 + 14 + 14) * K * k + rangs * 38 * K * k + (12 + 13 + 8 + 18 + 14) * K * k }; };
+    let k = 1, L = haut(1); for (let n = 0; n < 12 && TOP + L.CH > CB_MAX && k > .6; n++) { k = Math.max(.6, k * (CB_MAX - TOP) / L.CH - .005); L = haut(k); }
+    const CH = L.CH, CB = TOP + CH;
+    cx.save(); cx.shadowColor = "rgba(30,20,22,.28)"; cx.shadowBlur = 40; cx.shadowOffsetY = 18; cx.fillStyle = carte; rond(cx, X, TOP, CW, CH, 26 * K); cx.fill(); cx.restore();
+    cx.textAlign = "center"; cx.textBaseline = "alphabetic"; let y = TOP + 18 * K * k; cx.font = police(L.N.fs); cx.fillStyle = a;
+    L.N.l.forEach(l => { y += L.N.fs * 1.05; cx.fillText(l, W / 2, y - L.N.fs * .18); });
+    y += 6 * K * k;
+    /* « Mes dispos de » + le mois en italique, dans la couleur du site */
+    const f1 = `500 ${32 * K * k}px 'Cormorant Garamond', Georgia, serif`, f2 = `italic 500 ${32 * K * k}px 'Cormorant Garamond', Georgia, serif`, p1 = "Mes dispos de ";
+    cx.font = f1; const w1 = cx.measureText(p1).width; cx.font = f2; const w2 = cx.measureText(nomM).width, x0 = W / 2 - (w1 + w2) / 2;
+    cx.textAlign = "left"; cx.font = f1; cx.fillStyle = t; cx.fillText(p1, x0, y + 26 * K * k); cx.font = f2; cx.fillStyle = a; cx.fillText(nomM, x0 + w1, y + 26 * K * k); y += (32 + 14) * K * k;
+    /* le calendrier */
+    const gx = 3 * K * k, cw = (CW - 2 * PX - 6 * gx) / 7, ch = 34 * K * k, xc = i => X + PX + i * (cw + gx);
+    cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillStyle = t; cx.globalAlpha = .55; cx.font = `500 ${10.5 * K * k}px Jost, sans-serif`;
+    ["L", "M", "M", "J", "V", "S", "D"].forEach((l, i) => cx.fillText(l, xc(i) + cw / 2, y + 6 * K * k)); cx.globalAlpha = 1; y += 14 * K * k;
+    per.jours.forEach((j, n) => { const p = dec + n, cl = p % 7, rg = Math.floor(p / 7), x = xc(cl), yy = y + rg * (ch + 4 * K * k), mx = x + cw / 2, nb = j.libres.length;
+      if (j.ferme) { cx.globalAlpha = .18; cx.fillStyle = t; cx.font = `400 ${15 * K * k}px Jost, sans-serif`; cx.fillText(String(j.d.getDate()), mx, yy + ch / 2); cx.globalAlpha = 1; return; }
+      if (!nb) { cx.globalAlpha = .35; cx.fillStyle = t; cx.font = `400 ${15 * K * k}px Jost, sans-serif`; cx.fillText(String(j.d.getDate()), mx, yy + ch * .36);
+        cx.font = `400 ${9 * K * k}px Jost, sans-serif`; cx.fillText("complet", mx, yy + ch * .74); cx.globalAlpha = 1; return; }
+      cx.fillStyle = pil; rond(cx, x, yy, cw, ch, 12 * K * k); cx.fill();
+      cx.fillStyle = t; cx.font = `500 ${15 * K * k}px Jost, sans-serif`; cx.fillText(String(j.d.getDate()), mx, yy + ch * .36);
+      cx.fillStyle = a; cx.font = `500 ${9.5 * K * k}px Jost, sans-serif`; cx.fillText(nb + (nb > 1 ? " places" : " place"), mx, yy + ch * .75); });
+    y += rangs * (ch + 4 * K * k) - 4 * K * k + 12 * K * k;
+    /* la légende et la petite phrase */
+    cx.fillStyle = t; cx.globalAlpha = .7; cx.font = `400 ${11 * K * k}px Jost, sans-serif`; cx.fillText("en couleur = il reste de la place   ·   pâle = complet", W / 2, y + 7 * K * k); cx.globalAlpha = 1; y += (13 + 8) * K * k;
+    cx.globalAlpha = .75; cx.font = `italic 500 ${15 * K * k}px 'Cormorant Garamond', serif`; cx.fillText(astuce, W / 2, y + 9 * K * k); cx.globalAlpha = 1;
+    /* les 2 charms (en haut, de chaque côté) ; sans charm, des étoiles ✦ */
+    const c1 = s.charms[0] && await charmSur(cx, s.charms[0], 10 * K, TOP - 32 * K, 62 * K, -14), c2 = s.charms[1] && await charmSur(cx, s.charms[1], W - 10 * K - 52 * K, TOP - 22 * K, 52 * K, 12);
+    if (!c1) { etoileSur(cx, X + 4 * K, TOP - 4 * K, 30 * K); etoileSur(cx, X + 22 * K, TOP - 22 * K, 14 * K); } if (!c2) { etoileSur(cx, W - X - 4 * K, TOP - 2 * K, 24 * K); etoileSur(cx, W - X - 22 * K, TOP - 20 * K, 12 * K); }
+    pilule(cx, ["réserve ici ↓"], W / 2, 1272, false);
+    pilule(cx, SIGNATURE, W / 2, 1575 - 27 * K, true);
+    return c; }
+
   async function dessine(sem) {
     await Promise.all([chargeFonds(), chargePolices()]);
     { const nom = donnees().fond; if (nom && !(window.F100 && F100.idx[nom] != null)) await fondsDuSite(); }
@@ -155,6 +211,7 @@
     /* les couleurs de la carte : claire sur un fond clair, sombre sur un fond foncé */
     const t = s.sombre ? "#F3F0EC" : melange(s.acc, "#1E1C1B", .45), a = s.sombre ? melange(s.acc, "#FFFFFF", .7) : s.acc,
       carte = s.sombre ? "rgba(18,18,20,.82)" : "rgba(255,250,248,.93)", pil = s.sombre ? "rgba(255,255,255,.13)" : melange(s.acc, "#FFFFFF", .85), trait = s.sombre ? "rgba(255,255,255,.14)" : "rgba(30,28,27,.10)";
+    if (sem.mois != null) return dessineMois(cx, c, s, sem, { t, a, carte, pil });
     /* la mise en page (en px de l'image 1080 × 1920) : rien d'important dans les 250 px du haut ni les 340 px du bas (barres d'Instagram)
        carte de 270 à 1250 au plus · « réserve ici ↓ » à 1272 · place vide pour l'autocollant « Lien » · signature qui finit à 1575 */
     const TOP = 270, CB_MAX = 1250, Y_ICI = 1272, Y_SIG = 1575 - 27 * K;
@@ -212,7 +269,7 @@
   let ETAT = { n: 0, blob: null, url: "", jeton: 0 };
   async function prepare(n) {
     const j = ++ETAT.jeton, z = E.querySelector(".dsp-apercu"); if (z) z.classList.add("charge");
-    try { const sem = await semaine(n), c = await dessine(sem); if (j !== ETAT.jeton) return;
+    try { const sem = n === "M" ? await mois() : await semaine(n), c = await dessine(sem); if (j !== ETAT.jeton) return;
       const blob = await new Promise((ok, ko) => { try { c.toBlob(b => b ? ok(b) : ko(new Error("vide")), "image/jpeg", .93); } catch (e) { ko(e); } });
       if (j !== ETAT.jeton) return; if (ETAT.url) URL.revokeObjectURL(ETAT.url); ETAT.blob = blob; ETAT.url = URL.createObjectURL(blob);
       const zz = E.querySelector(".dsp-apercu"); if (zz) { zz.innerHTML = `<img src="${ETAT.url}" alt="Aperçu de ma story : mes dispos de la semaine">`; zz.classList.remove("charge"); }
@@ -222,7 +279,7 @@
     ecrit("loginail-dispos-vu", "1"); ETAT.n = 0; ETAT.blob = null;
     const u = lien();
     ouvre(`<div class="dsp"><h3>Mes dispos</h3>
-      <div class="dsp-bascule" role="tablist"><button role="tab" data-dsp="sem" data-n="0" class="on" aria-selected="true">Cette semaine</button><button role="tab" data-dsp="sem" data-n="1" aria-selected="false">Semaine prochaine</button></div>
+      <div class="dsp-bascule" role="tablist"><button role="tab" data-dsp="sem" data-n="0" class="on" aria-selected="true">Cette semaine</button><button role="tab" data-dsp="sem" data-n="1" aria-selected="false">La suivante</button><button role="tab" data-dsp="sem" data-n="M" aria-selected="false">${(m => m.charAt(0).toUpperCase() + m.slice(1))(MOIS[(new Date().getMonth() + 1) % 12])}</button></div>
       <div class="dsp-apercu charge"></div>
       <button class="btn dsp-btn" data-dsp="partage" disabled><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>Partager sur Instagram</button>
       <div class="dsp-copie${u ? "" : " non"}" aria-live="polite">${u ? "<i></i>Ton lien de réservation est copié" : "Mettez votre site en ligne pour avoir votre lien de réservation"}</div></div>`);
@@ -233,13 +290,13 @@
   new MutationObserver(() => { if (!E.classList.contains("fe")) { const f = E.querySelector(".feuille.dsp-f"); if (f) f.classList.remove("dsp-f"); } }).observe(E, { attributes: true, attributeFilter: ["class"] });
   document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-dsp]"); if (!b) return; e.stopPropagation(); const k = b.dataset.dsp;
     if (k === "ouvre") return feuille();
-    if (k === "sem") { const n = +b.dataset.n; if (n === ETAT.n) return; ETAT.n = n; b.parentElement.querySelectorAll("button").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-selected", x === b); });
+    if (k === "sem") { const n = b.dataset.n === "M" ? "M" : +b.dataset.n; if (n === ETAT.n) return; ETAT.n = n; b.parentElement.querySelectorAll("button").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-selected", x === b); });
       const p = E.querySelector('[data-dsp="partage"]'); if (p) p.disabled = true; return prepare(n); }
     if (k === "partage") { if (!ETAT.blob) return;
       /* le lien d'abord (pendant que le toucher compte encore), puis le menu Partager du téléphone avec l'image */
       copie().then(ok => { const m = E.querySelector(".dsp-copie"); if (m && ok) { m.classList.remove("attend"); m.innerHTML = "<i></i>Ton lien de réservation est copié"; } });
-      const d = plusJours(lundiDe(new Date()), 7 * ETAT.n);
-      partageFichier(ETAT.blob, `mes-dispos-${d.getDate()}-${MOIS[d.getMonth()]}.jpg`, "Image enregistrée ✓"); } }, true);
+      const d = ETAT.n === "M" ? null : plusJours(lundiDe(new Date()), 7 * ETAT.n), nomF = d ? `${d.getDate()}-${MOIS[d.getMonth()]}` : MOIS[(new Date().getMonth() + 1) % 12];
+      partageFichier(ETAT.blob, `mes-dispos-${nomF.normalize("NFD").replace(/[̀-ͯ]/g, "")}.jpg`, "Image enregistrée ✓"); } }, true);
 
   /* ---------- 6 · le bouton dans l'Agenda, sous la bande des jours ---------- */
   const vAg = VUES.ag;
@@ -267,7 +324,7 @@
 #E .feuille.dsp-f{max-height:calc(100% - 40px)}
 #E .dsp h3{font:400 30px/1.1 'Italiana','Cormorant Garamond',Georgia,serif;margin:4px 0 0;text-align:center}
 #E .dsp-bascule{display:flex;background:color-mix(in srgb,var(--v-rose,#F5E6E4) 70%,#E9E2DC);border-radius:99px;padding:3px;margin:12px 0 14px}
-#E .dsp-bascule button{flex:1;height:36px;border:0;border-radius:99px;background:transparent;font:inherit;font-size:13.5px;color:var(--gris);cursor:pointer;transition:background .2s,color .2s,box-shadow .2s}
+#E .dsp-bascule button{flex:1;min-width:0;padding:0 4px;white-space:nowrap;height:36px;border:0;border-radius:99px;background:transparent;font:inherit;font-size:13.5px;color:var(--gris);cursor:pointer;transition:background .2s,color .2s,box-shadow .2s}
 #E .dsp-bascule button.on{background:#fff;color:var(--v-fonce);box-shadow:0 2px 8px -4px rgba(0,0,0,.3)}
 #E .dsp-apercu{position:relative;width:min(206px,52vw);aspect-ratio:9/16;margin:0 auto 16px;border-radius:14px;overflow:hidden;background:linear-gradient(160deg,var(--v-h1,#F2D7D6),var(--v-h2,#F7ECEA));box-shadow:0 18px 34px -16px rgba(42,27,30,.5)}
 #E .dsp-apercu img{display:block;width:100%;height:100%;animation:dspArrive .3s ease both}
