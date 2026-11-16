@@ -70,7 +70,12 @@
   const vAcc = VUES.acc;
   /* 16/11 (Marie) : la cloche de l'accueil remplace le bandeau « X réservations en ligne depuis hier » */
   const CLOCHE = `<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5a2.1 2.1 0 0 0 4 0"/></svg>`;
-  const clocheListe = now => S.rdv.filter(r => r.source === "en_ligne" && r.cree_le && new Date(r.cree_le) > plusJours(now, -1)).sort((a, b) => String(b.cree_le).localeCompare(String(a.cree_le)));
+  /* 16/11 (Marie) : la cloche montre aussi les rendez-vous annulés par les clientes (lien de l'e-mail de confirmation).
+     Elle lit S.cloche (chargé à part, toutes semaines confondues) + S.rdv. Chaque ligne = un évènement { r, t (sa date), annul }. */
+  const clocheListe = now => { const h = plusJours(now, -1), m = new Map(); [...S.rdv, ...(S.cloche || [])].forEach(r => m.set(r.id, r)); const L = [];
+    m.forEach(r => { if (r.statut === "annule" && r.annule_par === "cliente" && r.annule_le && new Date(r.annule_le) > h) L.push({ r, t: r.annule_le, annul: true });
+      else if (r.source === "en_ligne" && r.cree_le && new Date(r.cree_le) > h) L.push({ r, t: r.cree_le, annul: false }); });
+    return L.sort((a, b) => String(b.t).localeCompare(String(a.t))); };
   const clocheVu = () => { try { return new Date(localStorage.getItem("loginail-cloche-vu") || 0); } catch (x) { return new Date(0); } };
   const ilya = d => { const m = Math.max(1, Math.round((Date.now() - d) / 60000)); return m < 60 ? `il y a ${m} min` : `il y a ${Math.round(m / 60)} h`; };
   document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-v-cloche]"); if (!b) return; e.stopPropagation();
@@ -78,9 +83,9 @@
     b.classList.remove("sonne"); const bd = b.querySelector(".v-badge"); if (bd) bd.remove(); b.setAttribute("aria-label", "Réservations en ligne");
     const L = clocheListe(new Date());
     ouvre(`<h3>Réservations en ligne</h3><div class="sous">Depuis hier</div>` + (L.length
-      ? `<div class="liste v-liste v-cl-liste">${L.map(r => { const d = new Date(r.debut);
-          return `<div class="v-l" data-rdv="${r.id}"><span class="v-h">${JOURS[(d.getDay() + 6) % 7].slice(0, 3).toLowerCase()}. ${d.getDate()}<br>${hh(d)}</span><div class="v-t">${esc(nomRdv(r))}<small>${esc(titreRdv(r))}${titreRdv(r) ? " · " : ""}réservé ${ilya(new Date(r.cree_le))}</small></div>${r.prix ? `<span class="v-p">${euros(r.prix)}</span>` : ""}</div>`; }).join("")}</div>`
-      : `<div class="blanche vide"><b>Rien de nouveau</b><span>Aucune réservation en ligne depuis hier.</span></div>`)); }, true);
+      ? `<div class="liste v-liste v-cl-liste">${L.map(({ r, t, annul }) => { const d = new Date(r.debut);
+          return `<div class="v-l${annul ? " v-annul" : ""}" data-rdv="${r.id}"><span class="v-h">${JOURS[(d.getDay() + 6) % 7].slice(0, 3).toLowerCase()}. ${d.getDate()}<br>${hh(d)}</span><div class="v-t">${esc(nomRdv(r))}<small>${annul ? `a annulé ${ilya(new Date(t))}${titreRdv(r) ? " · " + esc(titreRdv(r)) : ""}` : `${esc(titreRdv(r))}${titreRdv(r) ? " · " : ""}réservé ${ilya(new Date(t))}`}</small></div>${annul ? `<span class="v-p v-annule">Annulé</span>` : r.prix ? `<span class="v-p">${euros(r.prix)}</span>` : ""}</div>`; }).join("")}</div>`
+      : `<div class="blanche vide"><b>Rien de nouveau</b><span>Aucune réservation ni annulation depuis hier.</span></div>`)); }, true);
 
   VUES.acc = () => { const f = dom(vAcc()), now = new Date(), prenom = S.profil.prenom || "", salon = (S.profil && S.profil.nom_salon) || "votre salon";
     const ai = f.querySelector(".ai-b"), dem = [...f.querySelectorAll(".k")].find(k => /Pour bien démarrer/.test(k.textContent));
@@ -89,7 +94,7 @@
     const auj = S.rdv.filter(r => memeJour(new Date(r.debut), now) && r.statut !== "annule").sort((a, b) => a.debut.localeCompare(b.debut)), cli = auj.filter(r => r.cliente_id);
     const ici = cli.find(r => new Date(r.debut) <= now && new Date(r.fin) > now && r.statut === "prevu");
     const proch = cli.find(r => r !== ici && new Date(r.fin) > now && new Date(r.debut) > now && r.statut === "prevu");
-    const nouv = clocheListe(now), vu = clocheVu(), nonvu = nouv.filter(r => new Date(r.cree_le) > vu).length;
+    const nouv = clocheListe(now), vu = clocheVu(), nonvu = nouv.filter(x => new Date(x.t) > vu).length;
     let h = `<div class="v-haut v-haut-acc">${etoiles("acc")}<div class="tete"><div><h1 style="--n:${(JOURS[(now.getDay() + 6) % 7] + " " + now.getDate() + " " + MOIS[now.getMonth()]).length}">${JOURS[(now.getDay() + 6) % 7]} <em>${now.getDate()} ${MOIS[now.getMonth()]}</em></h1></div><div class="v-btns"><button class="ai-b v-cloche${nonvu ? " sonne" : ""}" data-v-cloche aria-label="Réservations en ligne${nonvu ? " : " + nonvu + " nouvelle" + (nonvu > 1 ? "s" : "") : ""}">${CLOCHE}${nonvu ? `<span class="v-badge">${nonvu}</span>` : ""}</button>${ai ? ai.outerHTML : ""}</div></div>`;
     if (proch) { const d = new Date(proch.debut), mn = Math.round((d - now) / 60000), tel = (proch.clientes && proch.clientes.telephone || "").replace(/\s/g, "");
       h += `<div class="v-prochain" data-rdv="${proch.id}"><div class="v-lab">Prochaine cliente</div><div class="v-grand"><b>${hh(d)}</b><span>dans ${mn >= 60 ? duree(mn) : mn + " min"}</span></div>
@@ -288,6 +293,7 @@
 @keyframes v-sonne{0%,100%{transform:rotate(0)}15%{transform:rotate(14deg)}30%{transform:rotate(-11deg)}45%{transform:rotate(7deg)}60%{transform:rotate(-4deg)}75%{transform:rotate(2deg)}}
 @media (prefers-reduced-motion:reduce){#E .v-cloche.sonne svg{animation:none}}
 #E .v-cl-liste .v-h{line-height:1.3;font-size:12.5px;white-space:nowrap;width:auto;min-width:54px}
+#E .v-cl-liste .v-annul .v-h{text-decoration:line-through;opacity:.55}#E .v-cl-liste .v-annule{font-size:12.5px;color:#A04A4A}
 #E .v-haut-acc .tete{container-type:inline-size}#E .v-haut-acc .tete h1{white-space:nowrap;font-size:min(38px,calc((100cqw - 112px) / (var(--n, 21) * .48)))}
 #E :is(.k,.lab,.lab2,.fi-k,.form label,.noire small,.fi-noire small,.fi-t3 small,.su-t3 small,.su-b2 small,.k-tot span,.rv-note b,.su-auj2 small,.fi-fid .ht small,.abo small,.deco,.btn,.semaine button small,.tete small){text-transform:none!important;letter-spacing:0!important}
 #E .k{font-size:13px;font-weight:400;color:var(--gris);margin:26px 0 10px}

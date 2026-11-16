@@ -92,6 +92,10 @@ async function chargeSemaine() {
   const { data, error } = await sb.from("rendez_vous").select("*, clientes(id,prenom,nom,telephone), prestations(id,nom)")
     .gte("debut", de.toISOString()).lt("debut", a.toISOString()).order("debut");
   if (error) throw error; S.rdv = data || [];
+  /* 16/11 : la cloche de l'accueil (réservations en ligne et annulations des clientes depuis hier), quelle que soit la semaine du rendez-vous */
+  try { const hier = new Date(Date.now() - 864e5).toISOString(), sel = "*, clientes(id,prenom,nom,telephone), prestations(id,nom)";
+    const [a, b] = await Promise.all([sb.from("rendez_vous").select(sel).eq("source", "en_ligne").gt("cree_le", hier), sb.from("rendez_vous").select(sel).eq("statut", "annule").gt("annule_le", hier)]);
+    S.cloche = [...((a && a.data) || []), ...((b && b.data) || [])]; } catch (e) {}
   const d0 = new Date(); d0.setDate(1); d0.setMonth(d0.getMonth() - 1); d0.setHours(0, 0, 0, 0);
   const t = await sb.from("tickets").select("*").gte("cree_le", d0.toISOString()).order("cree_le", { ascending: false });
   S.tickets = t.data || [];
@@ -233,7 +237,7 @@ function msFond() {
 
 /* ---------- les feuilles ---------- */
 function feuilleRdv(id) {
-  const r = S.rdv.find(x => x.id === id); if (!r) return; const d = new Date(r.debut), f = new Date(r.fin), t = r.clientes?.telephone?.replace(/\s/g, "");
+  const r = S.rdv.find(x => x.id === id) || (S.cloche || []).find(x => x.id === id); if (!r) return; const d = new Date(r.debut), f = new Date(r.fin), t = r.clientes?.telephone?.replace(/\s/g, "");
   ouvre(`<div class="fiche-t"><div><h3 style="text-align:left;margin:0">${esc(nomRdv(r))}</h3><div class="sous" style="text-align:left;margin:2px 0 0">${[hm(d) + " – " + hm(f), esc(titreRdv(r)), r.prix ? euros(r.prix) : ""].filter(Boolean).join(" · ")}</div></div>
     ${t ? `<div class="ronds"><button data-href="tel:${esc(t)}" aria-label="Appeler">${I.tel}</button><button data-href="sms:${esc(t)}" aria-label="Message">${I.msg}</button></div>` : ""}</div>
     ${r.source === "en_ligne" ? `<div class="sous" style="text-align:left;margin:10px 0 0">Réservé en ligne${r.acompte ? " · acompte de " + euros(r.acompte) + (r.acompte_paye ? " payé" : " (à régler au salon)") : ""}</div>` : ""}
