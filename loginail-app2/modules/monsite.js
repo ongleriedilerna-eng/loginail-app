@@ -20,7 +20,7 @@
   const PAIL=[["non","Sans"],["or","Dorées"],["argent","Argentées"],["nacre","Nacrées"],["holo","Holographiques"],["rose","Roses"]];
   const NOMF={1:"Amande",2:"Stiletto",3:"Carré",4:"Ovale",5:"Coffin",6:"Carré arrondi"};
   const url=()=>{if(!DEMO)return "loginail-creer/pret.html?public&appli="+Date.now();const b=lit(),q=new URLSearchParams({style:b.style||1,couleur:b.couleur||"noir",mode:b.mode||"jour",fond:b.fond||"",police:b.police||"elegante",paillettes:b.paillettes||"non",charm:(b.charms||[]).join(",")});
-    return "loginail-creer/pret.html?public&exemple=dilerna&"+q.toString()+(b.epure?"&epure=1":"")+(b.coffin?"&coffin=1":"")+(b.arrondi?"&arrondi=1":"")+(b.vif?"&vif="+b.vif:"")+"&t="+Date.now()};
+    return "loginail-creer/pret.html?public&appli=voir&exemple=dilerna&"+q.toString()+(b.epure?"&epure=1":"")+(b.coffin?"&coffin=1":"")+(b.arrondi?"&arrondi=1":"")+(b.vif?"&vif="+b.vif:"")+"&t="+Date.now()};
   const st=document.createElement("style");st.textContent=`
 .ms2-apercu{position:relative;height:230px;border-radius:20px;overflow:hidden;background:#EAE5DF;margin:0 0 10px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
 .ms2-apercu iframe{position:absolute;left:0;top:0;width:390px;height:844px;border:0;transform-origin:0 0;pointer-events:none}

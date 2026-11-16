@@ -46,6 +46,8 @@ function squelette() {
 }
 /* 13/11 (Apple) : sur iPhone, un fichier ne se télécharge pas : on l'ouvre avec « Partager » (Enregistrer dans Fichiers, Mail…) */
 async function partageFichier(blob, nom, fait) { try { const f = new File([blob], nom, { type: blob.type }); if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: nom }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+  /* 16/11 (Apple) : dans l'appli iPhone, un lien de téléchargement ne fait rien → on ne dit jamais « téléchargé ✓ » si ce n'est pas vrai */
+  if (!/^https?:$/.test(location.protocol)) { dit("Partage impossible : demandez le fichier via l’aide."); return; }
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nom; document.body.appendChild(a); a.click(); a.remove(); dit(fait); }
 let dit = t => { const z = $(".toast", E); if (!z) return; z.textContent = t; z.classList.add("on"); clearTimeout(z._t); z._t = setTimeout(() => z.classList.remove("on"), 2200); };
 const ouvre = h => { $(".feuille .fc", E).innerHTML = '<button class="fe-x" data-a="fermer" aria-label="Fermer">×</button>' + h; E.classList.add("fe"); $(".feuille", E).scrollTop = 0; };
@@ -180,9 +182,9 @@ function vueSite() {
   const s = S.site, b = brouillon();
   return tete("Mon site", s?.en_ligne ? "En ligne" : "Pas encore en ligne")
     + `<div class="noire siteb"><small>Mon site</small><div class="ms-nom"><b>${esc((b && b.nom) || S.profil?.nom_salon || "Votre salon")}</b><span>${s ? esc(s.slug) : "Pas encore d’adresse"}</span></div><div class="enl"><i></i>${s?.en_ligne ? "En ligne · réservations ouvertes" : "Hors ligne"}</div>
-      <div class="bts">${s?.en_ligne ? `<button class="plein" data-href="${(/^https?:$/.test(location.protocol) && location.hostname !== "app.loginail.fr") ? "" : "https://loginail.fr/"}loginail-creer/pret.html?public&s=${esc(s.slug)}" data-neuf>Voir mon site</button>` : ""}<button data-a="site">${s?.en_ligne ? "Mettre à jour" : "Mettre en ligne"}</button></div></div>`
+      <div class="bts">${s?.en_ligne ? `<button class="plein" data-href="${(/^https?:$/.test(location.protocol) && location.hostname !== "app.loginail.fr") ? "" : "https://loginail.fr/"}loginail-creer/pret.html?public&appli=voir&s=${esc(s.slug)}" data-neuf>Voir mon site</button>` : ""}<button data-a="site">${s?.en_ligne ? "Mettre à jour" : "Mettre en ligne"}</button></div></div>`
     + (b ? `<div class="k">Mon style</div><div class="liste">${[["style", "Changer de style", "Des sites à glisser : gardez vos coups de cœur"], ["perso", "Personnaliser", "La forme, le fond, les couleurs, l’écriture"], ["charms", "Mes charms", (b.stickers || []).length ? b.stickers.length + " charm" + (b.stickers.length > 1 ? "s" : "") + " posé" + (b.stickers.length > 1 ? "s" : "") : "Posez-les où vous voulez sur votre site"]].map(l => `<div class="ligne" data-pont="${l[0]}"><div class="t">${l[1]}<span>${l[2]}</span></div><span class="fl">›</span></div>`).join("")}</div>` : "")
-    + (b ? "" : `<div class="blanche vide" style="margin-top:12px"><b>Créez d’abord votre site</b><span>Sur loginail.fr, en 3 étapes : il apparaîtra ici.</span></div>`);
+    + (b ? "" : `<div class="blanche vide" style="margin-top:12px"><b>Votre site n’est pas encore créé.</b><span>Il apparaîtra ici dès qu’il sera prêt.</span></div>`);
 }
 function vueReglages() {
   const L = (t, sous, a, fin) => `<div class="ligne"${a ? ` data-a="${a}"` : ""}><div class="t">${t}${sous ? `<span>${sous}</span>` : ""}</div>${fin ?? (a ? '<span class="fl">›</span>' : "")}</div>`;
