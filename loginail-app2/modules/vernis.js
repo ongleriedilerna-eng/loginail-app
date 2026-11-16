@@ -26,10 +26,10 @@
   /* ---------- 1 · les 7 couleurs de l'appli (ronds « Duos ») ---------- */
   const T = [
     { id: "rose", nom: "Rose vernis", c: "#FBF8F5", rose: "#F5E6E4", acc: "#B5475E", fonce: "#2A1B1E", h1: "#F2D7D6", h2: "#F7ECEA" },
+    { id: "graphite", nom: "Graphite", c: "#F7F7F8", rose: "#E6E7EA", acc: "#4A4E55", fonce: "#1B1D21", h1: "#D9DBE0", h2: "#EEEFF2" },
     { id: "nude", nom: "Nude", c: "#FAF7F3", rose: "#F0E6DC", acc: "#8C5F45", fonce: "#2B2420", h1: "#EADBCB", h2: "#F5EDE4" },
     { id: "sauge", nom: "Sauge", c: "#F7F8F4", rose: "#E4EBE1", acc: "#4F6E55", fonce: "#1F2A22", h1: "#D6E2D3", h2: "#EEF2EB" },
     { id: "lavande", nom: "Lavande", c: "#F9F8FB", rose: "#ECE6F3", acc: "#76589A", fonce: "#241E2C", h1: "#DED3EC", h2: "#F2EDF7" },
-    { id: "graphite", nom: "Graphite", c: "#F7F7F8", rose: "#E6E7EA", acc: "#4A4E55", fonce: "#1B1D21", h1: "#D9DBE0", h2: "#EEEFF2" },
     { id: "terracotta", nom: "Terracotta", c: "#FBF7F4", rose: "#F4E3DA", acc: "#A4502F", fonce: "#2E1C15", h1: "#EFD3C4", h2: "#F7EAE2" },
     { id: "bleunuit", nom: "Bleu nuit", c: "#F7F8FA", rose: "#E3E8F1", acc: "#3B5583", fonce: "#161E2E", h1: "#D3DCEB", h2: "#EDF1F7" }];
   const teinte = () => T.find(t => t.id === lit("loginail-appli-teinte", "rose")) || T[0];
