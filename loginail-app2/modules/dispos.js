@@ -1,9 +1,9 @@
 /* ===== 16/11 (Marie, décision D23) : « Partager mes dispos » =====
-   Dans l'Agenda, un bouton fabrique la story Instagram de la semaine (version « Carnet », maquettes/dispos-story.html) :
+   En bas de l'Accueil, un bouton fabrique la story Instagram de la semaine (version « Carnet », maquettes/dispos-story.html) :
    le fond, l'écriture du nom et 2 charms de SON site, puis une ligne par jour ouvert avec ses places LIBRES.
    L'image (1080 × 1920) est dessinée dans le téléphone : aucun serveur, 0 €.
    Jamais un prénom ni une prestation de cliente : on ne lit que le début et la fin des rendez-vous.
-   Ce fichier est chargé APRÈS vernis.js (il ajoute le bouton dans l'agenda déjà dessiné). */
+   Ce fichier est chargé APRÈS vernis.js (il ajoute le bouton sous l'accueil déjà dessiné). */
 (function () {
   const W = 1080, H = 1920, K = 3;                        /* la maquette est dessinée en 360 × 640 : tout × 3 */
   const SIGNATURE = ["✦ mon planning s'est fait tout seul · ", "loginail.fr"];
@@ -298,19 +298,18 @@
       const d = ETAT.n === "M" ? null : plusJours(lundiDe(new Date()), 7 * ETAT.n), nomF = d ? `${d.getDate()}-${MOIS[d.getMonth()]}` : MOIS[(new Date().getMonth() + 1) % 12];
       partageFichier(ETAT.blob, `mes-dispos-${nomF.normalize("NFD").replace(/[̀-ͯ]/g, "")}.jpg`, "Image enregistrée ✓"); } }, true);
 
-  /* ---------- 6 · le bouton dans l'Agenda, sous la bande des jours ---------- */
-  const vAg = VUES.ag;
-  VUES.ag = () => { const h = vAg(), t = document.createElement("template"); t.innerHTML = h; const sem = t.content.querySelector(".semaine"); if (!sem) return h;
+  /* ---------- 6 · le bouton, tout en bas de l'Accueil (16/11, Marie : seulement dans l'Accueil, plus dans l'Agenda) ---------- */
+  const vAcc = VUES.acc;
+  VUES.acc = () => { const h = vAcc();
     const neuf = lit("loginail-dispos-vu", "") !== "1", s = (() => { try { return site(); } catch (e) { return { fond: null }; } })();
     const vig = s.fond ? `<span class="dsp-vig f100" aria-hidden="true">${s.fond.base === SITE ? s.fond.html.replace(/url\((?!['"]?(data:|https?:))(['"]?)/g, "url($2" + SITE) : s.fond.html}<i></i></span>` : '<span class="dsp-vig" aria-hidden="true"><i></i></span>';
-    sem.insertAdjacentHTML("afterend", `<button class="dsp-ouvre" data-dsp="ouvre">${neuf ? '<span class="dsp-neuf">nouveau</span>' : ""}${vig}<span class="dsp-t"><b>Partager mes dispos</b><small>Votre story de la semaine, prête en 1 clic</small></span><span class="dsp-fl" aria-hidden="true">›</span></button>`);
-    const d = document.createElement("div"); d.appendChild(t.content); return d.innerHTML; };
-  /* la vignette montre son fond : on charge les fonds une fois, puis on redessine l'agenda s'il est ouvert */
-  chargeFonds().then(() => { if (S.onglet === "ag" && E.querySelector(".ong") && !E.classList.contains("fe")) try { rendu(); } catch (e) {} });
+    return h + `<button class="dsp-ouvre" data-dsp="ouvre">${neuf ? '<span class="dsp-neuf">nouveau</span>' : ""}${vig}<span class="dsp-t"><b>Partager mes dispos</b><small>Votre story de la semaine, prête en 1 clic</small></span><span class="dsp-fl" aria-hidden="true">›</span></button>`; };
+  /* la vignette montre son fond : on charge les fonds une fois, puis on redessine l'accueil s'il est ouvert */
+  chargeFonds().then(() => { if (S.onglet === "acc" && E.querySelector(".ong") && !E.classList.contains("fe")) try { rendu(); } catch (e) {} });
 
   const st = document.createElement("style");
   st.textContent = `
-#E .dsp-ouvre{position:relative;display:flex;align-items:center;gap:12px;width:100%;margin:14px 0 0;padding:12px 14px;border-radius:18px;background:#fff;border:1px solid color-mix(in srgb,var(--v-acc) 35%,transparent);box-shadow:0 14px 30px -20px rgba(120,40,55,.55);font:inherit;text-align:left;color:inherit;cursor:pointer;transition:transform .12s}
+#E .dsp-ouvre{position:relative;display:flex;align-items:center;gap:12px;width:100%;margin:26px 0 8px;padding:12px 14px;border-radius:18px;background:#fff;border:1px solid color-mix(in srgb,var(--v-acc) 35%,transparent);box-shadow:0 14px 30px -20px rgba(120,40,55,.55);font:inherit;text-align:left;color:inherit;cursor:pointer;transition:transform .12s}
 #E .dsp-ouvre:active{transform:scale(.98)}
 #E .dsp-ouvre .dsp-t{flex:1;min-width:0}
 #E .dsp-ouvre b{display:block;font-weight:500;font-size:15px;color:var(--v-encre,#1E1C1B)}
