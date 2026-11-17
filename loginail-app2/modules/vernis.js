@@ -417,6 +417,8 @@
 #E .v-cherche .v-rondb{width:46px;height:46px}
 #E .v-filtres{display:flex;gap:8px;margin:14px -22px 0;padding:0 22px;overflow-x:auto;scrollbar-width:none}
 #E .v-filtres::-webkit-scrollbar{display:none}
+/* 17/11 (Marie) : le calendrier du mois et le menu de tri passaient SOUS la bande des jours, les rendez-vous et les filtres (ils étaient enfermés au niveau 1) ; le mois n'est plus transparent */
+#E .v-haut>.tete,#E .v-haut>.v-cherche{z-index:40!important}#E .calm{background:#fff!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;box-shadow:0 24px 60px -18px rgba(30,28,27,.45)!important}
 #E .v-filtres button{flex:none;height:34px;padding:0 14px;border-radius:99px;background:rgba(255,255,255,.75);border:1px solid var(--v-trait);font:inherit;font-size:13px;color:inherit;cursor:pointer;transition:background .2s,color .2s}
 #E .v-filtres button.on{background:var(--v-fonce);color:#fff;border-color:var(--v-fonce)}
 #E .vue[data-p="cl"] .v-groupe{margin-right:14px}

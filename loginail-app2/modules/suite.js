@@ -128,10 +128,9 @@
   document.addEventListener("change", e => { if (e.target.id === "cg-du" || e.target.id === "cg-au") { CG.du = $("#cg-du", E).value; CG.au = $("#cg-au", E).value; if (CG.au < CG.du) CG.au = CG.du; feuilleConges(); } });
 
   /* ---------- la semaine coulisse : on glisse à gauche ou à droite sur les jours ---------- */
-  { let sx = null, sy = 0; E.addEventListener("touchstart", e => { const z = e.target.closest(".semaine,.nav-sem"); sx = z && e.touches.length === 1 ? e.touches[0].clientX : null; sy = e.touches[0].clientY; }, { passive: true });
-    E.addEventListener("touchend", async e => { if (sx == null) return; const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy; sx = null; if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-      const n = dx < 0 ? 7 : -7; S.lundi = plusJours(S.lundi, n); S.jour = plusJours(S.jour, n); avale = Date.now(); await chargeSemaine(); rendu(); }, { passive: true });
-    document.addEventListener("click", e => { if (Date.now() - avale < 400 && e.target.closest && e.target.closest(".semaine")) { e.stopPropagation(); e.preventDefault(); } }, true); }
+  /* 17/11 : un seul code pour le geste (plus bas, « la semaine suit le doigt ») ; ici on avale juste le clic qui suit un glissement */
+  {
+    document.addEventListener("click", e => { if (Date.now() - (window.__semAvale || 0) < 400 && e.target.closest && e.target.closest(".semaine")) { e.stopPropagation(); e.preventDefault(); } }, true); }
   let avale = 0;
   /* ---------- faire glisser un rendez-vous dans l'agenda (on reste appuyée, puis on monte ou on descend) ---------- */
   let G = null;
@@ -524,7 +523,7 @@ h3 .lap{font-size:11px;vertical-align:4px}
 .rv-fid-n.gros b{font-weight:500;color:#1E1C1B}
 .ph-carte{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;border-radius:20px;padding:10px 10px 10px 16px;background:#fff;font-size:14px}.ph-carte b{font-weight:500}
 .ph-carte button{flex:none;border:0;border-radius:99px;background:var(--acc,#1E1C1B);color:#fff;padding:10px 16px;font:inherit;font-size:13px;display:flex;align-items:center;gap:6px}
-.semaine.suit{transition:none!important}.semaine.glisse{transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s}`;
+.semaine,.nav-sem{touch-action:pan-y}.semaine.suit{transition:none!important}.semaine.glisse{transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s}`;
   document.head.appendChild(st);
   const tel = t => String(t || "").replace(/\s/g, "");
   new MutationObserver(() => {
@@ -540,17 +539,25 @@ h3 .lap{font-size:11px;vertical-align:4px}
     try { await chargeVisites(); } catch (x) {} const c = S.clientes.find(x => x.id === b.dataset.cli); if (!c) return; const v = __fid.etat(c), salon = (S.profil && S.profil.nom_salon) || "";
     const txt = v.pret ? `Bonjour ${c.prenom || ""}, merci pour votre visite ! Votre carte de fidélité est complète : ${v.f.cadeau} à votre prochain rendez-vous. ${salon}` : `Bonjour ${c.prenom || ""}, merci pour votre visite ! Votre carte de fidélité : ${v.fait} sur ${v.f.n}. Encore ${v.reste} visite${v.reste > 1 ? "s" : ""} avant votre cadeau (${v.f.cadeau}). ${salon}`;
     location.href = `sms:${tel(c.telephone)}&body=${encodeURIComponent(txt.trim())}`; }, true);
-  /* la semaine suit le doigt, puis la nouvelle arrive du bon côté */
-  let x0 = null, y0 = 0, sens = 0, bouge = false;
-  E.addEventListener("touchstart", e => { const z = e.target.closest && e.target.closest(".semaine,.nav-sem"); x0 = z && e.touches.length === 1 ? e.touches[0].clientX : null; y0 = e.touches[0].clientY; bouge = false; }, { passive: true });
-  E.addEventListener("touchmove", e => { if (x0 == null) return; const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0; if (!bouge && Math.abs(dx) < 8) return;
-    if (!bouge && Math.abs(dy) > Math.abs(dx)) { x0 = null; return; } bouge = true; const s = E.querySelector(".vue.on .semaine"); if (s) { s.classList.add("suit"); s.style.transform = `translateX(${dx}px)`; s.style.opacity = String(1 - Math.min(.6, Math.abs(dx) / 400)); } }, { passive: true });
-  E.addEventListener("touchend", e => { if (x0 == null || !bouge) { x0 = null; return; } const dx = e.changedTouches[0].clientX - x0; x0 = null; const s = E.querySelector(".vue.on .semaine"); if (!s) return;
+  /* la semaine suit le doigt, puis la nouvelle arrive du bon côté.
+     17/11 (Marie) : un seul code décide (avant, deux codes avec des règles différentes : la semaine pouvait partir sans être remplacée → chiffres invisibles) ;
+     dès que le doigt part sur le côté, la page ne défile plus (avant, elle descendait jusqu'en bas de l'agenda). */
+  let x0 = null, y0 = 0, bouge = false, enCours = false;
+  const posee = s => { s.classList.remove("suit", "glisse"); s.style.transition = ""; s.style.transform = ""; s.style.opacity = ""; };
+  E.addEventListener("touchstart", e => { const z = !enCours && e.target.closest && e.target.closest(".semaine,.nav-sem"); x0 = z && e.touches.length === 1 ? e.touches[0].clientX : null; y0 = e.touches[0].clientY; bouge = false; }, { passive: true });
+  E.addEventListener("touchmove", e => { if (x0 == null) return; const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
+    if (!bouge) { if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; if (Math.abs(dy) >= Math.abs(dx)) { x0 = null; return; } bouge = true; }
+    if (e.cancelable) e.preventDefault();
+    const s = E.querySelector(".vue.on .semaine"); if (s) { s.classList.add("suit"); s.style.transform = `translateX(${dx}px)`; s.style.opacity = String(1 - Math.min(.6, Math.abs(dx) / 400)); } }, { passive: false });
+  const fin = async e => { if (x0 == null || !bouge) { x0 = null; return; } const dx = e.changedTouches[0].clientX - x0; x0 = null; bouge = false; window.__semAvale = Date.now();
+    const s = E.querySelector(".vue.on .semaine"); if (!s) return;
     s.classList.remove("suit"); s.classList.add("glisse");
-    if (Math.abs(dx) < 45) { s.style.transform = ""; s.style.opacity = ""; return; }   /* pas assez loin : elle revient */
-    sens = dx < 0 ? 1 : -1; s.style.transform = `translateX(${dx < 0 ? -110 : 110}%)`; s.style.opacity = "0"; }, { passive: true });
-  /* quand la nouvelle semaine est dessinée, elle arrive de l'autre côté */
-  new MutationObserver(() => { if (!sens) return; const s = E.querySelector(".vue.on .semaine"); if (!s || s.dataset.arrive) return; s.dataset.arrive = "1";
-    const d = sens; sens = 0; s.style.transition = "none"; s.style.transform = `translateX(${d > 0 ? 60 : -60}%)`; s.style.opacity = "0";
-    requestAnimationFrame(() => requestAnimationFrame(() => { s.style.transition = "transform .3s cubic-bezier(.2,.8,.2,1),opacity .3s"; s.style.transform = ""; s.style.opacity = ""; })); }).observe(E, { childList: true, subtree: true });
+    if (e.type === "touchcancel" || Math.abs(dx) < 45) { s.style.transform = ""; s.style.opacity = ""; setTimeout(() => posee(s), 300); return; }   /* pas assez loin : elle revient */
+    const d = dx < 0 ? 1 : -1; enCours = true; s.style.transform = `translateX(${d > 0 ? -110 : 110}%)`; s.style.opacity = "0";
+    S.lundi = plusJours(S.lundi, 7 * d); S.jour = plusJours(S.jour, 7 * d);
+    try { await Promise.all([chargeSemaine(), new Promise(r => setTimeout(r, 160))]); } catch (x) {}
+    rendu(); enCours = false; const n = E.querySelector(".vue.on .semaine"); if (!n) return;
+    n.style.transition = "none"; n.style.transform = `translateX(${d > 0 ? 60 : -60}%)`; n.style.opacity = "0";
+    requestAnimationFrame(() => requestAnimationFrame(() => { n.style.transition = "transform .3s cubic-bezier(.2,.8,.2,1),opacity .3s"; n.style.transform = ""; n.style.opacity = ""; setTimeout(() => posee(n), 320); })); };
+  E.addEventListener("touchend", fin, { passive: true }); E.addEventListener("touchcancel", fin, { passive: true });
 })();

@@ -60,7 +60,7 @@ function ecranConnexion(envoye) {
   E.innerHTML = `<div class="vue on"><div class="cx"><div class="marque">LOGINAIL</div>
     ${envoye ? (/[?&]parcours/.test(location.search) ? `<h1>Ceci est un essai.</h1><div class="ok">Aucun e-mail n’est envoyé ici. Tapez <b>6 chiffres au hasard</b> pour entrer et voir l’appli d’une nouvelle prothésiste.</div>` : `<h1>Regardez vos e-mails.</h1><div class="ok">Nous venons d’envoyer un e-mail à <b>${esc(envoye)}</b>. Le code est dans son titre.</div>`) + `
       <input id="cx-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Le code" style="text-align:center;letter-spacing:.3em;font-size:20px" data-mail="${esc(envoye)}">
-      <button class="btn" data-a="cx-code">Me connecter</button><button class="lien-t" data-a="cx-retour">Changer d’adresse</button>`
+      <button class="btn clair" data-a="cx-coller" style="margin-bottom:8px">Coller le code</button><button class="btn" data-a="cx-code">Me connecter</button><button class="lien-t" data-a="cx-retour">Changer d’adresse</button>`
     : `<h1>Votre espace pro.</h1><p>Entrez votre adresse e-mail : nous vous envoyons un code pour vous connecter, sans mot de passe.</p>
       <input id="cx-mail" type="email" inputmode="email" autocomplete="email" placeholder="votre@adresse.fr"><button class="btn" data-a="cx-envoi">Recevoir mon code</button>
       ${/^https?:$/.test(location.protocol) && !/[?&]parcours/.test(location.search) ? `<div class="cx-neuve" style="margin-top:26px;border-radius:18px;background:#fff;padding:14px 16px;font-size:13.5px;line-height:1.5;text-align:left"><b style="font-weight:500">Pas encore de compte ?</b><br>Votre espace pro se crée en même temps que votre site, en 3 minutes.<a href="https://loginail.fr" style="display:block;margin-top:8px;font-weight:500;text-decoration:underline;text-underline-offset:3px;color:inherit">Créer mon site sur loginail.fr ›</a></div>` : ""}`}
@@ -87,11 +87,17 @@ async function chargeVisites() { try { const { data } = await sb.from("rendez_vo
     S.vis = m; if (S.onglet === "cl" && E.querySelector(".ong") && !E.querySelector(".feuille.on,.voile.on")) rendu(); } catch (e) {} }
 const TRIS = [["az", "A à Z"], ["vues", "Vues récemment"], ["proch", "Prochain rendez-vous"], ["neuves", "Ajoutées récemment"]];
 const MOISC = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."], jourCourt = d => { const x = new Date(d); return x.getDate() + " " + MOISC[x.getMonth()]; };
+/* 17/11 : les créneaux annulés que la pro a supprimés, en attente que l'e-mail de la cliente parte (voir « rdv-suppr ») */
+const SUPP = (() => { try { return JSON.parse(localStorage.getItem("loginail-a-suppr") || "{}"); } catch (e) { return {}; } })();
+const suppGarde = () => { try { localStorage.setItem("loginail-a-suppr", JSON.stringify(SUPP)); } catch (e) {} };
+function suppLater(id, quand) { SUPP[id] = quand; suppGarde(); suppPasse(); }
+async function suppPasse() { for (const id of Object.keys(SUPP)) { if (Date.now() < SUPP[id]) { setTimeout(suppPasse, SUPP[id] - Date.now() + 500); continue; }
+  try { const { error } = await sb.from("rendez_vous").delete().eq("id", id); if (!error) { delete SUPP[id]; suppGarde(); } } catch (e) {} } }
 async function chargeSemaine() {
   const de = S.lundi, a = plusJours(S.lundi, 7);
   const { data, error } = await sb.from("rendez_vous").select("*, clientes(id,prenom,nom,telephone), prestations(id,nom)")
     .gte("debut", de.toISOString()).lt("debut", a.toISOString()).order("debut");
-  if (error) throw error; S.rdv = data || [];
+  if (error) throw error; S.rdv = (data || []).filter(r => !SUPP[r.id]); if (Object.keys(SUPP).length) suppPasse();
   /* 16/11 : la cloche de l'accueil (réservations en ligne et annulations des clientes depuis hier), quelle que soit la semaine du rendez-vous */
   try { const hier = new Date(Date.now() - 864e5).toISOString(), sel = "*, clientes(id,prenom,nom,telephone), prestations(id,nom)";
     const [a, b] = await Promise.all([sb.from("rendez_vous").select(sel).eq("source", "en_ligne").gt("cree_le", hier), sb.from("rendez_vous").select(sel).eq("statut", "annule").gt("annule_le", hier)]);
@@ -245,17 +251,17 @@ function feuilleRdv(id) {
       : `<button class="btn" data-a="encaisser" data-id="${r.id}" style="margin-top:16px">Encaisser · ${euros(resteDe(r))}</button>`) : ""}
     ${r.statut === "prevu" ? `<button class="btn${CAISSE() && r.cliente_id ? " clair" : ""}" data-a="statut" data-s="fini" data-id="${r.id}" style="margin-top:${CAISSE() && r.cliente_id ? 8 : 16}px">C’est fini</button>
     <div class="petits"><button data-a="decaler" data-id="${r.id}">Décaler</button><button data-a="statut" data-s="absente" data-id="${r.id}">Pas venue</button><button data-a="statut" data-s="annule" data-id="${r.id}">Annuler le rendez-vous</button></div>`
-    : `<div class="sous" style="margin-top:14px">${{ fini: "Rendez-vous fini", absente: "Pas venue", annule: "Annulé" }[r.statut]}</div><div class="petits"><button data-a="statut" data-s="prevu" data-id="${r.id}">Remettre comme prévu</button></div>`}`);
+    : `<div class="sous" style="margin-top:14px">${{ fini: "Rendez-vous fini", absente: "Pas venue", annule: "Annulé" }[r.statut]}</div><div class="petits">${r.statut === "annule" ? `<button data-a="rdv-suppr" data-id="${r.id}">Supprimer le créneau</button>` : `<button data-a="statut" data-s="prevu" data-id="${r.id}">Remettre comme prévu</button>`}</div>`}`);
 }
 let N = {};
-function feuilleNouveau(m) {
+function feuilleNouveau(m) {   /* 17/11 (Marie) : d'abord la cliente, puis la prestation, puis l'heure */
   const j = new Date(S.jour); j.setHours(0, 0, 0, 0); N = { jour: j, m: m ?? 9 * 60, cli: null, presta: null };
   const P = prestasDispo();
   ouvre(`<h3>Nouveau rendez-vous</h3><div class="sous">${JOURS[(j.getDay() + 6) % 7]} ${j.getDate()} ${MOIS[j.getMonth()]}</div>
-    <div class="lab2">Heure</div><input class="champ" id="n-h" type="time" value="${String(Math.floor(N.m / 60)).padStart(2, "0")}:${String(N.m % 60).padStart(2, "0")}" step="900" style="font-size:16px;width:100%;min-width:0;max-width:100%;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block;text-align:left">
     <div class="lab2">Cliente</div><div style="display:flex;gap:8px;align-items:center"><input class="champ" id="n-cli" placeholder="Tapez la 1re lettre : A, B, C…" autocomplete="off" autocapitalize="words" style="flex:1;min-width:0;margin:0"><button class="n-plus" data-a="n-neuve" id="n-neuve" aria-label="Nouvelle cliente"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="8" r="3.4"/><path d="M3.8 19c.6-3.4 3.2-5.4 6.2-5.4s5.6 2 6.2 5.4"/><path d="M19 8v6M16 11h6"/></svg></button></div><div id="n-sug" class="n-sug"></div><datalist id="n-cl">${S.clientes.map(c => `<option value="${esc(nomCli(c))}">`).join("")}</datalist>
     <div id="n-neuve-z" hidden><div class="lab2">Son téléphone <small style="text-transform:none;letter-spacing:0;opacity:.6">facultatif</small></div><input class="champ" id="n-tel" inputmode="tel" placeholder="06 12 34 56 78" autocomplete="off"></div>
     <div class="lab2">Prestation</div><div class="chips">${P.map((p, i) => `<button class="chip" data-np="${i}">${esc(p.nom)}<span>${duree(p.duree || 60)}</span></button>`).join("") || '<span class="sous">Ajoutez vos prestations dans Réglages</span>'}</div>
+    <div class="lab2">Heure</div><input class="champ" id="n-h" type="time" value="${String(Math.floor(N.m / 60)).padStart(2, "0")}:${String(N.m % 60).padStart(2, "0")}" step="900" style="font-size:16px;width:100%;min-width:0;max-width:100%;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block;text-align:left">
     <button class="btn" data-a="nouveau-ok" style="margin-top:16px">Enregistrer</button>`);
 }
 function feuilleCliente(id) {
@@ -399,6 +405,9 @@ E.addEventListener("click", async ev => {
       a.disabled = true; a.textContent = "Envoi…"; const { error } = await sb.auth.signInWithOtp({ email: m, options: { shouldCreateUser: false, emailRedirectTo: /^https?:$/.test(location.protocol) ? location.origin + location.pathname : "https://app.loginail.fr/" } });
       if (error) { a.disabled = false; a.textContent = "Recevoir mon code"; return dit(error.status === 429 ? "Attendez une minute avant de redemander" : /signups? not allowed|not found|otp_disabled/i.test((error.code || "") + " " + (error.message || "")) ? "Aucun compte avec cette adresse" : "Oups, réessayez"); } ecranConnexion(m); }
     else if (k === "cx-retour") ecranConnexion();
+    /* 17/11 (Marie) : « Coller le code » : on prend le code copié (dans l'e-mail) et on se connecte tout de suite */
+    else if (k === "cx-coller") { let t = ""; try { t = await navigator.clipboard.readText(); } catch (x) {} const m = String(t || "").match(/\d{6,8}/), c = $("#cx-code", E);
+      if (!m) { if (c) c.focus(); return dit("Copiez d’abord le code dans l’e-mail, puis touchez « Coller le code »"); } c.value = m[0]; const ok = E.querySelector('[data-a="cx-code"]'); if (ok) ok.click(); }
     else if (k === "cx-code") { const c = $("#cx-code", E), code = c.value.replace(/\D/g, ""); if (code.length < 6) return dit("Tapez les chiffres du code");
       a.disabled = true; a.textContent = "Un instant…"; const { data, error } = await sb.auth.verifyOtp({ email: c.dataset.mail, token: code, type: "email" });
       if (error) { a.disabled = false; a.textContent = "Me connecter"; return dit("Code incorrect ou expiré"); } if (data.session) demarre(data.session); }
@@ -420,6 +429,13 @@ E.addEventListener("click", async ev => {
       const r0 = (S.rdv || []).concat(S.tous || []).find(x => x.id === a.dataset.id), c0 = r0 && r0.cliente_id && (S.clientes || []).find(x => x.id === r0.cliente_id);
       const annul = !c0 || new Date(r0.debut) < new Date() ? "Rendez-vous annulé" : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((c0.email || "").trim()) ? "Annulé · la cliente reçoit un e-mail dans 1 minute" : "Annulé · pensez à prévenir la cliente (pas d’e-mail)";
       ferme(); await chargeSemaine(); chargeVisites(); rendu(); dit({ fini: "C’est noté ✓", absente: "Marquée pas venue", annule: annul, prevu: "Remis comme prévu" }[a.dataset.s]); }
+    /* 17/11 (Marie) : rendez-vous annulé → « Supprimer le créneau » : il disparaît de l'agenda.
+       Si la pro vient d'annuler et que l'e-mail « Rendez-vous annulé » n'est pas encore parti (il part 1 minute après), on attend 2 minutes avant d'effacer pour de bon. */
+    else if (k === "rdv-suppr") { const id = a.dataset.id, r0 = (S.rdv || []).concat(S.cloche || []).find(x => x.id === id);
+      const attendre = r0 && r0.annule_par === "pro" && !r0.mail_annul_envoye && r0.annule_le && Date.now() - new Date(r0.annule_le) < 3 * 60000;
+      if (attendre) { suppLater(id, new Date(r0.annule_le).getTime() + 2 * 60000); }
+      else { const { error } = await sb.from("rendez_vous").delete().eq("id", id); if (error) return oups(error); }
+      ferme(); await chargeSemaine(); rendu(); dit("Créneau supprimé ✓"); }
     else if (k === "tri-menu") { S.triOuvert = !S.triOuvert; rendu(); }
     else if (k === "tri") { S.tri = a.dataset.t; S.triOuvert = false; try { localStorage.setItem("loginail-tri", S.tri); } catch (x) {} rendu(); }
     else if (k === "sms-info") ouvre(`<h3>Rappel la veille</h3><div class="sous">La veille au soir, chaque cliente qui a rendez-vous le lendemain reçoit un SMS. Vous n’avez rien à faire.</div>
@@ -500,7 +516,7 @@ const ecranInactif = () => { E.innerHTML = `<div class="vue on"><div class="cx">
 async function demarre(session) {
   if (!session) { S.user = null; ecranConnexion(); return; }
   if (S.user?.id === session.user.id && E.querySelector(".ong")) return;
-  S.user = session.user; E.innerHTML = '<div class="charge">LOGINAIL</div>';
+  S.user = session.user; S.onglet = "acc"; /* 17/11 (Marie) : après une connexion, toujours l'Accueil */ E.innerHTML = '<div class="charge">LOGINAIL</div>';
   try { if (await compteBloque()) return ecranInactif(); await chargeTout(); squelette(); rendu(); } catch (e) { console.error(e); E.innerHTML = '<div class="charge" style="flex-direction:column;gap:14px">Connexion impossible<span style="font-size:13px;letter-spacing:0;opacity:.7;text-transform:none">Vérifiez votre connexion internet.</span><button class="btn" data-a="reessayer" style="width:auto;padding:12px 26px">Réessayer</button><button class="lien-t" data-a="deco">Se déconnecter</button></div>'; }
 }
 sb.auth.onAuthStateChange((_e, s) => setTimeout(() => demarre(s), 0));
