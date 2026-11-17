@@ -264,11 +264,16 @@
   st.textContent = `.fc .chips{display:grid!important;grid-template-columns:1fr 1fr;gap:8px}
 .fc .chips .chip{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;text-align:left;min-height:52px;padding:9px 12px;border-radius:16px;font-size:13.5px;line-height:1.2;width:100%;box-sizing:border-box}
 .fc .chips .chip span{font-size:11.5px;opacity:.6}
-.su-auj2{width:46px;height:46px;border-radius:50%;border:1.5px solid var(--acc,#1E1C1B);background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;line-height:1;color:var(--acc,#1E1C1B)}.su-auj2 b{font-weight:500;font-size:15px}.su-auj2 small{font-size:8px;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}`;
+.su-auj2{height:42px;padding:0 16px;border-radius:21px;border:0;background:#fff;color:var(--acc,#1E1C1B);font:400 14px Jost,sans-serif;white-space:nowrap;overflow:hidden;max-width:160px;cursor:pointer;flex:none;transition:transform .12s}.su-auj2:active{transform:scale(.94)}.su-auj2.arrive{animation:suAuj .26s cubic-bezier(.2,.8,.2,1)}.su-auj2.part{animation:suAuj .2s cubic-bezier(.4,0,1,1) reverse forwards;pointer-events:none}@keyframes suAuj{from{opacity:0;transform:scale(.85);max-width:0;padding:0;margin-right:-8px}to{opacity:1;transform:none;max-width:160px;padding:0 16px;margin-right:0}}@media (prefers-reduced-motion:reduce){.su-auj2.arrive{animation:none}.su-auj2.part{display:none}}`;
   document.head.appendChild(st);
   const auj = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
-  const ag0 = VUES.ag; VUES.ag = () => { let h = ag0(); if (memeJour(S.jour, new Date())) return h;
-    const d = new Date(); return h.replace('<button data-a="mois"', `<button data-su="auj" aria-label="Revenir à aujourd’hui" class="su-auj2"><b>${d.getDate()}</b><small>auj.</small></button><button data-a="mois"`); };
+  /* Marie, 17/11 (maquettes/agenda-aujourdhui.html, version A) : le mot « Aujourd’hui » en toutes lettres, seulement quand on regarde un autre jour ;
+     il arrive en glissant et repart en glissant (une seule fois, pas à chaque redessin) */
+  let loin0 = false;
+  const ag0 = VUES.ag; VUES.ag = () => { const h = ag0(), loin = !memeJour(S.jour, new Date()), avant = loin0; loin0 = loin;
+    if (!loin && !avant) return h;
+    const cl = loin ? (avant ? "" : " arrive") : " part";
+    return h.replace('<button data-a="mois"', `<button data-su="auj" aria-label="Revenir à aujourd’hui" class="su-auj2${cl}"${loin ? "" : ' tabindex="-1" aria-hidden="true"'}>Aujourd’hui</button><button data-a="mois"`); };
   const re0 = VUES.re; VUES.re = () => { const h = re0(), on = localStorage.getItem("loginail-agenda-horaires") !== "non";
     const l = `<div class="ligne"><div class="t">Mon agenda suit mes horaires<span>${on ? "L’agenda montre seulement vos heures d’ouverture" : "L’agenda montre toute la journée, de 8h à 20h"}</span></div><button class="sw${on ? " on" : ""}" data-su="ag-hor" aria-label="Mon agenda suit mes horaires"></button></div>`;
     for (const rep of ['<div class="k">Mes réservations</div><div class="liste">', '<div class="k">Mon salon</div><div class="liste">', '<div class="k">Mes données</div><div class="liste">']) if (h.includes(rep)) return h.replace(rep, rep + l);

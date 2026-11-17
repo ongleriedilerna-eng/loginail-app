@@ -125,7 +125,8 @@
   VUES.ag = () => { const f = dom(vAg()), te = f.querySelector(".tete"), j = S.jour, L = S.lundi, F = plusJours(L, 6);
     const zone = te && te.lastElementChild && te.lastElementChild.tagName === "DIV" && te.lastElementChild.querySelector("button") ? te.lastElementChild : null;
     if (zone) { zone.removeAttribute("style"); zone.className = "v-ronds";
-      zone.querySelectorAll(":scope>button").forEach(b => { if (b.dataset.a === "nouveau") return b.remove(); if (!b.classList.contains("su-auj2")) b.removeAttribute("style"); b.classList.add("v-rondb"); });
+      zone.querySelectorAll(":scope>button").forEach(b => { if (b.dataset.a === "nouveau") return b.remove(); if (b.classList.contains("su-auj2")) return; b.removeAttribute("style"); b.classList.add("v-rondb"); });
+      const aj = zone.querySelector(".su-auj2"); if (aj) zone.prepend(aj);   /* « Aujourd’hui » à gauche des deux ronds (Marie, 17/11) */
       const cg = zone.querySelector('[data-su="conges"]'); if (cg) cg.setAttribute("aria-label", "Bloquer un moment (congés)");
       const mo = zone.querySelector('[data-a="mois"]'); if (mo) mo.setAttribute("aria-label", "Choisir une date"); }
     const sm = te && te.querySelector("small"); if (sm) sm.textContent = sm.textContent.replace(/^./, c => c.toUpperCase());
@@ -381,7 +382,7 @@
 /* ----- Agenda ----- */
 #E .nav-sem{margin:18px 0 12px;font-size:13px;color:var(--gris)}
 #E .nav-sem button{width:34px;height:34px;background:rgba(255,255,255,.7);color:var(--v-fonce);font-size:16px}
-#E .su-auj2{width:42px;height:42px;border:1.5px solid var(--v-fonce);color:var(--v-fonce);box-shadow:none}
+#E .su-auj2{color:var(--v-fonce);box-shadow:0 6px 16px -10px rgba(120,40,55,.5)}
 #E .semaine{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:0}
 #E .semaine button{width:auto;height:auto;padding:8px 0 10px;border-radius:16px;gap:2px;background:none;color:inherit;transition:background .2s}
 #E .semaine button small{font-size:11.5px;color:var(--gris)}
