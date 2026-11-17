@@ -485,9 +485,13 @@ h3 .lap{font-size:11px;vertical-align:4px}
     p.addListener("registration", async t => { jeton = t.value; if (!S.user) return; await sb.from("appareils").upsert({ jeton: t.value, pro_id: S.user.id, plateforme: "ios", maj_le: new Date().toISOString() }); });
     p.addListener("registrationError", () => dit("Les notifications n’ont pas pu s’activer. Réessayez plus tard."));
     p.addListener("pushNotificationActionPerformed", async a => { const id = a && a.notification && a.notification.data && a.notification.data.rdv; if (!S.user) return;
-      try { await chargeSemaine(); } catch (e) {} let r = id && S.rdv.find(x => x.id === id);
-      if (!r && id) { const { data } = await sb.from("rendez_vous").select("debut").eq("id", id).maybeSingle(); if (data) { const d = new Date(data.debut); d.setHours(0, 0, 0, 0); S.jour = d; S.lundi = plusJours(d, -((d.getDay() + 6) % 7)); await chargeSemaine(); r = S.rdv.find(x => x.id === id); } }
-      S.onglet = "ag"; ferme(); rendu(); if (r) { const el = E.querySelector(`.pap .pr[data-rdv="${id}"]`); if (el) el.click(); } }); };
+      let r = null, info = null;
+      if (id) { try { const { data } = await sb.from("rendez_vous").select("debut, statut").eq("id", id).maybeSingle(); info = data; } catch (e) {} }
+      if (info) { const d = new Date(info.debut); d.setHours(0, 0, 0, 0); S.jour = d; S.lundi = plusJours(d, -((d.getDay() + 6) % 7)); }
+      try { await chargeSemaine(); } catch (e) {} r = id && S.rdv.find(x => x.id === id);
+      S.onglet = "ag"; ferme(); rendu();
+      if (info && info.statut === "annule") { const h = new Date(info.debut), m = h.getMinutes(); return dit(`Le créneau de ${h.getHours()} h${m ? " " + String(m).padStart(2, "0") : ""} est libre`); }
+      if (r) { const el = E.querySelector(`.pap .pr[data-rdv="${id}"]`); if (el) el.click(); } }); };
   const activer = async () => { const p = PN(); if (!p) return false; brancher(); let perm = await p.checkPermissions();
     if (perm.receive === "prompt" || perm.receive === "prompt-with-rationale") perm = await p.requestPermissions();
     if (perm.receive !== "granted") { ecrit("non"); dit("Vous pourrez les activer dans Réglages › Notifications de l’iPhone"); return false; }
