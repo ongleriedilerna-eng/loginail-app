@@ -60,7 +60,7 @@ function ecranConnexion(envoye) {
   E.innerHTML = `<div class="vue on"><div class="cx"><div class="marque">LOGINAIL</div>
     ${envoye ? (/[?&]parcours/.test(location.search) ? `<h1>Ceci est un essai.</h1><div class="ok">Aucun e-mail n’est envoyé ici. Tapez <b>6 chiffres au hasard</b> pour entrer et voir l’appli d’une nouvelle prothésiste.</div>` : `<h1>Regardez vos e-mails.</h1><div class="ok">Nous venons d’envoyer un e-mail à <b>${esc(envoye)}</b>. Le code est dans son titre.</div>`) + `
       <input id="cx-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Le code" style="text-align:center;letter-spacing:.3em;font-size:20px" data-mail="${esc(envoye)}">
-      <button class="btn clair" data-a="cx-coller" style="margin-bottom:8px">Coller le code</button><button class="btn" data-a="cx-code">Me connecter</button><button class="lien-t" data-a="cx-retour">Changer d’adresse</button>`
+      <button class="btn" data-a="cx-code">Me connecter</button><button class="lien-t" data-a="cx-retour">Changer d’adresse</button>`
     : `<h1>Votre espace pro.</h1><p>Entrez votre adresse e-mail : nous vous envoyons un code pour vous connecter, sans mot de passe.</p>
       <input id="cx-mail" type="email" inputmode="email" autocomplete="email" placeholder="votre@adresse.fr"><button class="btn" data-a="cx-envoi">Recevoir mon code</button>
       ${/^https?:$/.test(location.protocol) && !/[?&]parcours/.test(location.search) ? `<div class="cx-neuve" style="margin-top:26px;border-radius:18px;background:#fff;padding:14px 16px;font-size:13.5px;line-height:1.5;text-align:left"><b style="font-weight:500">Pas encore de compte ?</b><br>Votre espace pro se crée en même temps que votre site, en 3 minutes.<a href="https://loginail.fr" style="display:block;margin-top:8px;font-weight:500;text-decoration:underline;text-underline-offset:3px;color:inherit">Créer mon site sur loginail.fr ›</a></div>` : ""}`}
@@ -405,9 +405,6 @@ E.addEventListener("click", async ev => {
       a.disabled = true; a.textContent = "Envoi…"; const { error } = await sb.auth.signInWithOtp({ email: m, options: { shouldCreateUser: false, emailRedirectTo: /^https?:$/.test(location.protocol) ? location.origin + location.pathname : "https://app.loginail.fr/" } });
       if (error) { a.disabled = false; a.textContent = "Recevoir mon code"; return dit(error.status === 429 ? "Attendez une minute avant de redemander" : /signups? not allowed|not found|otp_disabled/i.test((error.code || "") + " " + (error.message || "")) ? "Aucun compte avec cette adresse" : "Oups, réessayez"); } ecranConnexion(m); }
     else if (k === "cx-retour") ecranConnexion();
-    /* 17/11 (Marie) : « Coller le code » : on prend le code copié (dans l'e-mail) et on se connecte tout de suite */
-    else if (k === "cx-coller") { let t = ""; try { t = await navigator.clipboard.readText(); } catch (x) {} const m = String(t || "").match(/\d{6,8}/), c = $("#cx-code", E);
-      if (!m) { if (c) c.focus(); return dit("Copiez d’abord le code dans l’e-mail, puis touchez « Coller le code »"); } c.value = m[0]; const ok = E.querySelector('[data-a="cx-code"]'); if (ok) ok.click(); }
     else if (k === "cx-code") { const c = $("#cx-code", E), code = c.value.replace(/\D/g, ""); if (code.length < 6) return dit("Tapez les chiffres du code");
       a.disabled = true; a.textContent = "Un instant…"; const { data, error } = await sb.auth.verifyOtp({ email: c.dataset.mail, token: code, type: "email" });
       if (error) { a.disabled = false; a.textContent = "Me connecter"; return dit("Code incorrect ou expiré"); } if (data.session) demarre(data.session); }
