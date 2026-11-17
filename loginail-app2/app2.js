@@ -417,7 +417,9 @@ E.addEventListener("click", async ev => {
       const { error } = await sb.from("rendez_vous").insert({ cliente_id: cli?.id || null, prestation_id: p?.id || null, titre: cli ? (p?.nom || null) : (saisie || "Bloqué"), debut: deb.toISOString(), fin: fin.toISOString(), prix: p?.prix ?? null });
       if (error) return oups(error); ferme(); await chargeSemaine(); rendu(); dit("Rendez-vous enregistré ✓"); }
     else if (k === "statut") { const { error } = await sb.from("rendez_vous").update({ statut: a.dataset.s }).eq("id", a.dataset.id); if (error) return oups(error);
-      ferme(); await chargeSemaine(); chargeVisites(); rendu(); dit({ fini: "C’est noté ✓", absente: "Marquée pas venue", annule: "Rendez-vous annulé", prevu: "Remis comme prévu" }[a.dataset.s]); }
+      const r0 = (S.rdv || []).concat(S.tous || []).find(x => x.id === a.dataset.id), c0 = r0 && r0.cliente_id && (S.clientes || []).find(x => x.id === r0.cliente_id);
+      const annul = !c0 || new Date(r0.debut) < new Date() ? "Rendez-vous annulé" : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((c0.email || "").trim()) ? "Annulé · la cliente reçoit un e-mail dans 1 minute" : "Annulé · pensez à prévenir la cliente (pas d’e-mail)";
+      ferme(); await chargeSemaine(); chargeVisites(); rendu(); dit({ fini: "C’est noté ✓", absente: "Marquée pas venue", annule: annul, prevu: "Remis comme prévu" }[a.dataset.s]); }
     else if (k === "tri-menu") { S.triOuvert = !S.triOuvert; rendu(); }
     else if (k === "tri") { S.tri = a.dataset.t; S.triOuvert = false; try { localStorage.setItem("loginail-tri", S.tri); } catch (x) {} rendu(); }
     else if (k === "sms-info") ouvre(`<h3>Rappel la veille</h3><div class="sous">La veille au soir, chaque cliente qui a rendez-vous le lendemain reçoit un SMS. Vous n’avez rien à faire.</div>
