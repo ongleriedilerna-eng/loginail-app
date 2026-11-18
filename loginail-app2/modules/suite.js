@@ -547,22 +547,34 @@ h3 .lap{font-size:11px;vertical-align:4px}
   /* la semaine suit le doigt, puis la nouvelle arrive du bon côté.
      17/11 (Marie) : un seul code décide (avant, deux codes avec des règles différentes : la semaine pouvait partir sans être remplacée → chiffres invisibles) ;
      dès que le doigt part sur le côté, la page ne défile plus (avant, elle descendait jusqu'en bas de l'agenda). */
+  /* 18/11 (Marie : « les chiffres se suppriment puis se remettent ») : la semaine d'avant et celle d'après sont collées de chaque côté,
+     comme sur le calendrier de l'iPhone ; on glisse directement sur la vraie semaine voisine, il n'y a plus jamais de trou. */
   let x0 = null, y0 = 0, bouge = false, enCours = false;
-  const posee = s => { s.classList.remove("suit", "glisse"); s.style.transition = ""; s.style.transform = ""; s.style.opacity = ""; };
+  const ECART = 22;
+  const posee = s => { s.classList.remove("suit", "glisse"); s.style.transition = ""; s.style.transform = ""; s.style.opacity = ""; s.querySelectorAll(":scope>.sem-v").forEach(v => v.remove()); };
+  const voisine = (s, d) => { const v = document.createElement("div"); v.className = "sem-v"; v.setAttribute("aria-hidden", "true");
+    v.style.cssText = `position:absolute;top:0;bottom:0;width:100%;left:calc(${d > 0 ? 100 : -100}% + ${d * ECART}px);display:grid;grid-template-columns:repeat(7,1fr);gap:inherit;pointer-events:none`;
+    const tous = S.tous && S.tous.length ? S.tous : S.rdv, auj = new Date();
+    s.querySelectorAll(":scope>button").forEach((b, i) => { const c = b.cloneNode(true), dt = plusJours(S.lundi, 7 * d + i);
+      const n = tous.filter(r => memeJour(new Date(r.debut), dt) && r.statut !== "annule").length;
+      c.classList.toggle("plein", !!n); c.removeAttribute("data-jour");
+      const bb = c.querySelector("b"), sm = c.querySelector("small"); if (bb) bb.textContent = dt.getDate();
+      if (sm) sm.textContent = memeJour(dt, auj) ? "auj." : COURT[i].toLowerCase() + ".";
+      v.appendChild(c); });
+    s.appendChild(v); };
+  const prepare = s => { if (s.querySelector(":scope>.sem-v")) return; if (getComputedStyle(s).position === "static") s.style.position = "relative"; voisine(s, -1); voisine(s, 1); };
   E.addEventListener("touchstart", e => { const z = !enCours && e.target.closest && e.target.closest(".semaine,.nav-sem"); x0 = z && e.touches.length === 1 ? e.touches[0].clientX : null; y0 = e.touches[0].clientY; bouge = false; }, { passive: true });
   E.addEventListener("touchmove", e => { if (x0 == null) return; const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
     if (!bouge) { if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; if (Math.abs(dy) >= Math.abs(dx)) { x0 = null; return; } bouge = true; }
     if (e.cancelable) e.preventDefault();
-    const s = E.querySelector(".vue.on .semaine"); if (s) { s.classList.add("suit"); s.style.transform = `translateX(${dx}px)`; s.style.opacity = String(1 - Math.min(.6, Math.abs(dx) / 400)); } }, { passive: false });
+    const s = E.querySelector(".vue.on .semaine"); if (s) { prepare(s); s.classList.add("suit"); s.style.transform = `translateX(${dx}px)`; } }, { passive: false });
   const fin = async e => { if (x0 == null || !bouge) { x0 = null; return; } const dx = e.changedTouches[0].clientX - x0; x0 = null; bouge = false; window.__semAvale = Date.now();
     const s = E.querySelector(".vue.on .semaine"); if (!s) return;
     s.classList.remove("suit"); s.classList.add("glisse");
-    if (e.type === "touchcancel" || Math.abs(dx) < 45) { s.style.transform = ""; s.style.opacity = ""; setTimeout(() => posee(s), 300); return; }   /* pas assez loin : elle revient */
-    const d = dx < 0 ? 1 : -1; enCours = true; s.style.transform = `translateX(${d > 0 ? -110 : 110}%)`; s.style.opacity = "0";
+    if (e.type === "touchcancel" || Math.abs(dx) < 45) { s.style.transform = ""; setTimeout(() => posee(s), 300); return; }   /* pas assez loin : elle revient */
+    const d = dx < 0 ? 1 : -1; enCours = true; s.style.transform = `translateX(calc(${-d * 100}% - ${d * ECART}px))`;
     S.lundi = plusJours(S.lundi, 7 * d); S.jour = plusJours(S.jour, 7 * d);
-    try { await Promise.all([chargeSemaine(), new Promise(r => setTimeout(r, 160))]); } catch (x) {}
-    rendu(); enCours = false; const n = E.querySelector(".vue.on .semaine"); if (!n) return;
-    n.style.transition = "none"; n.style.transform = `translateX(${d > 0 ? 60 : -60}%)`; n.style.opacity = "0";
-    requestAnimationFrame(() => requestAnimationFrame(() => { n.style.transition = "transform .3s cubic-bezier(.2,.8,.2,1),opacity .3s"; n.style.transform = ""; n.style.opacity = ""; setTimeout(() => posee(n), 320); })); };
+    try { await Promise.all([chargeSemaine(), new Promise(r => setTimeout(r, 290))]); } catch (x) {}
+    rendu(); enCours = false; const n = E.querySelector(".vue.on .semaine"); if (n) posee(n); };
   E.addEventListener("touchend", fin, { passive: true }); E.addEventListener("touchcancel", fin, { passive: true });
 })();
