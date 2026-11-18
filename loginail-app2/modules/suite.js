@@ -508,14 +508,22 @@ h3 .lap{font-size:11px;vertical-align:4px}
   const brancher = () => { const p = PN(); if (!p || branche) return; branche = true;
     p.addListener("registration", async t => { jeton = t.value; if (!S.user) return; await sb.from("appareils").upsert({ jeton: t.value, pro_id: S.user.id, plateforme: "ios", maj_le: new Date().toISOString() }); });
     p.addListener("registrationError", () => dit("Les notifications n’ont pas pu s’activer. Réessayez plus tard."));
-    p.addListener("pushNotificationActionPerformed", async a => { const id = a && a.notification && a.notification.data && a.notification.data.rdv; if (!S.user) return;
-      let r = null, info = null;
+    /* 18/11 : appli fermée → l'iPhone donne le toucher AVANT que l'appli ait fini de charger. Avant, on ouvrait tout de suite,
+       puis le chargement du démarrage (semaine en cours, Accueil) passait par-dessus → mauvais jour, rendez-vous pas ouvert.
+       Maintenant on garde le rendez-vous de côté et on l'ouvre seulement quand l'appli est prête. */
+    p.addListener("pushNotificationActionPerformed", a => { const d = a && a.notification && a.notification.data; attente = (d && d.rdv) || "ag"; ouvreNotif(); }); };
+  let attente = null, enCours = false;
+  const ouvreNotif = async () => { if (!attente || enCours || !S.user || !S.pret) return; const id = attente === "ag" ? null : attente; attente = null; enCours = true;
+    try { let info = null;
       if (id) { try { const { data } = await sb.from("rendez_vous").select("debut, statut").eq("id", id).maybeSingle(); info = data; } catch (e) {} }
       if (info) { const d = new Date(info.debut); d.setHours(0, 0, 0, 0); S.jour = d; S.lundi = plusJours(d, -((d.getDay() + 6) % 7)); }
-      try { await chargeSemaine(); } catch (e) {} r = id && S.rdv.find(x => x.id === id);
+      try { await chargeSemaine(); } catch (e) {}
       S.onglet = "ag"; ferme(); rendu();
       if (info && info.statut === "annule") { const h = new Date(info.debut), m = h.getMinutes(); return dit(`Le créneau de ${h.getHours()} h${m ? " " + String(m).padStart(2, "0") : ""} est libre`); }
-      if (r) { const el = E.querySelector(`.pap .pr[data-rdv="${id}"]`); if (el) el.click(); } }); };
+      if (id && S.rdv.some(x => x.id === id)) feuilleRdv(id); /* marche dans les 3 styles d'agenda */
+    } finally { enCours = false; if (attente) ouvreNotif(); } };
+  document.addEventListener("loginail-pret", ouvreNotif);
+  brancher(); /* on écoute le toucher dès le lancement (pas besoin de l'autorisation pour écouter) */
   const activer = async () => { const p = PN(); if (!p) return false; brancher(); let perm = await p.checkPermissions();
     if (perm.receive === "prompt" || perm.receive === "prompt-with-rationale") perm = await p.requestPermissions();
     if (perm.receive !== "granted") { ecrit("non"); dit("Vous pourrez les activer dans Réglages › Notifications de l’iPhone"); return false; }

@@ -514,9 +514,12 @@ const ecranInactif = () => { E.innerHTML = `<div class="vue on"><div class="cx">
   <button class="btn" data-a="reessayer">Réessayer</button><button class="lien-t" data-a="deco">Se déconnecter</button></div><div class="toast"></div></div>`; };
 async function demarre(session) {
   if (!session) { S.user = null; ecranConnexion(); return; }
-  if (S.user?.id === session.user.id && E.querySelector(".ong")) return;
-  S.user = session.user; S.onglet = "acc"; /* 17/11 (Marie) : après une connexion, toujours l'Accueil */ E.innerHTML = '<div class="charge">LOGINAIL</div>';
-  try { if (await compteBloque()) return ecranInactif(); await chargeTout(); squelette(); rendu(); } catch (e) { console.error(e); E.innerHTML = '<div class="charge" style="flex-direction:column;gap:14px">Connexion impossible<span style="font-size:13px;letter-spacing:0;opacity:.7;text-transform:none">Vérifiez votre connexion internet.</span><button class="btn" data-a="reessayer" style="width:auto;padding:12px 26px">Réessayer</button><button class="lien-t" data-a="deco">Se déconnecter</button></div>'; }
+  /* 18/11 : au lancement, getSession et onAuthStateChange appellent tous les deux demarre → un seul chargement à la fois */
+  if (S.user?.id === session.user.id && (E.querySelector(".ong") || S.demarre === session.user.id)) return;
+  S.demarre = session.user.id; setTimeout(() => { if (S.demarre === session.user.id && !S.pret) S.demarre = null; }, 20000);
+  S.user = session.user; S.pret = false; S.onglet = "acc"; /* 17/11 (Marie) : après une connexion, toujours l'Accueil */ E.innerHTML = '<div class="charge">LOGINAIL</div>';
+  /* 18/11 : « pret » = tout est chargé et affiché ; la notification attend ce moment pour ouvrir son rendez-vous */
+  try { if (await compteBloque()) { S.demarre = null; return ecranInactif(); } await chargeTout(); squelette(); rendu(); S.pret = true; S.demarre = null; document.dispatchEvent(new Event("loginail-pret")); } catch (e) { S.demarre = null; console.error(e); E.innerHTML = '<div class="charge" style="flex-direction:column;gap:14px">Connexion impossible<span style="font-size:13px;letter-spacing:0;opacity:.7;text-transform:none">Vérifiez votre connexion internet.</span><button class="btn" data-a="reessayer" style="width:auto;padding:12px 26px">Réessayer</button><button class="lien-t" data-a="deco">Se déconnecter</button></div>'; }
 }
 sb.auth.onAuthStateChange((_e, s) => setTimeout(() => demarre(s), 0));
 sb.auth.getSession().then(({ data }) => demarre(data.session));
