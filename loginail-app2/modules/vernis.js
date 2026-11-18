@@ -186,7 +186,7 @@
   /* les lettres sur le côté : seulement celles qui existent ; on glisse le doigt dessus */
   let IXV = null;
   const brancheIdx = ix => { const va = y => { const sp = [...ix.children]; if (!sp.length) return; const r = ix.getBoundingClientRect(), i = Math.max(0, Math.min(sp.length - 1, Math.floor((y - r.top) / (r.height / sp.length))));
-      const l = sp[i].dataset.l, gr = E.querySelector(`.vue.on [id="L-${l === "#" ? "0" : l}"]`), vu = E.querySelector(".vue.on"); if (gr && vu) vu.scrollTop += gr.getBoundingClientRect().top - vu.getBoundingClientRect().top - 70;
+      const l = sp[i].dataset.l, gs = [...E.querySelectorAll('.vue.on [id^="L-"]')], cle = z => z === "0" || z === "#" ? "[" : z, gr = gs.find(z => cle(z.id.slice(2)) >= cle(l)) || gs[gs.length - 1], vu = E.querySelector(".vue.on"); if (gr && vu) vu.scrollTop += gr.getBoundingClientRect().top - vu.getBoundingClientRect().top - 70;
       sp.forEach((s, k) => s.classList.toggle("on", k === i)); };
     const fin = () => [...ix.children].forEach(s => s.classList.remove("on"));
     ix.addEventListener("touchstart", e => { e.preventDefault(); va(e.touches[0].clientY); }, { passive: false });
@@ -196,9 +196,11 @@
     document.addEventListener("mousemove", e => { if (bas) va(e.clientY); }); document.addEventListener("mouseup", () => { if (bas) { bas = false; fin(); } }); };
   const indexLettres = () => { const v = E.querySelector('.vue.on[data-p="cl"]'), gs = v ? [...v.querySelectorAll(".v-groupe")] : [];
     if (!IXV || !IXV.isConnected) { if (!E.querySelector(".ong")) return; IXV = document.createElement("div"); IXV.className = "v-idx"; IXV.setAttribute("aria-hidden", "true"); E.appendChild(IXV); brancheIdx(IXV); }
-    const on = !!v && gs.length > 3; IXV.hidden = !on; if (!on) return;
-    const ls = gs.map(x => x.id.slice(2)).map(x => x === "0" ? "#" : x), cle = ls.join("");
-    if (IXV.dataset.k !== cle) { IXV.dataset.k = cle; IXV.innerHTML = ls.map(l => `<span data-l="${l}">${l}</span>`).join(""); } };
+    /* 18/11 (Marie : « je l'aimais bien, pourquoi tu l'as enlevé ») : avant, les lettres n'apparaissaient qu'à partir de 4 lettres différentes ;
+       maintenant tout l'alphabet est toujours là, comme les contacts de l'iPhone (les lettres sans cliente en plus clair) */
+    const on = !!v && gs.length > 0; IXV.hidden = !on; if (!on) return;
+    const ls = gs.map(x => x.id.slice(2)).map(x => x === "0" ? "#" : x), tout = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").concat(ls.includes("#") ? ["#"] : []), cle = ls.join("");
+    if (IXV.dataset.k !== cle) { IXV.dataset.k = cle; IXV.innerHTML = tout.map(l => `<span data-l="${l}"${ls.includes(l) ? "" : ' class="x"'}>${l}</span>`).join(""); } };
 
   /* ---------- 7 · Mon site ---------- */
   const LIG = { style: IC.style, perso: IC.perso, charms: IC.charms, "ms-presta": IC.presta, "ms-photos": IC.photos, "ms-salon": IC.salon, "ms-horaires": IC.horloge, "ms-adresse": IC.adresse, "ms-apropos": IC.apropos, "ms-photo": IC.moi, "ms-bon": IC.bon, "ms-legal": IC.bon, bio: IC.lien, site: IC.globe };
@@ -331,6 +333,7 @@
 #E .ong.o1 button.on svg{stroke-width:1.9}
 #E .toast{background:var(--v-fonce);border-radius:14px}
 #E .feuille{background:var(--v-c)}
+#E .feuille:has(.fi-sw){height:100%}   /* 18/11 (Marie) : la fiche d'une cliente s'ouvre tout de suite en grand (avant : petite, puis elle grandissait quand l'historique arrivait) */
 #E .feuille h3{font:500 28px/1.1 'Cormorant Garamond',Georgia,serif;letter-spacing:0}
 #E .chip.on,#E .su-puces button.on,#E .fi-puces button.on{background:var(--v-fonce)!important;color:#fff!important}
 /* les pastilles « en ligne » : texte un peu plus foncé pour bien se lire */
@@ -439,7 +442,7 @@
 #E .v-idx{position:absolute;right:4px;top:50%;transform:translateY(-50%);z-index:12;display:flex;flex-direction:column;align-items:center;padding:8px 3px;touch-action:none;-webkit-user-select:none;user-select:none;cursor:pointer}
 #E .v-idx[hidden]{display:none}
 #E .v-idx span{font-size:10px;font-weight:500;line-height:15px;width:16px;text-align:center;color:var(--v-acc);border-radius:50%;transition:transform .1s}
-#E .v-idx span.on{transform:scale(1.5)}
+#E .v-idx span.on{transform:scale(1.5)}#E .v-idx span.x{opacity:.35}
 /* ----- Mon site ----- */
 #E .v-enligne{display:inline-flex;align-items:center;gap:6px;color:#2E6B4F}
 #E .v-enligne:before{content:"";width:7px;height:7px;border-radius:50%;background:#3D8B66}
