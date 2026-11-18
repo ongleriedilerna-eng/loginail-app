@@ -281,7 +281,16 @@
   /* 18/11 (Marie : « l'agenda ne doit bouger ni en haut ni en bas ») : le haut et la barre du bas restent en place, seules les heures défilent.
      On garde l'endroit où elle en était ; la 1re fois, on se place juste avant maintenant (ou avant le 1er rendez-vous). */
   E.addEventListener("scroll", e => { const p = e.target; if (p.classList && p.classList.contains("pap")) S.papY = p.scrollTop; }, true);
-  const heures = () => { const p = E.querySelector('.vue.on[data-p="ag"] .pap'); if (!p) return;
+  /* 18/11 (Marie, version C « le mix », choisie après la table ronde) : la journée de la prothésiste remplit l'écran toute seule.
+     Une heure fait entre 40 px (minimum lisible) et 60 px ; 9 h – 18 h tient sans glisser sur un iPhone. Un rendez-vous court tient sur une ligne
+     (heure de début · prestation), et un espace en bas pour que le « + » ne cache jamais le dernier rendez-vous. */
+  const ajuste = p => { if (p.dataset.k) return; const n = p.querySelectorAll(".pl").length / 2 || 1, place = p.clientHeight - 50;
+    const k = Math.max(40 / 60, Math.min(1, place / (n * 60))); p.dataset.k = k.toFixed(3); p.style.setProperty("--plh", (R * k).toFixed(2) + "px");
+    p.querySelectorAll(".pr,.v-now").forEach(x => { const t0 = parseFloat(x.style.top), h0 = parseFloat(x.style.height);
+      if (!isNaN(t0)) x.style.top = (t0 * k).toFixed(1) + "px";
+      if (!isNaN(h0)) { const h = Math.max(h0 * k, 24); x.style.height = h.toFixed(1) + "px";
+        if (x.classList.contains("pr") && h < 42) { x.classList.add("v-une"); const st = x.querySelector("strong"); if (st) st.textContent = st.textContent.replace(/^\s*(\d{1,2}:\d{2})\s*[–—-]\s*\d{1,2}:\d{2}/, "$1"); } } }); };
+  const heures = () => { const p = E.querySelector('.vue.on[data-p="ag"] .pap'); if (!p) return; ajuste(p);
     if (S.papY == null) { const n = p.querySelector(".v-now"), r = p.querySelector(".pr"); S.papY = Math.max(0, (n ? n.offsetTop - 90 : r ? r.offsetTop - 30 : 0)); }
     p.scrollTop = S.papY; };
   rendu = function () { r0.apply(this, arguments); try { fab(); bandeau(); indexLettres(); heures(); } catch (e) { console.warn(e); } };
@@ -418,6 +427,22 @@
 #E .vue[data-p="ag"]>*{flex:none}
 #E .vue[data-p="ag"]>.pap{flex:1 1 auto;min-height:120px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 #E .vue[data-p="ag"]>.pap::-webkit-scrollbar{display:none}
+#E .vue[data-p="ag"] .pap{padding-bottom:50px}
+#E .vue[data-p="ag"] .pap .pl{height:var(--plh,30px)}
+#E .vue[data-p="ag"] .pap .pl span{font-size:11px}
+#E .vue[data-p="ag"] .pap .pr{padding:4px 9px 4px 12px}
+#E .vue[data-p="ag"] .pap .pr b{font-size:13px}#E .vue[data-p="ag"] .pap .pr span{font-size:11.5px}
+#E .vue[data-p="ag"] .pap .pr.v-une{display:flex;flex-direction:row;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;padding-top:1px;padding-bottom:1px}
+#E .vue[data-p="ag"] .pap .pr.v-une b{flex:none}#E .vue[data-p="ag"] .pap .pr.v-une>span{overflow:hidden;text-overflow:ellipsis;min-width:0}
+#E .vue[data-p="ag"] .tete h1{font-size:30px}
+#E .vue[data-p="ag"] .tete small{font-size:12px}
+#E .vue[data-p="ag"] .v-haut{padding-bottom:10px}
+#E .vue[data-p="ag"] .nav-sem{margin:8px 0 4px;font-size:12px}
+#E .vue[data-p="ag"] .nav-sem button{width:30px;height:30px;font-size:14px}
+#E .vue[data-p="ag"] .semaine button{padding:5px 0 7px;border-radius:14px}
+#E .vue[data-p="ag"] .semaine button b{font-size:19px}
+#E .vue[data-p="ag"] .semaine button small{font-size:10.5px}
+#E .vue[data-p="ag"] .v-haut+.k,#E .vue[data-p="ag"] .k{margin:8px 0 8px;font-size:12.5px}
 #E .pap{background:#fff;border-radius:22px;border:1px solid var(--v-trait);box-shadow:none;margin-top:0;padding-left:52px}
 #E .pap:before{display:none}
 #E .pap .pl{border-bottom-color:transparent}
