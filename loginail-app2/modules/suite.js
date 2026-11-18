@@ -245,12 +245,32 @@
   st.textContent = `.en-ligne{background:#1E1C1B!important;color:#fff!important}.pr.ligne-en{box-shadow:inset 3px 0 0 #1E1C1B!important}
 .ong.o1{transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s;transform-origin:50% 100%}.ong.o1.mini{transform:scale(.8);opacity:.94}`;
   document.head.appendChild(st);
-  /* le mois : glisser à gauche = mois d'après, à droite = mois d'avant */
-  let mx = null, my = 0;
-  E.addEventListener("touchstart", e => { mx = e.target.closest && e.target.closest(".calm") && e.touches.length === 1 ? e.touches[0].clientX : null; my = e.touches[0].clientY; }, { passive: true });
-  E.addEventListener("touchend", e => { if (mx == null) return; const t = e.changedTouches[0], dx = t.clientX - mx, dy = t.clientY - my; mx = null;
-    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
-    const b = E.querySelector(`.vue.on .calm [data-a="mois-nav"][data-n="${dx < 0 ? 1 : -1}"]`); if (b) { e.preventDefault(); b.click(); } }, { passive: false });
+  /* le mois : glisser à gauche = mois d'après, à droite = mois d'avant.
+     18/11 (Marie : « le swipe du calendrier n'est pas joli ») : comme la semaine, le mois suit le doigt et le mois voisin arrive collé à côté
+     (les flèches ‹ › font le même glissement). */
+  const GM = 18;
+  const grilleDe = dt => { const v = S.moisVu; S.moisVu = dt; const h = calMois(); S.moisVu = v; const d = document.createElement("div"); d.innerHTML = h; return d.querySelector(".calm>div:nth-child(2)"); };
+  const prepMois = c => { const g = c.querySelector(":scope>div:nth-child(2)"); if (!g || g.querySelector(":scope>.mo-v")) return g;
+    c.style.overflow = "hidden"; g.style.position = "relative"; const v = S.moisVu;
+    [-1, 1].forEach(d => { const n = grilleDe(new Date(v.getFullYear(), v.getMonth() + d, 1)); if (!n) return; n.classList.add("mo-v"); n.setAttribute("aria-hidden", "true");
+      n.style.cssText += `;position:absolute;top:0;left:calc(${d * 100}% + ${d * GM}px);width:100%;pointer-events:none`; g.appendChild(n); });
+    return g; };
+  let moAnim = false;
+  const glisseMois = async (d, g) => { if (moAnim) return; moAnim = true; g = g || prepMois(E.querySelector(".vue.on .calm")); if (!g) { moAnim = false; return; }
+    g.style.transition = "transform .28s cubic-bezier(.2,.8,.2,1)"; g.style.transform = `translateX(calc(${-d * 100}% - ${d * GM}px))`;
+    await new Promise(r => setTimeout(r, 280)); S.moisVu = new Date(S.moisVu.getFullYear(), S.moisVu.getMonth() + d, 1); moAnim = false; rendu(); };
+  let mx = null, my = 0, mBouge = false;
+  E.addEventListener("touchstart", e => { mx = e.target.closest && e.target.closest(".calm") && e.touches.length === 1 && !moAnim ? e.touches[0].clientX : null; my = e.touches[0].clientY; mBouge = false; }, { passive: true });
+  E.addEventListener("touchmove", e => { if (mx == null) return; const dx = e.touches[0].clientX - mx, dy = e.touches[0].clientY - my;
+    if (!mBouge) { if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; if (Math.abs(dy) >= Math.abs(dx)) { mx = null; return; } mBouge = true; }
+    if (e.cancelable) e.preventDefault(); const g = prepMois(E.querySelector(".vue.on .calm")); if (g) { g.style.transition = "none"; g.style.transform = `translateX(${dx}px)`; } }, { passive: false });
+  E.addEventListener("touchend", e => { if (mx == null || !mBouge) { mx = null; return; } const dx = e.changedTouches[0].clientX - mx; mx = null; mBouge = false; window.__moAvale = Date.now();
+    const g = E.querySelector(".vue.on .calm>div:nth-child(2)"); if (!g) return;
+    if (Math.abs(dx) < 45) { g.style.transition = "transform .25s cubic-bezier(.2,.8,.2,1)"; g.style.transform = ""; return; }
+    glisseMois(dx < 0 ? 1 : -1, g); }, { passive: true });
+  document.addEventListener("click", e => { const t = e.target.closest && e.target.closest(".calm"); if (!t) return;
+    if (Date.now() - (window.__moAvale || 0) < 400) { e.stopPropagation(); e.preventDefault(); return; }
+    const b = e.target.closest('[data-a="mois-nav"]'); if (b) { e.stopPropagation(); e.preventDefault(); glisseMois(+b.dataset.n); } }, true);
   /* la barre du bas : plus petite quand on descend, normale quand on remonte ou tout en haut */
   let dernier = 0;
   E.addEventListener("scroll", e => { const v = e.target; if (!v.classList || !v.classList.contains("vue")) return; const y = v.scrollTop, n = E.querySelector(".ong.o1"); if (!n) return;

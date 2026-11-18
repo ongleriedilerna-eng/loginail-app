@@ -185,8 +185,16 @@
     const x = b.parentElement.scrollLeft; S.vFiltre = b.dataset.vF === "tout" ? null : b.dataset.vF; rendu(); const n = E.querySelector(".vue.on .v-filtres"); if (n) n.scrollLeft = x; }, true);
   /* les lettres sur le côté : seulement celles qui existent ; on glisse le doigt dessus */
   let IXV = null;
+  /* 18/11 (Marie) : les lettres A-Z sont là dans TOUS les tris (A à Z, Vues récemment, Prochain rendez-vous…), toujours au milieu de l'écran.
+     En A à Z, une lettre amène à son groupe ; dans les autres tris, à la 1re cliente de la liste dont le prénom commence par cette lettre. */
+  const initiale = s => { const l = String(s || "#").trim().normalize("NFD").replace(/[̀-ͯ]/g, "").charAt(0).toUpperCase(); return /[A-Z]/.test(l) ? l : "#"; };
+  const cibles = () => { const v = E.querySelector('.vue.on[data-p="cl"]'); if (!v) return [];
+    const gs = [...v.querySelectorAll(".v-groupe")]; if (gs.length) return gs.map(g => ({ el: g, l: g.id.slice(2) === "0" ? "#" : g.id.slice(2) }));
+    return [...v.querySelectorAll(".cli[data-cli]")].map(el => { const c = S.clientes.find(x => x.id === el.dataset.cli); return { el, l: initiale(c ? c.prenom || c.nom : (el.querySelector(".t b") || el).textContent) }; }); };
   const brancheIdx = ix => { const va = y => { const sp = [...ix.children]; if (!sp.length) return; const r = ix.getBoundingClientRect(), i = Math.max(0, Math.min(sp.length - 1, Math.floor((y - r.top) / (r.height / sp.length))));
-      const l = sp[i].dataset.l, gs = [...E.querySelectorAll('.vue.on [id^="L-"]')], cle = z => z === "0" || z === "#" ? "[" : z, gr = gs.find(z => cle(z.id.slice(2)) >= cle(l)) || gs[gs.length - 1], vu = E.querySelector(".vue.on"); if (gr && vu) vu.scrollTop += gr.getBoundingClientRect().top - vu.getBoundingClientRect().top - 70;
+      const l = sp[i].dataset.l, cs = cibles(), cle = z => z === "#" ? "[" : z, vu = E.querySelector(".vue.on");
+      const ci = cs.find(z => z.l === l) || (E.querySelector('.vue.on[data-p="cl"] .v-groupe') ? cs.find(z => cle(z.l) >= cle(l)) || cs[cs.length - 1] : null);
+      if (ci && vu) vu.scrollTop += ci.el.getBoundingClientRect().top - vu.getBoundingClientRect().top - 70;
       sp.forEach((s, k) => s.classList.toggle("on", k === i)); };
     const fin = () => [...ix.children].forEach(s => s.classList.remove("on"));
     ix.addEventListener("touchstart", e => { e.preventDefault(); va(e.touches[0].clientY); }, { passive: false });
@@ -194,12 +202,10 @@
     ix.addEventListener("touchend", fin); ix.addEventListener("touchcancel", fin);
     let bas = false; ix.addEventListener("mousedown", e => { bas = true; va(e.clientY); e.preventDefault(); });
     document.addEventListener("mousemove", e => { if (bas) va(e.clientY); }); document.addEventListener("mouseup", () => { if (bas) { bas = false; fin(); } }); };
-  const indexLettres = () => { const v = E.querySelector('.vue.on[data-p="cl"]'), gs = v ? [...v.querySelectorAll(".v-groupe")] : [];
+  const indexLettres = () => { const v = E.querySelector('.vue.on[data-p="cl"]');
     if (!IXV || !IXV.isConnected) { if (!E.querySelector(".ong")) return; IXV = document.createElement("div"); IXV.className = "v-idx"; IXV.setAttribute("aria-hidden", "true"); E.appendChild(IXV); brancheIdx(IXV); }
-    /* 18/11 (Marie : « je l'aimais bien, pourquoi tu l'as enlevé ») : avant, les lettres n'apparaissaient qu'à partir de 4 lettres différentes ;
-       maintenant tout l'alphabet est toujours là, comme les contacts de l'iPhone (les lettres sans cliente en plus clair) */
-    const on = !!v && gs.length > 0; IXV.hidden = !on; if (!on) return;
-    const ls = gs.map(x => x.id.slice(2)).map(x => x === "0" ? "#" : x), tout = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").concat(ls.includes("#") ? ["#"] : []), cle = ls.join("");
+    const cs = cibles(), on = !!v && cs.length > 0; IXV.hidden = !on; if (!on) return;
+    const ls = [...new Set(cs.map(z => z.l))], tout = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").concat(ls.includes("#") ? ["#"] : []), cle = ls.sort().join("");
     if (IXV.dataset.k !== cle) { IXV.dataset.k = cle; IXV.innerHTML = tout.map(l => `<span data-l="${l}"${ls.includes(l) ? "" : ' class="x"'}>${l}</span>`).join(""); } };
 
   /* ---------- 7 · Mon site ---------- */
@@ -266,7 +272,13 @@
     if (!FAB || !FAB.isConnected) { FAB = document.createElement("button"); FAB.className = "v-fab"; FAB.dataset.a = "nouveau"; FAB.setAttribute("aria-label", "Nouveau rendez-vous"); FAB.innerHTML = svg(IC.plus, 26); E.appendChild(FAB); }
     FAB.hidden = S.onglet !== "ag"; };
   const r0 = rendu;
-  rendu = function () { r0.apply(this, arguments); try { fab(); bandeau(); indexLettres(); } catch (e) { console.warn(e); } };
+  /* 18/11 (Marie : « l'agenda ne doit bouger ni en haut ni en bas ») : le haut et la barre du bas restent en place, seules les heures défilent.
+     On garde l'endroit où elle en était ; la 1re fois, on se place juste avant maintenant (ou avant le 1er rendez-vous). */
+  E.addEventListener("scroll", e => { const p = e.target; if (p.classList && p.classList.contains("pap")) S.papY = p.scrollTop; }, true);
+  const heures = () => { const p = E.querySelector('.vue.on[data-p="ag"] .pap'); if (!p) return;
+    if (S.papY == null) { const n = p.querySelector(".v-now"), r = p.querySelector(".pr"); S.papY = Math.max(0, (n ? n.offsetTop - 90 : r ? r.offsetTop - 30 : 0)); }
+    p.scrollTop = S.papY; };
+  rendu = function () { r0.apply(this, arguments); try { fab(); bandeau(); indexLettres(); heures(); } catch (e) { console.warn(e); } };
 
   /* ---------- 10 · le dessin ---------- */
   const st = document.createElement("style");
@@ -396,6 +408,10 @@
 #E .semaine button.on{background:var(--v-fonce)}
 #E .semaine button.on small{color:rgba(255,255,255,.7)}#E .semaine button.on b{color:#fff}#E .semaine button.on i{background:#fff;opacity:1}
 #E .semaine button.fj{opacity:1}#E .semaine button.fj b{color:#C9BFB6;text-decoration:none}
+#E .vue.on[data-p="ag"]{display:flex;flex-direction:column;overflow:hidden;padding-bottom:calc(env(safe-area-inset-bottom) + 96px)}
+#E .vue[data-p="ag"]>*{flex:none}
+#E .vue[data-p="ag"]>.pap{flex:1 1 auto;min-height:120px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#E .vue[data-p="ag"]>.pap::-webkit-scrollbar{display:none}
 #E .pap{background:#fff;border-radius:22px;border:1px solid var(--v-trait);box-shadow:none;margin-top:0;padding-left:52px}
 #E .pap:before{display:none}
 #E .pap .pl{border-bottom-color:transparent}
