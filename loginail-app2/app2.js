@@ -50,6 +50,8 @@ async function partageFichier(blob, nom, fait) { try { const f = new File([blob]
   if (!/^https?:$/.test(location.protocol)) { dit("Partage impossible : demandez le fichier via l’aide."); return; }
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nom; document.body.appendChild(a); a.click(); a.remove(); dit(fait); }
 let dit = t => { const z = $(".toast", E); if (!z) return; z.textContent = t; z.classList.add("on"); clearTimeout(z._t); z._t = setTimeout(() => z.classList.remove("on"), 2200); };
+/* 18/11 (Marie, D4 + D5) : l'adresse qu'on partage. Son .fr dès qu'il est en service (après le 1er paiement) ; sinon, pendant le mois offert, loginail.fr/nom-du-salon */
+const lienDuSite = st => { if (!st || !st.slug) return ""; const d = String((st.donnees && st.donnees.domaine) || "").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, ""); return /^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(d) ? "https://" + d : "https://loginail.fr/" + st.slug; };
 const ouvre = h => { $(".feuille .fc", E).innerHTML = '<button class="fe-x" data-a="fermer" aria-label="Fermer">×</button>' + h; E.classList.add("fe"); $(".feuille", E).scrollTop = 0; };
 const ferme = () => E.classList.remove("fe");
 const oups = e => { console.error(e); dit("Oups, ça n’a pas marché. Réessayez."); };
