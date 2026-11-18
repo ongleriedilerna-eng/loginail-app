@@ -206,7 +206,13 @@
     if (!IXV || !IXV.isConnected) { if (!E.querySelector(".ong")) return; IXV = document.createElement("div"); IXV.className = "v-idx"; IXV.setAttribute("aria-hidden", "true"); E.appendChild(IXV); brancheIdx(IXV); }
     const cs = cibles(), on = !!v && cs.length > 0; IXV.hidden = !on; if (!on) return;
     const ls = [...new Set(cs.map(z => z.l))], tout = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").concat(ls.includes("#") ? ["#"] : []), cle = ls.sort().join("");
-    if (IXV.dataset.k !== cle) { IXV.dataset.k = cle; IXV.innerHTML = tout.map(l => `<span data-l="${l}"${ls.includes(l) ? "" : ' class="x"'}>${l}</span>`).join(""); } };
+    if (IXV.dataset.k !== cle) { IXV.dataset.k = cle; IXV.innerHTML = tout.map(l => `<span data-l="${l}"${ls.includes(l) ? "" : ' class="x"'}>${l}</span>`).join(""); }
+    /* 18/11 (Marie : « tout en haut, A et B sont sur “Anniversaire ce mois” ») : les lettres restent au milieu de la place libre
+       entre les filtres (quand on est tout en haut) et la barre du bas ; elles ne bougent pas quand on fait défiler, et se serrent si l'écran est petit */
+    const er = E.getBoundingClientRect(), fl = v.querySelector(".v-filtres"), o = E.querySelector(".ong");
+    const haut = fl ? fl.getBoundingClientRect().bottom + v.scrollTop - er.top + 10 : 120, bas = (o ? o.getBoundingClientRect().top : er.bottom) - er.top - 10;
+    const n = IXV.children.length || 1, lh = Math.max(9, Math.min(15, (bas - haut - 16) / n));
+    IXV.style.top = Math.round((haut + bas) / 2) + "px"; IXV.style.setProperty("--lh", lh.toFixed(1) + "px"); };
 
   /* ---------- 7 · Mon site ---------- */
   const LIG = { style: IC.style, perso: IC.perso, charms: IC.charms, "ms-presta": IC.presta, "ms-photos": IC.photos, "ms-salon": IC.salon, "ms-horaires": IC.horloge, "ms-adresse": IC.adresse, "ms-apropos": IC.apropos, "ms-photo": IC.moi, "ms-bon": IC.bon, "ms-legal": IC.bon, bio: IC.lien, site: IC.globe };
@@ -457,7 +463,7 @@
 #E .idx2{display:none!important}
 #E .v-idx{position:absolute;right:4px;top:50%;transform:translateY(-50%);z-index:12;display:flex;flex-direction:column;align-items:center;padding:8px 3px;touch-action:none;-webkit-user-select:none;user-select:none;cursor:pointer}
 #E .v-idx[hidden]{display:none}
-#E .v-idx span{font-size:10px;font-weight:500;line-height:15px;width:16px;text-align:center;color:var(--v-acc);border-radius:50%;transition:transform .1s}
+#E .v-idx span{font-size:10px;font-weight:500;line-height:var(--lh,15px);width:16px;text-align:center;color:var(--v-acc);border-radius:50%;transition:transform .1s}
 #E .v-idx span.on{transform:scale(1.5)}#E .v-idx span.x{opacity:.35}
 /* ----- Mon site ----- */
 #E .v-enligne{display:inline-flex;align-items:center;gap:6px;color:#2E6B4F}
