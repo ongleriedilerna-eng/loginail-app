@@ -66,7 +66,7 @@
   const POL = { elegante: ["Italiana", 1], manuscrite: ["'Great Vibes'", 1.15], ronde: ["'Bagel Fat One'", .8], retro: ["'Abril Fatface'", .82], calligraphie: ["'Pinyon Script'", 1.05], parisienne: ["Parisienne", 1.05], chic: ["'Playfair Display'", .88], luxe: ["Cinzel", .78], surf: ["Pacifico", .85], seventies: ["Shrikhand", .82], bulle: ["'Rubik Bubbles'", .85], bonbon: ["'Cherry Bomb One'", .85], y2k: ["Monoton", .72], gothique: ["UnifrakturMaguntia", .95], feutre: ["'Permanent Marker'", .85], moderne: ["Jost", .9] };
   const base = () => { const s = document.querySelector('script[src*="fonds-100.js"]'); return s ? s.src.replace(/[^/]*(\?.*)?$/, "") : new URL("loginail-site/", location.href).href; };
   const chargeFonds = () => new Promise(res => { if (window.F100) return res(); addEventListener("f100", () => res(), { once: true });
-    if (!document.querySelector('script[src*="fonds-100.js"]')) { const sc = document.createElement("script"); sc.src = "loginail-site/fonds-100.js"; sc.onerror = () => res(); document.head.appendChild(sc); }
+    if (!document.querySelector('script[src*="fonds-100.js"]')) { const sc = document.createElement("script"); sc.src = "https://loginail.fr/loginail-site/fonds-100.js"; sc.onerror = () => res(); document.head.appendChild(sc); }
     setTimeout(res, 6000); });
   let polOk = null;
   const chargePolices = () => polOk || (polOk = new Promise(res => { const l = document.createElement("link"); l.rel = "stylesheet"; l.href = "loginail-site/polices-sites.css";

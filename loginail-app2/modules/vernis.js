@@ -49,7 +49,7 @@
     FP = new Promise(res => { const go = () => { try { const i = F100.idx[f]; if (i != null) { FOND = { nom: f, html: '<div class="f100">' + F100.tuile(i) + "</div>" };
           if (!document.getElementById("mcCss") && window.FONDS100) { const c = document.createElement("style"); c.id = "mcCss"; c.textContent = FONDS100.css; document.head.appendChild(c); } } } catch (e) {} FP = null; res(); };
       if (window.F100) return go(); addEventListener("f100", go, { once: true });
-      if (!document.querySelector('script[src*="fonds-100.js"]')) { const sc = document.createElement("script"); sc.src = "loginail-site/fonds-100.js"; sc.onerror = () => { FP = null; res(); }; document.head.appendChild(sc); } });
+      if (!document.querySelector('script[src*="fonds-100.js"]')) { const sc = document.createElement("script"); sc.src = "https://loginail.fr/loginail-site/fonds-100.js"; sc.onerror = () => { FP = null; res(); }; document.head.appendChild(sc); } });
     return FP; };
   const bandeau = () => { const v = E.querySelector(".vue.on"); if (!v) return; let bd = v.querySelector(":scope>.v-ban");
     const voulu = ban() && !!fondDuSite(), pret = voulu && FOND.nom === fondDuSite() && FOND.html;

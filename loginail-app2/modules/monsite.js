@@ -113,7 +113,7 @@ html.demo-ms .ms2-dots{grid-template-columns:repeat(9,1fr);margin-bottom:4px}
     <div class="sous" style="margin-top:6px;font-size:11.5px">Les charms de votre univers. Bientôt : les choisir un par un.</div>`};
   let fCharge=0;const chargeF=()=>{if(window.F100||fCharge)return;fCharge=1;addEventListener("f100",()=>{document.querySelectorAll(".ms2-fonds").forEach(z=>z.innerHTML=ronds(lit()));
     if(!document.getElementById("mcCss")){const c=document.createElement("style");c.id="mcCss";c.textContent=FONDS100.css;document.head.appendChild(c)}},{once:true});
-    if(!document.querySelector('script[src*="fonds-100.js"]')){const sc=document.createElement("script");sc.src="loginail-site/fonds-100.js";document.head.appendChild(sc)}};
+    if(!document.querySelector('script[src*="fonds-100.js"]')){const sc=document.createElement("script");sc.src="https://loginail.fr/loginail-site/fonds-100.js";document.head.appendChild(sc)}};
   /* l'aperçu en direct */
   const rafraichit=()=>{document.querySelectorAll(".ms2-apercu iframe").forEach(f=>{const z=f.parentElement.clientWidth/390;f.style.transform=`scale(${z})`;
     f.onload=()=>{try{const d=f.contentDocument,s2=d.createElement("style");s2.textContent=".pret,.langues,.bandeau{display:none!important}";d.head.appendChild(s2)}catch(_){}};f.src=url()})};
