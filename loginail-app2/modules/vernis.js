@@ -214,6 +214,14 @@
     const n = IXV.children.length || 1, lh = Math.max(9, Math.min(15, (bas - haut - 16) / n));
     IXV.style.top = Math.round((haut + bas) / 2) + "px"; IXV.style.setProperty("--lh", lh.toFixed(1) + "px"); };
 
+  /* 18/11 : les visites du mois de son site (une lecture toutes les 5 minutes au plus) */
+  let VIS = null, VIS_T = 0;
+  const visites = () => { if (window.SB_DEMO) return { visite: 312, reserver: 48, src: { google: 140, instagram: 61 } };
+    if (Date.now() - VIS_T > 300000) { VIS_T = Date.now(); const d = new Date(), de = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+      sb.rpc("mes_visites", { depuis: de }).then(({ data, error }) => { if (error || !Array.isArray(data)) return; const o = { visite: 0, reserver: 0, src: {} };
+        data.forEach(x => { o[x.quoi] = (o[x.quoi] || 0) + +x.n; if (x.quoi === "visite") o.src[x.source] = (o.src[x.source] || 0) + +x.n; });
+        const avant = JSON.stringify(VIS); VIS = o; if (avant !== JSON.stringify(o) && S.onglet === "si" && !E.classList.contains("fe")) rendu(); }).catch(() => {}); }
+    return VIS; };
   /* ---------- 7 · Mon site ---------- */
   const LIG = { style: IC.style, perso: IC.perso, charms: IC.charms, "ms-presta": IC.presta, "ms-photos": IC.photos, "ms-salon": IC.salon, "ms-horaires": IC.horloge, "ms-adresse": IC.adresse, "ms-apropos": IC.apropos, "ms-photo": IC.moi, "ms-bon": IC.bon, "ms-legal": IC.bon, bio: IC.lien, site: IC.globe };
   const icones = () => E.querySelectorAll('.vue.on[data-p="si"] .ligne').forEach(l => { const k = l.dataset.v || l.dataset.a; if (LIG[k] && !l.querySelector(".v-ico")) l.insertAdjacentHTML("afterbegin", `<span class="v-ico">${svg(LIG[k])}</span>`); });
@@ -230,7 +238,13 @@
     const chiffres = [], resa = (S.tous || []).filter(r => r.source === "en_ligne" && r.cree_le && new Date(r.cree_le).getMonth() === now.getMonth() && new Date(r.cree_le).getFullYear() === now.getFullYear()).length;
     if (s) chiffres.push([resa, "réservation" + (resa > 1 ? "s" : "") + " en ligne ce mois"]);
     if (b.note) chiffres.push([String(Math.round(b.note * 10) / 10).replace(".", ","), "sur Google" + (b.nbAvis ? " · " + b.nbAvis + " avis" : "")]);
+    if (s && s.en_ligne && visites() && chiffres.length && /réservation/.test(chiffres[0][1])) chiffres.shift();   /* les réservations sont dans « Ce mois sur votre site » : pas deux fois */
     if (chiffres.length && pe) pe.insertAdjacentHTML("afterend", `<div class="v-chiffres v-c${chiffres.length}">${chiffres.map(c => `<div><b>${c[0]}</b><span>${c[1]}</span></div>`).join("")}</div>`);
+    /* 18/11 (Marie : « Visites ce mois », version maison) : le chemin du mois — visites → « Réserver » → réservations, et d'où viennent les visites.
+       Compté sans cookie par le site public (serveur/sql/22-visites.sql) ; ici on lit seulement les chiffres de SON site. */
+    if (s && s.en_ligne && pe) { const V = visites(); const c = f.querySelector(".v-chiffres") || pe;
+      if (V) { const src = [["google", "Google"], ["instagram", "Instagram"], ["tiktok", "TikTok"], ["facebook", "Facebook"]].map(x => [V.src[x[0]] || 0, x[1]]).filter(x => x[0]).sort((x, y) => y[0] - x[0]).slice(0, 2);
+        c.insertAdjacentHTML("afterend", `<div class="v-chemin"><div class="v-ch-k">Ce mois sur votre site</div><div class="v-ch-l"><div><b>${V.visite}</b><span>visite${V.visite > 1 ? "s" : ""}</span></div><i>›</i><div><b>${V.reserver}</b><span>ont touché « Réserver »</span></div><i>›</i><div><b>${resa}</b><span>réservation${resa > 1 ? "s" : ""}</span></div></div>${V.visite ? (src.length ? `<div class="v-ch-s">dont ${src.map(x => x[0] + " venue" + (x[0] > 1 ? "s" : "") + (/^[AEIOU]/.test(x[1]) ? " d’" : " de ") + x[1]).join(" · ")}</div>` : "") : `<div class="v-ch-s">Les visites se comptent depuis le 18 novembre.</div>`}</div>`); } }
     f.querySelectorAll(".ligne").forEach(l => { const k = l.dataset.v || l.dataset.a; if (LIG[k] && !l.querySelector(".v-ico")) l.insertAdjacentHTML("afterbegin", `<span class="v-ico">${svg(LIG[k])}</span>`);
       if (k === "perso") { const sp = l.querySelector(".t span"); if (sp) sp.textContent = sp.textContent.replace(/^La forme, le fond, les couleurs, l’écriture · /, ""); } });
     const lp = f.querySelector('.ligne[data-a="ms-photos"]'), ph = (b.photos || []).filter((p, i) => i !== b.salon && p && p.url).slice(0, 3);
@@ -382,7 +396,13 @@
 #E .v-annonce>i{width:7px;height:7px;background:var(--v-acc)}
 #E .v-annonce .fl{margin-left:auto;color:var(--v-acc);font-size:13px;white-space:nowrap}
 #E .v-chiffres{display:grid;grid-template-columns:repeat(3,1fr);margin:0 0 6px}
-#E .v-chiffres.v-c2{grid-template-columns:repeat(2,1fr)}#E .v-chiffres.v-c1{grid-template-columns:1fr}
+#E .v-chiffres.v-c2{grid-template-columns:repeat(2,1fr)}
+#E .v-chemin{background:#fff;border:1px solid var(--v-trait);border-radius:18px;padding:12px 14px 11px;margin:4px 0 6px}
+#E .v-ch-k{font-size:12px;color:var(--gris);margin-bottom:6px}
+#E .v-ch-l{display:flex;align-items:flex-start;gap:6px}#E .v-ch-l>div{flex:1;min-width:0}
+#E .v-ch-l b{display:block;font:500 22px/1.1 'Cormorant Garamond',Georgia,serif;font-variant-numeric:lining-nums;color:var(--v-encre)}#E .v-ch-l span{display:block;font-size:11.5px;color:var(--gris);line-height:1.3}
+#E .v-ch-l i{font-style:normal;color:var(--v-acc);opacity:.6;padding-top:3px}
+#E .v-ch-s{font-size:11.5px;color:var(--gris);margin-top:7px;border-top:1px solid var(--v-trait);padding-top:7px}#E .v-chiffres.v-c1{grid-template-columns:1fr}
 #E .v-chiffres div{padding:0 4px;min-width:0}
 #E .v-chiffres div+div{border-left:1px solid var(--v-trait);padding-left:16px}
 #E .v-chiffres b{display:block;font:500 28px/1.1 'Cormorant Garamond',Georgia,serif;font-variant-numeric:lining-nums;white-space:nowrap}
