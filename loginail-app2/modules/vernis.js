@@ -281,6 +281,7 @@
 #E .v-ban{position:absolute;left:0;right:0;top:0;height:calc(max(62px,env(safe-area-inset-top) + 40px) + 96px);overflow:hidden;z-index:0;pointer-events:none;-webkit-mask-image:linear-gradient(180deg,#000 62%,transparent);mask-image:linear-gradient(180deg,#000 62%,transparent)}
 #E .v-ban .f100,#E .v-ban .tuile{position:absolute!important;inset:0;width:100%!important;height:100%!important;border-radius:0!important}
 #E .v-avecban>*:not(.v-ban){position:relative;z-index:1}
+#E .v-avecban>.v-haut{z-index:5}   /* 18/11 (bug de Marie) : avec le fond en haut, le mois et le menu de tri passaient sous la liste des heures */
 #E .v-avecban .v-et{display:none}
 #E .v-avecban .tete>div:first-child{background:rgba(255,255,255,.78);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-radius:16px;padding:8px 14px 6px;margin-left:-6px}
 /* les titres : écrits normalement, Cormorant pour le grand titre */
