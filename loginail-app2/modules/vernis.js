@@ -427,6 +427,26 @@
 #E .vue[data-p="ag"]>*{flex:none}
 #E .vue[data-p="ag"]>.pap{flex:1 1 auto;min-height:120px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 #E .vue[data-p="ag"]>.pap::-webkit-scrollbar{display:none}
+/* 18/11 (Marie, version 1 « douce ») : Clientes et Mon site écrits un peu plus petit, titres à la taille de l'agenda.
+   La case « Chercher » garde 16 px dans la saisie (en dessous, l'iPhone zoome tout l'écran quand on tape). */
+#E .vue:is([data-p="cl"],[data-p="si"]) .tete h1{font-size:30px}
+#E .vue:is([data-p="cl"],[data-p="si"]) .tete small,#E .vue[data-p="si"] .v-enligne{font-size:12px}
+#E .vue:is([data-p="cl"],[data-p="si"]) .v-haut{padding-bottom:12px}
+#E .vue[data-p="cl"] label.cherche{height:42px;font-size:14px}
+#E .vue[data-p="cl"] .v-rondb,#E .vue[data-p="cl"] [data-a="tri-menu"]{width:40px!important;height:40px!important}
+#E .vue[data-p="cl"] .v-filtres button{height:30px;font-size:12.5px;padding:0 13px}
+#E .vue[data-p="cl"] .v-lettre{font-size:17px;height:auto;margin-bottom:4px}
+#E .vue[data-p="cl"] .cli{padding-top:9px;padding-bottom:9px;min-height:0}
+#E .vue[data-p="cl"] .cli .av{width:34px;height:34px;font-size:13px}
+#E .vue[data-p="cl"] .cli .t b{font-size:14.5px}#E .vue[data-p="cl"] .cli .t span{font-size:12px}
+#E .vue[data-p="cl"] .cli .fl{font-size:15px}
+#E .vue[data-p="si"] .v-img{height:150px}#E .vue[data-p="si"] .v-nomsite{font-size:24px}
+#E .vue[data-p="si"] .v-bas{padding-top:10px;padding-bottom:10px}#E .vue[data-p="si"] .v-voir{font-size:14px}
+#E .vue[data-p="si"] .btn{height:44px;font-size:14.5px}
+#E .vue[data-p="si"] .v-chiffres b,#E .vue[data-p="si"] .v-chiffres strong{font-size:24px}#E .vue[data-p="si"] .v-chiffres{font-size:12.5px}
+#E .vue[data-p="si"] .ligne{padding-top:11px;padding-bottom:11px;min-height:0}
+#E .vue[data-p="si"] .ligne .t{font-size:14.5px;height:auto;min-width:0}#E .vue[data-p="si"] .ligne .t span,#E .vue[data-p="si"] .ligne .t small{font-size:12px}
+#E .vue[data-p="si"] .v-ico{width:32px;height:32px}
 #E .vue[data-p="ag"] .pap{padding-bottom:50px}
 #E .vue[data-p="ag"] .pap .pl{height:var(--plh,30px)}
 #E .vue[data-p="ag"] .pap .pl span{font-size:11px}
