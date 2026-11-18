@@ -159,4 +159,4 @@ html.demo-ms .ms2-dots{grid-template-columns:repeat(9,1fr);margin-bottom:4px}
 /* 12/11 : « Copier le lien de mon site » */
 document.addEventListener("click",async e=>{const a=e.target.closest&&e.target.closest('[data-a="bio"]');if(!a)return;
   try{const st=typeof S!=="undefined"&&S.site;if(!st||!st.en_ligne||!st.slug){dit("Mettez d’abord votre site en ligne");return}
-    await navigator.clipboard.writeText("https://loginail.fr/loginail-creer/pret.html?public&s="+st.slug);dit("Lien copié ✓")}catch(x){try{dit("Impossible de copier, réessayez")}catch(y){}}},true);
+    await navigator.clipboard.writeText("https://loginail.fr/"+st.slug);dit("Lien copié ✓")}catch(x){try{dit("Impossible de copier, réessayez")}catch(y){}}},true);

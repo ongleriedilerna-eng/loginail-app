@@ -264,7 +264,7 @@
     return c; }
 
   /* ---------- 5 · la feuille d'aperçu ---------- */
-  const lien = () => S.site && S.site.en_ligne && S.site.slug ? "https://loginail.fr/loginail-creer/pret.html?public&s=" + S.site.slug : "";
+  const lien = () => S.site && S.site.en_ligne && S.site.slug ? "https://loginail.fr/" + S.site.slug : "";
   const copie = () => { const u = lien(); if (!u) return Promise.resolve(false); try { return navigator.clipboard.writeText(u).then(() => true, () => false); } catch (e) { return Promise.resolve(false); } };
   let ETAT = { n: 0, blob: null, url: "", jeton: 0 };
   async function prepare(n) {

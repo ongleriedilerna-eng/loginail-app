@@ -227,7 +227,7 @@
     return enTexte(f); };
   document.addEventListener("click", async e => { const p = e.target.closest && e.target.closest("[data-v-partage]"); if (!p) return; e.stopPropagation();
     const st = S.site; if (!st || !st.en_ligne || !st.slug) return dit("Mettez d’abord votre site en ligne");
-    const url = "https://loginail.fr/loginail-creer/pret.html?public&s=" + st.slug, nom = (brouillon() || {}).nom || S.profil.nom_salon || "Mon site";
+    const url = "https://loginail.fr/" + st.slug,   /* 18/11 : la page du salon (son nom et sa photo dans l'aperçu du lien) */ nom = (brouillon() || {}).nom || S.profil.nom_salon || "Mon site";
     if (navigator.share) { try { await navigator.share({ title: nom, url }); return; } catch (x) { if (x && x.name === "AbortError") return; } }
     try { await navigator.clipboard.writeText(url); dit("Lien copié ✓"); } catch (x) { dit("Impossible de copier, réessayez"); } }, true);
 
