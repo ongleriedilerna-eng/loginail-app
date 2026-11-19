@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <script>/* 13/11 (Apple) : sur un écran tactile (iPhone, iPad) ou dans l'appli emballée, l'appli prend tout l'écran — le faux téléphone ne sert que sur ordinateur */if(matchMedia("(hover:none) and (pointer:coarse)").matches||!/^https?:$/.test(location.protocol)||/[?&]plein/.test(location.search))document.documentElement.classList.add("plein");</script>
+<script>/* 19/11 (Marie) : sur ordinateur, sans connexion en cours, on ouvre DIRECTEMENT « Contente de te revoir » : ni faux téléphone vide, ni logo qui s'écrit avant */try{if(!document.documentElement.classList.contains("plein")&&/^https?:$/.test(location.protocol)&&!localStorage.getItem("sb-scfhaombuptmrlkdhcsl-auth-token")&&!localStorage.getItem("loginail-demo")&&!/access_token|[?&]code=|token_hash/.test(location.href))document.documentElement.classList.add("cx-ordi","cx-direct")}catch(e){}</script>
 <title>Loginail · Espace pro</title>
 <meta name="theme-color" content="#F6F3EF">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -76,6 +77,7 @@ html body .cxo-f input.cxo-code{text-align:center;letter-spacing:.3em;font-size:
 @media (max-width:1100px){.cxo-bulle{display:none}}
 @media (max-height:760px){.cxo-boite h1{font-size:46px}.cxo-boite .intro{margin:14px auto 22px}.cxo-neuve{margin-top:28px}}
 html.cx-ordi .toast{z-index:50}
+html.cx-direct .ouv{display:none!important}html.cx-ordi .ecran>.charge{display:none!important}
 @media (prefers-reduced-motion:reduce){.cxo-ch,.cxo-bulle,.cxo-boite{animation:none}}
 /* l'encoche et la barre du bas de l'iPhone */
 html.plein .vue{padding-top:max(62px,calc(env(safe-area-inset-top) + 40px))}
@@ -124,7 +126,7 @@ html.plein .ecran{-webkit-user-select:none;user-select:none;-webkit-touch-callou
 <script src="loginail-app2/vendor/supabase.js"></script>
 <script src="loginail-app2/vendor/qrcode.min.js"></script>
 <script src="loginail-app2/demo-salon.js?v=1911la"></script>
-<script src="loginail-app2/app2.js?v=1911cx"></script>
+<script src="loginail-app2/app2.js?v=1911cy"></script>
 <script src="loginail-app2/modules/ronds.js?v=1711sc"></script>
 <script src="loginail-app2/modules/monsite.js?v=1811pg"></script>
 <script src="loginail-app2/modules/photos.js?v=1711sc"></script>

@@ -545,7 +545,7 @@ const ecranInactif = () => { E.innerHTML = `<div class="vue on"><div class="cx">
   <button class="btn" data-a="reessayer">Réessayer</button><button class="lien-t" data-a="deco">Se déconnecter</button></div><div class="toast"></div></div>`; };
 async function demarre(session) {
   if (!session) { S.user = null; ecranConnexion(); return; }
-  document.documentElement.classList.remove("cx-ordi"); /* 19/11 : on sort de la page de connexion ordinateur */
+  document.documentElement.classList.remove("cx-ordi", "cx-direct"); /* 19/11 : on sort de la page de connexion ordinateur */
   /* 18/11 : au lancement, getSession et onAuthStateChange appellent tous les deux demarre → un seul chargement à la fois */
   if (S.user?.id === session.user.id && (E.querySelector(".ong") || S.demarre === session.user.id)) return;
   S.demarre = session.user.id; setTimeout(() => { if (S.demarre === session.user.id && !S.pret) S.demarre = null; }, 20000);
