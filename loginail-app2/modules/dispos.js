@@ -160,7 +160,7 @@
   const melange = (a, b, t) => { const p = c => { c = c.replace("#", ""); if (c.length === 3) c = c.replace(/./g, "$&$&"); return [0, 2, 4].map(i => parseInt(c.substr(i, 2), 16)); };
     try { const x = p(a), y = p(b); return "rgb(" + x.map((v, i) => Math.round(v + (y[i] - v) * t)).join(",") + ")"; } catch (e) { return a; } };
   /* ---------- 4 bis · la story du MOIS : même carte Carnet, un calendrier lundi → dimanche ---------- */
-  const charmSur = async (cx, n, x, y, w, r) => { try { const im = await img(base() + "charms/" + n + ".png").catch(() => img(SITE + "charms/" + n + ".png")), h = w * im.naturalHeight / im.naturalWidth; cx.save(); cx.translate(x + w / 2, y + h / 2); cx.rotate(r * Math.PI / 180);
+  const charmSur = async (cx, n, x, y, w, r) => { try { const im = await img(base() + "charms/" + n + ".png").catch(() => img(SITE + "charms/" + n + ".webp")).catch(() => img(SITE + "charms/" + n + ".png")), h = w * im.naturalHeight / im.naturalWidth; cx.save(); cx.translate(x + w / 2, y + h / 2); cx.rotate(r * Math.PI / 180);
       cx.shadowColor = "rgba(0,0,0,.25)"; cx.shadowBlur = 8 * K; cx.shadowOffsetY = 6 * K; cx.drawImage(im, -w / 2, -h / 2, w, h); cx.restore(); return true; } catch (e) { return false; } };
   const etoileSur = (cx, x, y, sz) => { cx.save(); cx.font = `${sz}px 'Cormorant Garamond', serif`; cx.fillStyle = "#fff"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.shadowColor = "rgba(0,0,0,.3)"; cx.shadowBlur = 12; cx.fillText("✦", x, y); cx.restore(); };
   async function dessineMois(cx, c, s, per, col) {
@@ -240,7 +240,7 @@
     let k = 1, M = mise(1); for (let n = 0; n < 12 && TOP + M.CH > CB_MAX && k > .6; n++) { k = Math.max(.6, k * (CB_MAX - TOP) / M.CH - .005); M = mise(k); }
     const CH = M.CH, CB = TOP + CH;
     /* les 2 charms de son site, posés de travers comme sur la maquette (en haut à gauche, en bas à droite) */
-    const charm = async (n, x, y, w, r) => { try { const im = await img(base() + "charms/" + n + ".png").catch(() => img(SITE + "charms/" + n + ".png")), h = w * im.naturalHeight / im.naturalWidth; cx.save(); cx.translate(x + w / 2, y + h / 2); cx.rotate(r * Math.PI / 180);
+    const charm = async (n, x, y, w, r) => { try { const im = await img(base() + "charms/" + n + ".png").catch(() => img(SITE + "charms/" + n + ".webp")).catch(() => img(SITE + "charms/" + n + ".png")), h = w * im.naturalHeight / im.naturalWidth; cx.save(); cx.translate(x + w / 2, y + h / 2); cx.rotate(r * Math.PI / 180);
         cx.shadowColor = "rgba(0,0,0,.25)"; cx.shadowBlur = 8 * K; cx.shadowOffsetY = 6 * K; cx.drawImage(im, -w / 2, -h / 2, w, h); cx.restore(); return true; } catch (e) { return false; } };
     const etoile = (x, y, sz) => { cx.save(); cx.font = `${sz}px 'Cormorant Garamond', serif`; cx.fillStyle = "#fff"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.shadowColor = "rgba(0,0,0,.3)"; cx.shadowBlur = 12; cx.fillText("✦", x, y); cx.restore(); };
     /* le carnet */
