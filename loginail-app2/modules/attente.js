@@ -51,7 +51,7 @@
   const fiche = (j = S.jour) => { const l = duJour(j), salon = (S.profil && S.profil.nom_salon) || "votre prothésiste";
     const quand = `${JOURS[(j.getDay() + 6) % 7]} ${j.getDate()} ${MOIS[j.getMonth()]}`;
     if (!l.length) return ouvre(`<h3>En attente</h3><div class="sous">${quand}<br>Plus personne n’attend ce jour-là.</div>`);
-    ouvre(`<h3>En attente</h3><div class="sous">${quand}<br>Si une place se libère, elles reçoivent un e-mail tout seul.<br>La première qui réserve a la place.</div>
+    ouvre(`<h3>En attente</h3><div class="sous">${quand}<br>Si un rendez-vous est annulé, elles reçoivent un e-mail tout seul : la première qui réserve a la place.<br>Pour une place de dernière minute ou une place que vous ajoutez, écrivez-leur ou appelez-les.</div>
       <div class="at-carte">${l.map(a => { const t = num(a.telephone), txt = encodeURIComponent(`Bonjour ${a.prenom}, c’est ${salon}. Une place s’est libérée ${quand.toLowerCase()} pour votre ${(a.presta || "rendez-vous").toLowerCase()}. Elle vous intéresse ?`);
         return `<div class="at-l"><div class="at-av">${esc((a.prenom || "?").trim().charAt(0).toUpperCase())}</div><div class="at-tx"><b>${esc(a.prenom || "")}</b><span>${esc([a.presta, duree(a.duree)].filter(Boolean).join(" · "))}${a.cree_le ? " · " + inscrite(a.cree_le) : ""}</span></div>${t ? `<a class="at-bt cl" href="sms:${t}?&body=${txt}" aria-label="Écrire un SMS à ${esc(a.prenom || "")}">${SMS}</a><a class="at-bt" href="tel:${t}" aria-label="Appeler ${esc(a.prenom || "")}">${TEL}</a>` : ""}</div>`; }).join("")}</div>
       <div class="at-note">✦ <span>Vous ne voyez que le prénom, le téléphone et l’e-mail. Tout s’efface tout seul une fois le jour passé.</span></div>`); };
