@@ -267,31 +267,48 @@
   const lien = () => S.site && S.site.en_ligne && S.site.slug ? lienDuSite(S.site) : "";
   const copie = () => { const u = lien(); if (!u) return Promise.resolve(false); try { return navigator.clipboard.writeText(u).then(() => true, () => false); } catch (e) { return Promise.resolve(false); } };
   let ETAT = { n: 0, blob: null, url: "", jeton: 0 };
+  /* 19/11 (Marie : « le carré met du temps à s'afficher », « à chaque onglet ça se ferme, ça se rouvre ») :
+     les 3 images (cette semaine, la suivante, le mois) sont préparées À L'AVANCE pendant qu'elle est sur l'Accueil.
+     À l'ouverture et à chaque onglet, l'image est déjà là : tout s'affiche d'un coup, sans rond qui tourne.
+     En même temps on relit ses rendez-vous : si une place a changé, l'image est redessinée et remplacée sans clignoter. */
+  const CACHE = {}, EN_COURS = {};
+  const signe = sem => JSON.stringify(sem.jours.map(j => [+j.d, j.ferme ? 1 : 0, j.libres])) + "|" + JSON.stringify(donnees());
+  async function fabrique(n) { const k = String(n), sem = n === "M" ? await mois() : await semaine(n), s = signe(sem), avant = CACHE[k];
+    if (avant && avant.sig === s) return avant;
+    const c = await dessine(sem), blob = await new Promise((ok, ko) => { try { c.toBlob(b => b ? ok(b) : ko(new Error("vide")), "image/jpeg", .93); } catch (e) { ko(e); } });
+    const v = { blob, url: URL.createObjectURL(blob), sig: s };
+    if (avant) setTimeout(() => URL.revokeObjectURL(avant.url), 20000);
+    return (CACHE[k] = v); }
+  const obtenir = n => { const k = String(n); return EN_COURS[k] || (EN_COURS[k] = fabrique(n).finally(() => { delete EN_COURS[k]; })); };
+  let dernierPrechauffe = 0;
+  const prechauffe = (force) => { if (!S.user || (!force && Date.now() - dernierPrechauffe < 60000)) return; dernierPrechauffe = Date.now();
+    obtenir(0).catch(() => {}).then(() => obtenir(1)).catch(() => {}).then(() => obtenir("M")).catch(() => {}); };
+  const apercuHtml = v => `<img src="${v.url}" alt="Aperçu de ma story : mes dispos">`;
   async function prepare(n) {
-    const j = ++ETAT.jeton, z = E.querySelector(".dsp-apercu"); if (z) z.classList.add("charge");
-    try { const sem = n === "M" ? await mois() : await semaine(n), c = await dessine(sem); if (j !== ETAT.jeton) return;
-      const blob = await new Promise((ok, ko) => { try { c.toBlob(b => b ? ok(b) : ko(new Error("vide")), "image/jpeg", .93); } catch (e) { ko(e); } });
-      if (j !== ETAT.jeton) return; if (ETAT.url) URL.revokeObjectURL(ETAT.url); ETAT.blob = blob; ETAT.url = URL.createObjectURL(blob);
-      const zz = E.querySelector(".dsp-apercu"); if (zz) { zz.innerHTML = `<img src="${ETAT.url}" alt="Aperçu de ma story : mes dispos de la semaine">`; zz.classList.remove("charge"); }
-      const b = E.querySelector('[data-dsp="partage"]'); if (b) b.disabled = false; }
-    catch (e) { console.error(e); if (j === ETAT.jeton) { const zz = E.querySelector(".dsp-apercu"); if (zz) { zz.classList.remove("charge"); zz.innerHTML = '<span class="dsp-oups">Oups, l’image n’a pas pu se faire.<br>Réessayez.</span>'; } } } }
+    const j = ++ETAT.jeton, k = String(n), deja = CACHE[k];
+    const montre = v => { ETAT.blob = v.blob; ETAT.url = v.url; const zz = E.querySelector(".dsp-apercu"); if (zz) { const im = zz.querySelector("img");
+        if (im) { if (im.getAttribute("src") !== v.url) im.src = v.url; } else zz.innerHTML = apercuHtml(v); zz.classList.remove("charge"); }
+      const b = E.querySelector('[data-dsp="partage"]'); if (b) b.disabled = false; };
+    if (deja) montre(deja); else { const z = E.querySelector(".dsp-apercu"); if (z) z.classList.add("charge"); }
+    try { const v = await obtenir(n); if (j === ETAT.jeton) montre(v); }
+    catch (e) { console.error(e); if (j === ETAT.jeton && !deja) { const zz = E.querySelector(".dsp-apercu"); if (zz) { zz.classList.remove("charge"); zz.innerHTML = '<span class="dsp-oups">Oups, l’image n’a pas pu se faire.<br>Réessayez.</span>'; } } } }
   function feuille() {
     ecrit("loginail-dispos-vu", "1"); ETAT.n = 0; ETAT.blob = null;
-    const u = lien();
+    const u = lien(), c0 = CACHE["0"];
     ouvre(`<div class="dsp"><h3>Mes dispos</h3>
       <div class="dsp-bascule" role="tablist"><button role="tab" data-dsp="sem" data-n="0" class="on" aria-selected="true">Cette semaine</button><button role="tab" data-dsp="sem" data-n="1" aria-selected="false">La suivante</button><button role="tab" data-dsp="sem" data-n="M" aria-selected="false">${(m => m.charAt(0).toUpperCase() + m.slice(1))(MOIS[(new Date().getMonth() + 1) % 12])}</button></div>
-      <div class="dsp-apercu charge"></div>
-      <button class="btn dsp-btn" data-dsp="partage" disabled><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>Partager sur Instagram</button>
+      <div class="dsp-apercu${c0 ? "" : " charge"}">${c0 ? apercuHtml(c0) : ""}</div>
+      <button class="btn dsp-btn" data-dsp="partage"${c0 ? "" : " disabled"}><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>Partager sur Instagram</button>
       <div class="dsp-copie${u ? "" : " non"}" aria-live="polite">${u ? "<i></i>Votre lien de réservation est copié" : "Mettez votre site en ligne pour avoir votre lien de réservation"}</div></div>`);
     E.querySelector(".feuille").classList.add("dsp-f");
     if (u) copie().then(ok => { const m = E.querySelector(".dsp-copie"); if (m && !ok) { m.classList.add("attend"); m.innerHTML = "<i></i>Votre lien sera copié quand vous partagerez"; } });
-    prepare(0); }
+    prepare(0).then(() => { if (!CACHE["1"] || !CACHE.M) prechauffe(true); }); }
   /* l'appli ferme la feuille : on enlève notre marque */
   new MutationObserver(() => { if (!E.classList.contains("fe")) { const f = E.querySelector(".feuille.dsp-f"); if (f) f.classList.remove("dsp-f"); } }).observe(E, { attributes: true, attributeFilter: ["class"] });
   document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-dsp]"); if (!b) return; e.stopPropagation(); const k = b.dataset.dsp;
     if (k === "ouvre") return feuille();
     if (k === "sem") { const n = b.dataset.n === "M" ? "M" : +b.dataset.n; if (n === ETAT.n) return; ETAT.n = n; b.parentElement.querySelectorAll("button").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-selected", x === b); });
-      const p = E.querySelector('[data-dsp="partage"]'); if (p) p.disabled = true; return prepare(n); }
+      if (!CACHE[String(n)]) { const p = E.querySelector('[data-dsp="partage"]'); if (p) p.disabled = true; } return prepare(n); }
     if (k === "partage") { if (!ETAT.blob) return;
       /* le lien d'abord (pendant que le toucher compte encore), puis le menu Partager du téléphone avec l'image */
       copie().then(ok => { const m = E.querySelector(".dsp-copie"); if (m && ok) { m.classList.remove("attend"); m.innerHTML = "<i></i>Votre lien de réservation est copié"; } });
@@ -300,7 +317,7 @@
 
   /* ---------- 6 · le bouton, tout en bas de l'Accueil (16/11, Marie : seulement dans l'Accueil, plus dans l'Agenda) ---------- */
   const vAcc = VUES.acc;
-  VUES.acc = () => { const h = vAcc();
+  VUES.acc = () => { const h = vAcc(); setTimeout(() => prechauffe(false), 1200);   /* 19/11 : les images se préparent pendant qu'elle regarde l'Accueil */
     const neuf = lit("loginail-dispos-vu", "") !== "1", s = (() => { try { return site(); } catch (e) { return { fond: null }; } })();
     const vig = s.fond ? `<span class="dsp-vig f100" aria-hidden="true">${s.fond.base === SITE ? s.fond.html.replace(/url\((?!['"]?(data:|https?:))(['"]?)/g, "url($2" + SITE) : s.fond.html}<i></i></span>` : '<span class="dsp-vig" aria-hidden="true"><i></i></span>';
     return h + `<button class="dsp-ouvre" data-dsp="ouvre">${neuf ? '<span class="dsp-neuf">nouveau</span>' : ""}${vig}<span class="dsp-t"><b>Partager mes dispos</b><small>Votre story de la semaine, prête en 1 clic</small></span><span class="dsp-fl" aria-hidden="true">›</span></button>`; };
