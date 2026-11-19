@@ -48,11 +48,16 @@
   if (/[?&]dix/.test(location.search)) [[11, 30], [12, 15], [13, 0], [13, 45], [16, 30], [18, 0], [8, 30]].forEach((h, n) => { const c = clientes[10 + n], p = prestations[n % 4], deb = jour(0, h[0], h[1]); rendez_vous.push({ id: "r" + (++k), cliente_id: c.id, prestation_id: p.id, titre: p.nom, debut: iso(deb), fin: iso(new Date(deb.getTime() + p.duree_min * 60000)), prix: p.prix, statut: "prevu", source: "appli", acompte: null, cree_le: iso(jour(-2, 10)) }); });
   let DB = { profils: [{ id: U.id, prenom: "Chloé", nom_salon: "les Ongles de Cerise", telephone: "06 00 00 00 00", ville: "Marseille", caisse_active: true }], prestations, clientes, rendez_vous, tickets: [],
     sites: [{ pro_id: U.id, slug: "les-ongles-de-cerise", en_ligne: true, maj: iso(jour(-1, 18)), donnees }] };
+  /* 19/11 : la liste d'attente (sql/23) — 3 clientes attendent aujourd'hui, 1 après-demain */
+  const ymd = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  const ATT0 = [["Léa", "06 12 34 56 78", 0, "Pose gel", 75, -20], ["Inès", "06 98 76 54 32", 0, "Remplissage", 60, -3], ["Sarah", "07 11 22 33 44", 0, "Semi-permanent", 45, -50], ["Chloé", "06 55 44 33 22", 2, "Pose gel", 75, -6]]
+    .map((x, n) => ({ id: "att" + n, pro_id: U.id, prenom: x[0], telephone: x[1], email: x[0].toLowerCase() + "@exemple.fr", jour: ymd(jour(x[2], 12, 0)), presta: x[3], duree: x[4], cree_le: iso(new Date(now.getTime() + x[5] * 3600000)) }));
 
   /* ce qu'on ajoute dans la démonstration est gardé dans le téléphone jusqu'au lendemain (ou jusqu'à « Se déconnecter ») */
   const AUJ = now.toDateString(), garde = () => { if (PARCOURS || /[?&]salon-neuf/.test(location.search)) return; try { localStorage.setItem("loginail-demo-db6", JSON.stringify({ j: AUJ, DB })); } catch (e) {} };
   const NEUF = PARCOURS || /[?&]salon-neuf/.test(location.search); if (NEUF) { DB.prestations = []; DB.clientes = []; DB.rendez_vous = []; DB.sites = []; DB.profils[0].nom_salon = ""; if (PARCOURS) { DB.profils[0].prenom = ""; DB.profils[0].ville = ""; DB.profils[0].telephone = ""; } try { localStorage.removeItem("loginail-brouillon"); } catch (e) {} }
   try { const g = NEUF ? null : JSON.parse(localStorage.getItem("loginail-demo-db6") || "null"); if (g && g.j === AUJ && g.DB && g.DB.clientes && !/[?&]dix/.test(location.search)) DB = g.DB; } catch (e) {}
+  if (!DB.liste_attente) DB.liste_attente = NEUF ? [] : ATT0;
   let nid = 1000 + Math.floor(Math.random() * 9e5), numero = 12; const uid = () => "d" + (++nid), copie = o => JSON.parse(JSON.stringify(o));
   const joint = (t, r) => { const o = copie(r); if (t === "rendez_vous") { const c = DB.clientes.find(x => x.id === r.cliente_id), p = DB.prestations.find(x => x.id === r.prestation_id);
     o.clientes = c ? { id: c.id, prenom: c.prenom, nom: c.nom, telephone: c.telephone } : null; o.prestations = p ? { id: p.id, nom: p.nom } : null; } return o; };
