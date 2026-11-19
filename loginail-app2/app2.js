@@ -58,7 +58,38 @@ const oups = e => { console.error(e); dit("Oups, ça n’a pas marché. Réessay
 const tete = (t, s, d) => `<div class="tete"><div><small>${s || ""}</small><h1>${t}</h1></div>${d || ""}</div>`;
 
 /* ---------- connexion (code ou lien par e-mail, sans mot de passe) ---------- */
+/* 19/11 (Marie, maquette site/idees/connexion-B.html) : sur ORDINATEUR, la connexion prend toute la page, dans le style de loginail.fr
+   (plus de faux téléphone pour se connecter). Mêmes champs (#cx-mail, #cx-code) et mêmes boutons (data-a) : rien ne change derrière. */
+const CXO_CH = "https://loginail.fr/loginail-site/charms/";
+function cxOrdi(envoye) {
+  const essai = /[?&]parcours/.test(location.search);
+  const charms = [["cerisedisco",82,"left:6%;top:9%;rotate:-12deg"],["etoile4",40,"left:24%;top:14%;animation-delay:-1s"],["papilloncyber",64,"left:16%;top:46%;animation-delay:-3s"],["collierperles",58,"left:5%;top:74%;animation-delay:-2s"],
+    ["saturne",64,"right:6%;top:8%;animation-delay:-4s"],["clenoire",40,"right:7%;top:44%;animation-delay:-1.5s"],["cerisecoeur",58,"right:21%;top:62%;animation-delay:-3.5s"],["sacmatelasse",52,"right:5%;top:78%;animation-delay:-2.5s"]]
+    .map(([n, w, st]) => `<img class="cxo-ch" src="${CXO_CH}${n}.webp" style="width:${w}px;${st}" alt="">`).join("");
+  const milieu = envoye
+    ? `<div class="cxo-k">— Ton espace pro —</div>
+       <h1 class="serif">${essai ? "Ceci est <em>un essai.</em>" : "Regarde <em>tes mails.</em>"}<span class="l2">Ton code t’attend.</span></h1>
+       <p class="intro">${essai ? "Aucun e-mail n’est envoyé ici. Tape <b>6 chiffres au hasard</b> pour entrer et voir l’appli d’une nouvelle prothésiste." : `On vient d’envoyer un e-mail à <b>${esc(envoye)}</b>. Le code est dans son titre.`}</p>
+       <div class="cxo-f"><input id="cx-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Le code" class="cxo-code" data-mail="${esc(envoye)}"><button class="cxo-cta" data-a="cx-code">Me connecter</button></div>
+       <button class="cxo-lien" data-a="cx-retour">Changer d’adresse</button>`
+    : `<div class="cxo-k">— Ton espace pro —</div>
+       <h1 class="serif">Contente de <em>te revoir.</em><span class="l2">Ton salon t’attend.</span></h1>
+       <p class="intro">Entre ton adresse mail : on t’envoie un code pour te connecter. Pas de mot de passe à retenir.</p>
+       <div class="cxo-f"><input id="cx-mail" type="email" inputmode="email" autocomplete="email" placeholder="ton@adresse.fr"><button class="cxo-cta" data-a="cx-envoi">Recevoir mon code <span>→</span></button></div>
+       <div class="cxo-coches"><span>Sans mot de passe</span><span>Sur ordinateur et téléphone</span><span>Tes données protégées</span></div>
+       ${essai ? "" : `<div class="cxo-neuve"><span class="et">✦</span><div><b>Pas encore de compte ?</b><br><small>Il se crée avec ton site, en 1 minute.</small></div><a href="https://loginail.fr/loginail-creer/index.html">Créer mon site →</a></div>`}`;
+  return `<div class="cxo"><div class="cxo-barre"><a class="cxo-marque" href="https://loginail.fr/"><img src="loginail-app2/icone-appli.svg" alt="">LOGINAIL</a><a class="cxo-retour" href="https://loginail.fr/">← Retour au site</a></div>
+    <div class="cxo-scene">${charms}
+      <div class="cxo-bulle" style="left:3%;top:27%;rotate:-3deg"><i>◷</i><div><b>Léa · demain 10 h</b><span>Pose américaine</span></div></div>
+      <div class="cxo-bulle" style="right:3%;top:24%;rotate:3deg;animation-delay:-3s"><i>✉</i><div><b>Rappel SMS envoyé</b><span>Zéro lapin demain</span></div></div>
+      <div class="cxo-boite">${milieu}
+        <p class="cxo-legal">En te connectant, tu acceptes nos <a data-a="lien3">conditions</a> et notre <a data-a="lien2">politique de confidentialité</a>.</p>
+      </div></div></div><div class="toast"></div>`;
+}
 function ecranConnexion(envoye) {
+  const ordi = /^https?:$/.test(location.protocol) && !document.documentElement.classList.contains("plein");
+  document.documentElement.classList.toggle("cx-ordi", ordi);
+  if (ordi) { E.innerHTML = cxOrdi(envoye); const c = $(envoye ? "#cx-code" : "#cx-mail", E); if (c) setTimeout(() => c.focus(), 300); return; }
   E.innerHTML = `<div class="vue on"><div class="cx"><div class="marque">LOGINAIL</div>
     ${envoye ? (/[?&]parcours/.test(location.search) ? `<h1>Ceci est un essai.</h1><div class="ok">Aucun e-mail n’est envoyé ici. Tapez <b>6 chiffres au hasard</b> pour entrer et voir l’appli d’une nouvelle prothésiste.</div>` : `<h1>Regardez vos e-mails.</h1><div class="ok">Nous venons d’envoyer un e-mail à <b>${esc(envoye)}</b>. Le code est dans son titre.</div>`) + `
       <input id="cx-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Le code" style="text-align:center;letter-spacing:.3em;font-size:20px" data-mail="${esc(envoye)}">
@@ -514,6 +545,7 @@ const ecranInactif = () => { E.innerHTML = `<div class="vue on"><div class="cx">
   <button class="btn" data-a="reessayer">Réessayer</button><button class="lien-t" data-a="deco">Se déconnecter</button></div><div class="toast"></div></div>`; };
 async function demarre(session) {
   if (!session) { S.user = null; ecranConnexion(); return; }
+  document.documentElement.classList.remove("cx-ordi"); /* 19/11 : on sort de la page de connexion ordinateur */
   /* 18/11 : au lancement, getSession et onAuthStateChange appellent tous les deux demarre → un seul chargement à la fois */
   if (S.user?.id === session.user.id && (E.querySelector(".ong") || S.demarre === session.user.id)) return;
   S.demarre = session.user.id; setTimeout(() => { if (S.demarre === session.user.id && !S.pret) S.demarre = null; }, 20000);
@@ -541,3 +573,6 @@ setInterval(async () => { if (!S.user || document.hidden || E.classList.contains
     if (m.data.loginail === "pret") { const f = document.querySelector(".pont iframe"); if (f && f.contentWindow === m.source) f.contentWindow.postMessage({ loginail: "brouillon", br: brouillon() || {} }, SITEO); }
     if (m.data.loginail === "enregistre" && m.data.br) { const b = Object.assign(brouillon() || {}, m.data.br); localStorage.setItem("loginail-brouillon", JSON.stringify(b)); ferme(); try { rendu(); } catch (x) {} dit("Mon site est à jour ✓"); } });
 }
+
+/* 19/11 : la touche Entrée envoie le mail ou le code (comme le bouton) */
+E.addEventListener("keydown", ev => { if (ev.key !== "Enter") return; const b = ev.target.id === "cx-mail" ? $('[data-a="cx-envoi"]', E) : ev.target.id === "cx-code" ? $('[data-a="cx-code"]', E) : null; if (b && !b.disabled) { ev.preventDefault(); b.click(); } });

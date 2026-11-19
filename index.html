@@ -33,6 +33,50 @@ html.plein .ecran{width:100%!important;height:100%!important;border-radius:0!imp
   html.plein .vue{padding-left:34px!important;padding-right:34px!important}
   html.plein .ong.o1{left:calc(50% - 300px)!important;right:calc(50% - 300px)!important}
   html.plein .feuille{left:calc(50% - 340px)!important;right:calc(50% - 340px)!important}}
+/* 19/11 (Marie) : ORDINATEUR — la page de connexion prend toute la page, dans le style de loginail.fr (maquette site/idees/connexion-B.html, choix B) */
+html.cx-ordi body{background:radial-gradient(45% 40% at 50% 40%,rgba(246,215,225,.95),transparent 72%),radial-gradient(30% 30% at 18% 82%,rgba(236,150,182,.25),transparent 70%),radial-gradient(30% 30% at 85% 78%,rgba(205,150,228,.22),transparent 70%),#F6EFEA!important;min-height:100vh}
+html.cx-ordi .rangee{padding:0!important;display:block}
+html.cx-ordi .bandeau,html.cx-ordi .reglages,html.cx-ordi .code,html.cx-ordi .ile{display:none!important}
+html.cx-ordi .tel{zoom:1!important;position:fixed;inset:0;width:auto!important;height:auto!important;padding:0!important;border-radius:0!important;box-shadow:none!important;background:none!important}
+html.cx-ordi .ecran{width:100%!important;height:100%!important;border-radius:0!important;background:none!important}
+.cxo{position:absolute;inset:0;overflow:auto;color:#1E1C1B;font:400 16px/1.55 Jost,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.cxo a{color:inherit}
+.cxo-barre{display:flex;justify-content:space-between;align-items:center;max-width:1180px;margin:0 auto;height:76px;padding:0 40px}
+.cxo-marque{display:inline-flex;align-items:center;gap:10px;font:500 13.5px Jost;letter-spacing:.32em;text-decoration:none}
+.cxo-marque img{width:30px;height:30px;border-radius:9px}
+.cxo-retour{font-size:14px;color:#6b625c!important;text-decoration:none}.cxo-retour:hover{color:#1E1C1B!important}
+.cxo-scene{position:relative;max-width:1180px;margin:0 auto;min-height:calc(100% - 76px);display:grid;place-items:center;padding:10px 40px 50px}
+.cxo-boite{text-align:center;max-width:560px;width:100%;position:relative;z-index:2;animation:cxoIn .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes cxoIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.cxo .cxo-k{display:block;text-align:center;font:500 12px Jost;letter-spacing:.22em;text-transform:uppercase;color:#B03562}
+.cxo .serif{font-family:'Abril Fatface',serif;font-weight:400;letter-spacing:-.015em;line-height:1.02}
+.cxo .serif em{font-style:normal;color:#B03562;white-space:nowrap}
+.cxo-boite h1{font-size:clamp(44px,4.8vw,66px);margin:16px 0 0}
+.cxo-boite h1 .l2{display:block;font-size:.46em;margin-top:.45em;color:#B03562}
+.cxo-boite .intro{color:#4a4440;font-size:17px;margin:20px auto 30px;max-width:440px;line-height:1.6}
+.cxo-boite .intro b{font-weight:500;color:#1E1C1B}
+.cxo-f{display:flex;align-items:center;gap:8px;height:68px;padding:6px 6px 6px 24px;border-radius:99px;background:#fff;box-shadow:inset 0 0 0 1px rgba(30,28,27,.09),0 24px 44px -26px rgba(120,40,70,.45);transition:box-shadow .2s}
+.cxo-f:focus-within{box-shadow:inset 0 0 0 2px #E0628C,0 24px 44px -26px rgba(120,40,70,.45)}
+html body .cxo-f input{flex:1;min-width:0;height:auto;margin:0;border:0;outline:0;background:none;padding:0;font:400 16px Jost!important;color:#1E1C1B;border-radius:0}
+html body .cxo-f input.cxo-code{text-align:center;letter-spacing:.3em;font-size:22px!important;padding-left:40px}
+.cxo-f input::placeholder{color:#9A8F88;letter-spacing:normal}
+.cxo-cta{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:56px;padding:0 26px;border-radius:99px;border:0;background:#1E1C1B;color:#fff;font:500 15.5px Jost;cursor:pointer;white-space:nowrap;box-shadow:0 18px 34px -16px rgba(30,28,27,.55);transition:transform .15s}
+.cxo-cta:hover{transform:translateY(-1px)}.cxo-cta:active{transform:scale(.97)}.cxo-cta:disabled{opacity:.6;cursor:default}
+.cxo-lien{display:block;margin:18px auto 0;border:0;background:none;font:400 14px Jost;color:#6b625c;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.cxo-coches{display:flex;justify-content:center;gap:22px;margin-top:22px;font-size:13.5px;color:#6b625c}.cxo-coches span::before{content:"✓ ";color:#B03562}
+.cxo-neuve{display:flex;gap:14px;align-items:center;margin:46px auto 0;text-align:left;max-width:480px;background:rgba(255,255,255,.7);border-radius:18px;padding:14px 18px;box-shadow:inset 0 0 0 1px rgba(30,28,27,.09);line-height:1.45}
+.cxo-neuve .et{font-size:20px}.cxo-neuve b{font-weight:500}.cxo-neuve small{font-size:13px;color:#6b625c}
+.cxo-neuve a{margin-left:auto;color:#B03562;font-weight:500;text-decoration:none;white-space:nowrap}
+.cxo-legal{margin-top:18px;font-size:12.5px;color:#6b625c}.cxo-legal a{text-decoration:underline;cursor:pointer}
+.cxo-ch{position:absolute;pointer-events:none;filter:drop-shadow(0 10px 12px rgba(80,30,50,.22));animation:cxoFl 6s ease-in-out infinite}
+.cxo-bulle{position:absolute;z-index:1;display:flex;align-items:center;gap:10px;padding:10px 16px 10px 10px;border-radius:16px;background:rgba(255,255,255,.96);box-shadow:0 18px 34px -16px rgba(80,20,40,.4);text-align:left;white-space:nowrap;animation:cxoFl 7s ease-in-out infinite;font-family:Jost}
+.cxo-bulle i{width:36px;height:36px;border-radius:11px;background:#FBE7EE;display:grid;place-items:center;color:#B03562;font-style:normal}
+.cxo-bulle b{display:block;font-weight:500;font-size:14.5px}.cxo-bulle span{font-size:12.5px;color:#6b625c}
+@keyframes cxoFl{0%,100%{translate:0 0}50%{translate:0 -8px}}
+@media (max-width:1100px){.cxo-bulle{display:none}}
+@media (max-height:760px){.cxo-boite h1{font-size:46px}.cxo-boite .intro{margin:14px auto 22px}.cxo-neuve{margin-top:28px}}
+html.cx-ordi .toast{z-index:50}
+@media (prefers-reduced-motion:reduce){.cxo-ch,.cxo-bulle,.cxo-boite{animation:none}}
 /* l'encoche et la barre du bas de l'iPhone */
 html.plein .vue{padding-top:max(62px,calc(env(safe-area-inset-top) + 40px))}
 html.plein .ong.o1{bottom:calc(14px + env(safe-area-inset-bottom))}
@@ -80,7 +124,7 @@ html.plein .ecran{-webkit-user-select:none;user-select:none;-webkit-touch-callou
 <script src="loginail-app2/vendor/supabase.js"></script>
 <script src="loginail-app2/vendor/qrcode.min.js"></script>
 <script src="loginail-app2/demo-salon.js?v=1911la"></script>
-<script src="loginail-app2/app2.js?v=1811nt"></script>
+<script src="loginail-app2/app2.js?v=1911cx"></script>
 <script src="loginail-app2/modules/ronds.js?v=1711sc"></script>
 <script src="loginail-app2/modules/monsite.js?v=1811pg"></script>
 <script src="loginail-app2/modules/photos.js?v=1711sc"></script>
