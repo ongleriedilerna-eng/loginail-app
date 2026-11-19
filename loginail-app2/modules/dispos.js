@@ -289,6 +289,10 @@
     obtenir(0).catch(() => {}).then(() => obtenir(1)).catch(() => {}).then(() => obtenir("M")).catch(() => {}); };
   /* 19/11 (Marie) : le bouton dit « Enregistrer mon image » (elle fait sa story elle-même) ; sur iPhone il ouvre le menu Partager → « Enregistrer l'image » */
   const peutPartager = () => { try { return !!(navigator.canShare && navigator.canShare({ files: [new File([""], "a.jpg", { type: "image/jpeg" })] })); } catch (e) { return false; } };
+  /* 19/11 (Marie : « je veux que ça s'enregistre d'un coup ») : dans l'appli iPhone (à partir de TestFlight 41), l'image va
+     DIRECTEMENT dans Photos (outil @capacitor-community/media). Sinon (ordinateur, ancienne version) : le menu Partager comme avant. */
+  const MEDIA = () => { try { return Capacitor.isNativePlatform() && Capacitor.Plugins.Media && Capacitor.Plugins.Media.savePhoto ? Capacitor.Plugins.Media : null; } catch (e) { return null; } };
+  const enDataUrl = blob => new Promise((ok, ko) => { const f = new FileReader(); f.onload = () => ok(f.result); f.onerror = ko; f.readAsDataURL(blob); });
   const apercuHtml = v => `<img src="${v.url}" alt="Aperçu de ma story : mes dispos">`;
   async function prepare(n) {
     const j = ++ETAT.jeton, k = String(n), deja = CACHE[k];
@@ -305,7 +309,7 @@
       <div class="dsp-bascule" role="tablist"><button role="tab" data-dsp="sem" data-n="0" class="on" aria-selected="true">Cette semaine</button><button role="tab" data-dsp="sem" data-n="1" aria-selected="false">La suivante</button><button role="tab" data-dsp="sem" data-n="M" aria-selected="false">${(m => m.charAt(0).toUpperCase() + m.slice(1))(MOIS[(new Date().getMonth() + 1) % 12])}</button></div>
       <div class="dsp-apercu${c0 ? "" : " charge"}">${c0 ? apercuHtml(c0) : ""}</div>
       <button class="btn dsp-btn" data-dsp="partage"${c0 ? "" : " disabled"}><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 19h14"/></svg>Enregistrer mon image</button>
-      ${peutPartager() ? `<div class="dsp-astuce">Puis touchez « Enregistrer l’image »</div>` : ""}
+      ${!MEDIA() && peutPartager() ? `<div class="dsp-astuce">Puis touchez « Enregistrer l’image »</div>` : ""}
       <div class="dsp-copie${u ? "" : " non"}" aria-live="polite">${u ? "<i></i>Votre lien de réservation est copié" : "Mettez votre site en ligne pour avoir votre lien de réservation"}</div></div>`);
     E.querySelector(".feuille").classList.add("dsp-f");
     if (u) copie().then(ok => { const m = E.querySelector(".dsp-copie"); if (m && !ok) { m.classList.add("attend"); m.innerHTML = "<i></i>Votre lien sera copié quand vous partagerez"; } });
@@ -322,7 +326,15 @@
       /* le lien d'abord (pendant que le toucher compte encore), puis le menu Partager du téléphone avec l'image */
       copie().then(ok => { const m = E.querySelector(".dsp-copie"); if (m && ok) { m.classList.remove("attend"); m.innerHTML = "<i></i>Votre lien de réservation est copié"; } });
       const d = ETAT.n === "M" ? null : plusJours(lundiDe(new Date()), 7 * ETAT.n), nomF = d ? `${d.getDate()}-${MOIS[d.getMonth()]}` : MOIS[(new Date().getMonth() + 1) % 12];
-      partageFichier(ETAT.blob, `mes-dispos-${nomF.normalize("NFD").replace(/[̀-ͯ]/g, "")}.jpg`, "Image enregistrée ✓"); } }, true);
+      const nom = `mes-dispos-${nomF.normalize("NFD").replace(/[̀-ͯ]/g, "")}.jpg`, M = MEDIA();
+      if (!M) return partageFichier(ETAT.blob, nom, "Image enregistrée ✓");
+      b.disabled = true;
+      enDataUrl(ETAT.blob).then(u => M.savePhoto({ path: u, fileName: nom.replace(/\.jpg$/, "") }))
+        .then(() => dit("Image enregistrée dans vos photos ✓"))
+        .catch(err => { const m = String((err && err.message) || err || "");
+          if (/denied|refus|permission|authori/i.test(m)) dit("Autorisez Loginail dans Réglages › Loginail › Photos");
+          else partageFichier(ETAT.blob, nom, "Image enregistrée ✓"); })
+        .finally(() => { b.disabled = false; }); } }, true);
 
   /* ---------- 6 · le bouton, tout en bas de l'Accueil (16/11, Marie : seulement dans l'Accueil, plus dans l'Agenda) ---------- */
   const vAcc = VUES.acc;
