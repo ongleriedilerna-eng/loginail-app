@@ -18,6 +18,7 @@
 .at-bt{width:36px;height:36px;border-radius:50%;border:0;background:#2A1B1E;color:#fff;display:grid;place-items:center;flex:none;text-decoration:none}
 .at-bt.cl{background:#F3EEEA;color:#2A1B1E}
 .at-bt svg{width:16px;height:16px}
+.at-ac{background:#fff;border-radius:20px;padding:4px 16px;margin-bottom:6px;text-align:left}.at-ac .at-l{cursor:pointer;-webkit-tap-highlight-color:transparent}.at-ac .at-l:active{opacity:.6}.at-ac i{font-style:normal;display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;box-sizing:border-box;border-radius:999px;background:#B5475E;color:#fff;font:600 11.5px Jost,sans-serif;flex:none}.at-ac .fl{color:#B5475E;font-size:18px}
 .at-note{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:#776D64;margin:14px 4px 0;line-height:1.45;text-align:left}`;
   document.head.appendChild(st);
 
@@ -35,7 +36,7 @@
   const charge = async (force) => { if (enCours || typeof sb === "undefined" || !sb || !S.user || (!force && Date.now() - lu < 30000)) return; enCours = true;
     try { const { data, error } = await sb.from("liste_attente").select("id,jour,prenom,telephone,email,presta,duree,cree_le").gte("jour", ymd(new Date())).order("cree_le");
       if (error) throw error; const avant = JSON.stringify(ATT); ATT = data || []; lu = Date.now();
-      if (JSON.stringify(ATT) !== avant && S.onglet === "ag" && S.pret && !E.classList.contains("fe")) rendu(); }
+      if (JSON.stringify(ATT) !== avant && (S.onglet === "ag" || S.onglet === "acc") && S.pret && !E.classList.contains("fe")) rendu(); }
     catch (e) { console.warn("liste d'attente", e); } finally { enCours = false; } };
   const duJour = d => ATT.filter(a => a.jour === ymd(d));
   document.addEventListener("loginail-pret", () => charge(true));
@@ -47,12 +48,22 @@
     const pil = `<button class="at-pil" data-at="voir" aria-label="${l.length} cliente${l.length > 1 ? "s" : ""} en liste d’attente ce jour-là"><i>${l.length}</i>en attente ce jour-là<b>›</b></button>`;
     return h.replace(/(<div class="k"[^>]*>[^<]*rendez-vous[^<]*<\/div>)/, "$1" + pil); };
 
-  const fiche = () => { const j = S.jour, l = duJour(j), salon = (S.profil && S.profil.nom_salon) || "votre prothésiste";
+  const fiche = (j = S.jour) => { const l = duJour(j), salon = (S.profil && S.profil.nom_salon) || "votre prothésiste";
     const quand = `${JOURS[(j.getDay() + 6) % 7]} ${j.getDate()} ${MOIS[j.getMonth()]}`;
     if (!l.length) return ouvre(`<h3>En attente</h3><div class="sous">${quand}<br>Plus personne n’attend ce jour-là.</div>`);
     ouvre(`<h3>En attente</h3><div class="sous">${quand}<br>Si une place se libère, elles reçoivent un e-mail tout seul.<br>La première qui réserve a la place.</div>
       <div class="at-carte">${l.map(a => { const t = num(a.telephone), txt = encodeURIComponent(`Bonjour ${a.prenom}, c’est ${salon}. Une place s’est libérée ${quand.toLowerCase()} pour votre ${(a.presta || "rendez-vous").toLowerCase()}. Elle vous intéresse ?`);
         return `<div class="at-l"><div class="at-av">${esc((a.prenom || "?").trim().charAt(0).toUpperCase())}</div><div class="at-tx"><b>${esc(a.prenom || "")}</b><span>${esc([a.presta, duree(a.duree)].filter(Boolean).join(" · "))}${a.cree_le ? " · " + inscrite(a.cree_le) : ""}</span></div>${t ? `<a class="at-bt cl" href="sms:${t}?&body=${txt}" aria-label="Écrire un SMS à ${esc(a.prenom || "")}">${SMS}</a><a class="at-bt" href="tel:${t}" aria-label="Appeler ${esc(a.prenom || "")}">${TEL}</a>` : ""}</div>`; }).join("")}</div>
       <div class="at-note">✦ <span>Vous ne voyez que le prénom, le téléphone et l’e-mail. Tout s’efface tout seul une fois le jour passé.</span></div>`); };
-  document.addEventListener("click", e => { const t = e.target; if (!t.closest || !t.closest('[data-at="voir"]')) return; e.stopPropagation(); e.preventDefault(); fiche(); charge(true); }, true);
+  /* 19/11 (Marie) : sur l'Accueil aussi, une carte « En attente d'une place » (seulement s'il y a quelqu'un), jour par jour ; on touche un jour → la même fiche */
+  const deDate = s => { const [a, m, d] = s.split("-").map(Number); return new Date(a, m - 1, d); };
+  const acc0 = VUES.acc;
+  VUES.acc = () => { const h = acc0(); charge(); if (!ATT.length) return h;
+    const jours = [...new Set(ATT.map(a => a.jour))].sort().slice(0, 5), auj = new Date(), dem = new Date(auj.getFullYear(), auj.getMonth(), auj.getDate() + 1);
+    const nom = d => memeJour(d, auj) ? "Aujourd’hui" : memeJour(d, dem) ? "Demain" : `${JOURS[(d.getDay() + 6) % 7]} ${d.getDate()} ${MOIS[d.getMonth()]}`;
+    const carte = `<div class="k">En attente d’une place</div><div class="at-ac">${jours.map(j => { const l = ATT.filter(a => a.jour === j), d = deDate(j);
+      return `<div class="at-l" data-at="voir" data-j="${j}" role="button" aria-label="${l.length} en attente ${nom(d)}"><i>${l.length}</i><div class="at-tx"><b>${nom(d)}</b><span>${esc(l.map(a => a.prenom).join(", "))}</span></div><span class="fl">›</span></div>`; }).join("")}</div>`;
+    for (const rep of ['<div class="k">Toute la journée', '<div class="k">Anniversaires', '<div class="k">Ma caisse']) if (h.includes(rep)) return h.replace(rep, carte + rep);
+    return h + carte; };
+  document.addEventListener("click", e => { const t = e.target, b = t.closest && t.closest('[data-at="voir"]'); if (!b) return; e.stopPropagation(); e.preventDefault(); fiche(b.dataset.j ? deDate(b.dataset.j) : S.jour); charge(true); }, true);
 })();
