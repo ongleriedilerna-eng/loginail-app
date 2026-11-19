@@ -150,9 +150,13 @@
 
   /* ---------- 4 · la story « Carnet » ---------- */
   const rond = (cx, x, y, w, h, r) => { cx.beginPath(); cx.moveTo(x + r, y); cx.arcTo(x + w, y, x + w, y + h, r); cx.arcTo(x + w, y + h, x, y + h, r); cx.arcTo(x, y + h, x, y, r); cx.arcTo(x, y, x + w, y, r); cx.closePath(); };
-  const pilule = (cx, txt, cxm, y, gras) => { cx.font = `400 ${12 * K}px Jost, sans-serif`; let w = 0; txt.forEach((t, i) => { cx.font = `${i === txt.length - 1 && gras ? 500 : 400} ${12 * K}px Jost, sans-serif`; w += cx.measureText(t).width; });
-    const pw = w + 26 * K, ph = 27 * K, x = cxm - pw / 2; cx.fillStyle = "rgba(30,20,22,.58)"; rond(cx, x, y, pw, ph, ph / 2); cx.fill();
-    cx.fillStyle = "#fff"; cx.textBaseline = "middle"; let xx = x + 13 * K; txt.forEach((t, i) => { cx.font = `${i === txt.length - 1 && gras ? 500 : 400} ${12 * K}px Jost, sans-serif`; cx.textAlign = "left"; cx.fillText(t, xx, y + ph / 2 + 1); xx += cx.measureText(t).width; }); };
+  const pilule = (cx, txt, cxm, y, gras, t0 = 12, fondA = .58) => { const q = t0 / 12; cx.font = `400 ${t0 * K}px Jost, sans-serif`; let w = 0; txt.forEach((t, i) => { cx.font = `${i === txt.length - 1 && gras ? 500 : 400} ${t0 * K}px Jost, sans-serif`; w += cx.measureText(t).width; });
+    const pw = w + 26 * K * q, ph = 27 * K * q, x = cxm - pw / 2; cx.fillStyle = `rgba(30,20,22,${fondA})`; rond(cx, x, y, pw, ph, ph / 2); cx.fill();
+    cx.fillStyle = "#fff"; cx.textBaseline = "middle"; let xx = x + 13 * K * q; txt.forEach((t, i) => { cx.font = `${i === txt.length - 1 && gras ? 500 : 400} ${t0 * K}px Jost, sans-serif`; cx.textAlign = "left"; cx.fillText(t, xx, y + ph / 2 + 1); xx += cx.measureText(t).width; }); };
+  /* 19/11 (Marie : « mon planning s'est fait tout seul » trop gros, « un peu abusé ») : signature plus petite, plus douce, plus bas
+     (toujours au-dessus de la barre « Envoyer un message » d'Instagram, qui couvre le bas de la story).
+     Choix de Marie (version 1) : la phrase entière, en petite pilule transparente. */
+  const signature = cx => pilule(cx, SIGNATURE, W / 2, 1600, true, 9, .32);
   const melange = (a, b, t) => { const p = c => { c = c.replace("#", ""); if (c.length === 3) c = c.replace(/./g, "$&$&"); return [0, 2, 4].map(i => parseInt(c.substr(i, 2), 16)); };
     try { const x = p(a), y = p(b); return "rgb(" + x.map((v, i) => Math.round(v + (y[i] - v) * t)).join(",") + ")"; } catch (e) { return a; } };
   /* ---------- 4 bis · la story du MOIS : même carte Carnet, un calendrier lundi → dimanche ---------- */
@@ -199,7 +203,7 @@
     const c1 = s.charms[0] && await charmSur(cx, s.charms[0], 10 * K, TOP - 32 * K, 62 * K, -14), c2 = s.charms[1] && await charmSur(cx, s.charms[1], W - 10 * K - 52 * K, TOP - 22 * K, 52 * K, 12);
     if (!c1) { etoileSur(cx, X + 4 * K, TOP - 4 * K, 30 * K); etoileSur(cx, X + 22 * K, TOP - 22 * K, 14 * K); } if (!c2) { etoileSur(cx, W - X - 4 * K, TOP - 2 * K, 24 * K); etoileSur(cx, W - X - 22 * K, TOP - 20 * K, 12 * K); }
     pilule(cx, ["réserve ici ↓"], W / 2, 1272, false);
-    pilule(cx, SIGNATURE, W / 2, 1575 - 27 * K, true);
+    signature(cx);
     return c; }
 
   async function dessine(sem) {
@@ -260,7 +264,7 @@
     if (!c1) { etoile(X + 4 * K, TOP - 4 * K, 30 * K); etoile(X + 22 * K, TOP - 22 * K, 14 * K); } if (!c2) { etoile(W - X - 4 * K, CB + 2 * K, 24 * K); etoile(W - X + 12 * K, CB + 22 * K, 12 * K); }
     /* la pastille « réserve ici ↓ » au-dessus de la place vide pour l'autocollant « Lien », puis la signature (toujours là, non désactivable) */
     pilule(cx, ["réserve ici ↓"], W / 2, Y_ICI, false);
-    pilule(cx, SIGNATURE, W / 2, Y_SIG, true);
+    signature(cx);
     return c; }
 
   /* ---------- 5 · la feuille d'aperçu ---------- */
@@ -283,6 +287,8 @@
   let dernierPrechauffe = 0;
   const prechauffe = (force) => { if (!S.user || (!force && Date.now() - dernierPrechauffe < 60000)) return; dernierPrechauffe = Date.now();
     obtenir(0).catch(() => {}).then(() => obtenir(1)).catch(() => {}).then(() => obtenir("M")).catch(() => {}); };
+  /* 19/11 (Marie) : le bouton dit « Enregistrer mon image » (elle fait sa story elle-même) ; sur iPhone il ouvre le menu Partager → « Enregistrer l'image » */
+  const peutPartager = () => { try { return !!(navigator.canShare && navigator.canShare({ files: [new File([""], "a.jpg", { type: "image/jpeg" })] })); } catch (e) { return false; } };
   const apercuHtml = v => `<img src="${v.url}" alt="Aperçu de ma story : mes dispos">`;
   async function prepare(n) {
     const j = ++ETAT.jeton, k = String(n), deja = CACHE[k];
@@ -298,11 +304,14 @@
     ouvre(`<div class="dsp"><h3>Mes dispos</h3>
       <div class="dsp-bascule" role="tablist"><button role="tab" data-dsp="sem" data-n="0" class="on" aria-selected="true">Cette semaine</button><button role="tab" data-dsp="sem" data-n="1" aria-selected="false">La suivante</button><button role="tab" data-dsp="sem" data-n="M" aria-selected="false">${(m => m.charAt(0).toUpperCase() + m.slice(1))(MOIS[(new Date().getMonth() + 1) % 12])}</button></div>
       <div class="dsp-apercu${c0 ? "" : " charge"}">${c0 ? apercuHtml(c0) : ""}</div>
-      <button class="btn dsp-btn" data-dsp="partage"${c0 ? "" : " disabled"}><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>Partager sur Instagram</button>
+      <button class="btn dsp-btn" data-dsp="partage"${c0 ? "" : " disabled"}><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 19h14"/></svg>Enregistrer mon image</button>
+      ${peutPartager() ? `<div class="dsp-astuce">Puis touchez « Enregistrer l’image »</div>` : ""}
       <div class="dsp-copie${u ? "" : " non"}" aria-live="polite">${u ? "<i></i>Votre lien de réservation est copié" : "Mettez votre site en ligne pour avoir votre lien de réservation"}</div></div>`);
     E.querySelector(".feuille").classList.add("dsp-f");
     if (u) copie().then(ok => { const m = E.querySelector(".dsp-copie"); if (m && !ok) { m.classList.add("attend"); m.innerHTML = "<i></i>Votre lien sera copié quand vous partagerez"; } });
     prepare(0).then(() => { if (!CACHE["1"] || !CACHE.M) prechauffe(true); }); }
+  /* 19/11 : « ?dispos=1 » ouvre directement « Mes dispos » (pour montrer les versions à Marie) */
+  if (/[?&]dispos=1/.test(location.search)) document.addEventListener("loginail-pret", () => setTimeout(() => { try { feuille(); } catch (e) {} }, 1500), { once: true });
   /* l'appli ferme la feuille : on enlève notre marque */
   new MutationObserver(() => { if (!E.classList.contains("fe")) { const f = E.querySelector(".feuille.dsp-f"); if (f) f.classList.remove("dsp-f"); } }).observe(E, { attributes: true, attributeFilter: ["class"] });
   document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-dsp]"); if (!b) return; e.stopPropagation(); const k = b.dataset.dsp;
@@ -346,6 +355,7 @@
 #E .dsp-apercu img{display:block;width:100%;height:100%;animation:dspArrive .3s ease both}
 #E .dsp-apercu.charge img{opacity:.45;transition:opacity .2s}
 #E .dsp-apercu.charge::after{content:"";position:absolute;left:50%;top:50%;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;border:2.5px solid rgba(255,255,255,.9);border-top-color:var(--v-acc);animation:dspTourne .8s linear infinite}
+#E .dsp-astuce{text-align:center;font-size:12.5px;color:var(--gris);margin:-4px 0 6px}
 #E .dsp-oups{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;font-size:13px;color:var(--gris)}
 @keyframes dspArrive{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
 @keyframes dspTourne{to{transform:rotate(360deg)}}
