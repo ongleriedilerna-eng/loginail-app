@@ -14,7 +14,7 @@ const lundiDe = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(
 const memeJour = (a, b) => a.toDateString() === b.toDateString();
 const nomCli = c => c ? [c.prenom, c.nom].filter(Boolean).join(" ") : "";
 /* 21/11 (Marie) : l'Instagram de la cliente, gardé sans le @ ni l'adresse (« @lea.nails », « instagram.com/lea.nails/ » → « lea.nails ») */
-const igPropre = v => String(v || "").trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/^@+/, "").replace(/[/?#].*$/, "").replace(/\s+/g, "").toLowerCase();
+const igPropre = v => String(v || "").trim().replace(/^@+/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/^@+/, "").replace(/[/?#].*$/, "").replace(/\s+/g, "").toLowerCase();
 const I = {
   acc: '<svg viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5V20H4z"/></svg>',
   ag: '<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
@@ -62,6 +62,9 @@ const ferme = () => { const a = document.activeElement; if (a && a.closest && a.
 if (matchMedia("(pointer:coarse)").matches) document.addEventListener("focusout", ecranEnPlace);
 /* 21/11 (Marie) : quand on part sur une autre appli (Insta…) et qu'on revient, le clavier ne se rouvre plus tout seul par-dessus ce qu'on écrivait */
 document.addEventListener("visibilitychange", () => { if (document.hidden && document.activeElement && document.activeElement.blur) document.activeElement.blur(); });
+/* 21/11 (Marie) : la case Instagram commence déjà par « @ » ; si elle n’écrit rien, le « @ » seul s’efface */
+document.addEventListener("focusin", e => { const i = e.target; if (i && i.id === "c-ig" && !i.value) { i.value = "@"; setTimeout(() => { try { i.setSelectionRange(1, 1); } catch (x) {} }, 0); } });
+document.addEventListener("focusout", e => { const i = e.target; if (i && i.id === "c-ig" && i.value.trim() === "@") i.value = ""; });
 const majMots = s => String(s || "").replace(/(^|[\s'’-])(\p{Ll})/gu, (x, a, b) => a + b.toUpperCase());
 const oups = e => { console.error(e); dit("Oups, ça n’a pas marché. Réessaie."); };
 const tete = (t, s, d) => `<div class="tete"><div><small>${s || ""}</small><h1>${t}</h1></div>${d || ""}</div>`;
