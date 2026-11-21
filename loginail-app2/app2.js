@@ -65,6 +65,7 @@ document.addEventListener("visibilitychange", () => { if (document.hidden && doc
 /* 21/11 (Marie) : la case Instagram commence déjà par « @ » ; si elle n’écrit rien, le « @ » seul s’efface */
 document.addEventListener("focusin", e => { const i = e.target; if (i && i.id === "c-ig" && !i.value) { i.value = "@"; setTimeout(() => { try { i.setSelectionRange(1, 1); } catch (x) {} }, 0); } });
 document.addEventListener("focusout", e => { const i = e.target; if (i && i.id === "c-ig" && i.value.trim() === "@") i.value = ""; });
+document.addEventListener("input", e => { const i = e.target; if (i && i.id === "c-ig" && /^@@/.test(i.value)) { i.value = i.value.replace(/^@+/, "@"); } });   /* 21/11 : « @ » déjà mis + « @ » tapé = un seul */
 const majMots = s => String(s || "").replace(/(^|[\s'’-])(\p{Ll})/gu, (x, a, b) => a + b.toUpperCase());
 const oups = e => { console.error(e); dit("Oups, ça n’a pas marché. Réessaie."); };
 const tete = (t, s, d) => `<div class="tete"><div><small>${s || ""}</small><h1>${t}</h1></div>${d || ""}</div>`;
@@ -639,4 +640,11 @@ setInterval(async () => { if (!S.user || document.hidden || E.classList.contains
 }
 
 /* 19/11 : la touche Entrée envoie le mail ou le code (comme le bouton) */
+/* 21/11 (Marie) : fiche cliente, la touche Entrée du téléphone passe à la case suivante (Prénom → Nom → Téléphone → Instagram → E-mail) ;
+   sur la dernière, elle range le clavier. Le clavier de l'iPhone affiche « suivant » au lieu de « retour ». */
+const CASES_CLI = ["c-p", "c-n", "c-t", "c-ig", "c-e"];
+document.addEventListener("focusin", ev => { const i = CASES_CLI.indexOf(ev.target.id); if (i >= 0) ev.target.setAttribute("enterkeyhint", i < CASES_CLI.length - 1 ? "next" : "done"); });
+document.addEventListener("keydown", ev => { if (ev.key !== "Enter" || ev.isComposing) return; const i = CASES_CLI.indexOf(ev.target.id); if (i < 0) return; ev.preventDefault();
+  const suiv = CASES_CLI.slice(i + 1).map(x => document.getElementById(x)).find(x => x && x.offsetParent);
+  if (suiv) { suiv.focus(); const n = suiv.value.length; try { suiv.setSelectionRange(n, n); } catch (e) {} } else ev.target.blur(); });
 E.addEventListener("keydown", ev => { if (ev.key !== "Enter") return; const b = ev.target.id === "cx-mail" ? $('[data-a="cx-envoi"]', E) : ev.target.id === "cx-code" ? $('[data-a="cx-code"]', E) : null; if (b && !b.disabled) { ev.preventDefault(); b.click(); } });
