@@ -355,8 +355,8 @@ function feuilleEncaisser(id) {
       <div class="nt-cl">Pour : ${esc(nomRdv(r))}</div><div class="nt-l"><span>${esc(titreRdv(r) || "Prestation")} · 1</span><b>${euros(+r.prix || 0)}</b></div><div class="nt-l nt-t"><span>Total</span><b>${euros(+r.prix || 0)}</b></div>
       ${r.acompte_paye && +r.acompte ? `<div class="nt-l nt-g"><span>Acompte déjà payé</span><b>− ${euros(+r.acompte)}</b></div>` : ""}<div class="nt-l nt-g"><span>Payé au salon</span><b>${euros(reste)}</b></div>
       <div class="nt-pied">${lg.tvaNon ? "TVA non applicable, art. 293 B du CGI · " : ""}${lg.siret ? "SIRET " + esc(lg.siret) : '<span style="color:#A04A4A">SIRET à compléter dans Mon site</span>'}</div></div>
-    <div class="lab2">Envoyer le ticket de caisse</div><div class="k-env" style="grid-template-columns:1fr 1fr"><button data-ke="email"><b>Par e-mail</b><span>Gratuit</span></button><button class="on" data-ke="qr"><b>QR code</b><span>Conseillé · gratuit</span></button></div>
-    <button class="btn" data-a="encaisser-ok" style="margin-top:16px">Encaisser</button>`);
+    <button class="btn" data-a="encaisser-ok" style="margin-top:16px">Encaisser</button>
+    <div style="text-align:center;font-size:12.5px;color:#776D64;margin-top:10px;line-height:1.45">Ensuite, elle scanne le QR code : son ticket arrive sur son téléphone.</div>`);
 }
 async function encaisser() {
   const r = K.r, reste = resteDe(r), lg = legal(), d = new Date(r.debut);
@@ -578,7 +578,16 @@ async function demarre(session) {
   try { if (await compteBloque()) { S.demarre = null; return ecranInactif(); } try { await rangeBrouillonOublie(session.user); } catch (e) { console.error(e); } await chargeTout(); squelette(); rendu(); S.pret = true; S.demarre = null; document.dispatchEvent(new Event("loginail-pret")); } catch (e) { S.demarre = null; console.error(e); E.innerHTML = '<div class="charge" style="flex-direction:column;gap:14px">Connexion impossible<span style="font-size:13px;letter-spacing:0;opacity:.7;text-transform:none">Vérifie ta connexion internet.</span><button class="btn" data-a="reessayer" style="width:auto;padding:12px 26px">Réessayer</button><button class="lien-t" data-a="deco">Se déconnecter</button></div>'; }
 }
 sb.auth.onAuthStateChange((_e, s) => setTimeout(() => demarre(s), 0));
-sb.auth.getSession().then(({ data }) => demarre(data.session));
+/* 21/11 : les boutons des mails mènent à app.loginail.fr/?token_hash=…&type=… (plus vers supabase.co = spams) : on valide le jeton ici */
+(async () => {
+  const q = new URLSearchParams(location.search), th = q.get("token_hash");
+  if (th && !window.SB_DEMO) {
+    try { await sb.auth.verifyOtp({ token_hash: th, type: q.get("type") || "email" }); } catch (e) {}
+    ["token_hash", "type"].forEach(k => q.delete(k));
+    history.replaceState(null, "", location.pathname + (q.toString() ? "?" + q : "") + location.hash);
+  }
+  const { data } = await sb.auth.getSession(); demarre(data.session);
+})();
 /* une réservation arrive pendant que l'appli est ouverte : on recharge toutes les minutes */
 setInterval(async () => { if (!S.user || document.hidden || E.classList.contains("fe") || S.onglet === "cl") return; try { await chargeSemaine(); rendu(); } catch (e) {} }, 60000);
 
