@@ -36,7 +36,7 @@ addEventListener("message", m => { if (m.data === "loginail-site-enregistre") po
 let _tp; const pousseSite = () => { clearTimeout(_tp); _tp = setTimeout(async () => { if (!S.user || !S.site) return; const d = brouillon(); if (!d) return;
   delete d.univers; delete d.exempleFictif; delete d._charmsU;
   const { error } = await sb.from("sites").update({ donnees: d, maj: new Date().toISOString() }).eq("pro_id", S.user.id);
-  if (error) { console.error(error); dit("Pas enregistré en ligne, réessayez"); } else S.site.donnees = d; }, 700); }; /* l'agenda papier : 8 h → 20 h, 30 px par demi-heure */
+  if (error) { console.error(error); dit("Pas enregistré en ligne, réessaie"); } else S.site.donnees = d; }, 700); }; /* l'agenda papier : 8 h → 20 h, 30 px par demi-heure */
 
 /* ---------- le squelette (comme la démo) ---------- */
 function squelette() {
@@ -47,14 +47,14 @@ function squelette() {
 /* 13/11 (Apple) : sur iPhone, un fichier ne se télécharge pas : on l'ouvre avec « Partager » (Enregistrer dans Fichiers, Mail…) */
 async function partageFichier(blob, nom, fait) { try { const f = new File([blob], nom, { type: blob.type }); if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: nom }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
   /* 16/11 (Apple) : dans l'appli iPhone, un lien de téléchargement ne fait rien → on ne dit jamais « téléchargé ✓ » si ce n'est pas vrai */
-  if (!/^https?:$/.test(location.protocol)) { dit("Partage impossible : demandez le fichier via l’aide."); return; }
+  if (!/^https?:$/.test(location.protocol)) { dit("Partage impossible : demande le fichier via l’aide."); return; }
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nom; document.body.appendChild(a); a.click(); a.remove(); dit(fait); }
 let dit = t => { const z = $(".toast", E); if (!z) return; z.textContent = t; z.classList.add("on"); clearTimeout(z._t); z._t = setTimeout(() => z.classList.remove("on"), 2200); };
 /* 18/11 (Marie, D4 + D5) : l'adresse qu'on partage. Son .fr dès qu'il est en service (après le 1er paiement) ; sinon, pendant le mois offert, loginail.fr/nom-du-salon */
 const lienDuSite = st => { if (!st || !st.slug) return ""; const d = String((st.donnees && st.donnees.domaine) || "").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, ""); return /^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(d) ? "https://" + d : "https://loginail.fr/" + st.slug; };
 const ouvre = h => { $(".feuille .fc", E).innerHTML = '<button class="fe-x" data-a="fermer" aria-label="Fermer">×</button>' + h; E.classList.add("fe"); $(".feuille", E).scrollTop = 0; };
 const ferme = () => E.classList.remove("fe");
-const oups = e => { console.error(e); dit("Oups, ça n’a pas marché. Réessayez."); };
+const oups = e => { console.error(e); dit("Oups, ça n’a pas marché. Réessaie."); };
 const tete = (t, s, d) => `<div class="tete"><div><small>${s || ""}</small><h1>${t}</h1></div>${d || ""}</div>`;
 
 /* ---------- connexion (code ou lien par e-mail, sans mot de passe) ---------- */
@@ -91,13 +91,13 @@ function ecranConnexion(envoye) {
   document.documentElement.classList.toggle("cx-ordi", ordi);
   if (ordi) { E.innerHTML = cxOrdi(envoye); const c = $(envoye ? "#cx-code" : "#cx-mail", E); if (c) setTimeout(() => c.focus(), 300); return; }
   E.innerHTML = `<div class="vue on"><div class="cx"><div class="marque">LOGINAIL</div>
-    ${envoye ? (/[?&]parcours/.test(location.search) ? `<h1>Ceci est un essai.</h1><div class="ok">Aucun e-mail n’est envoyé ici. Tapez <b>6 chiffres au hasard</b> pour entrer et voir l’appli d’une nouvelle prothésiste.</div>` : `<h1>Regardez vos e-mails.</h1><div class="ok">Nous venons d’envoyer un e-mail à <b>${esc(envoye)}</b>. Le code est dans son titre.</div>`) + `
+    ${envoye ? (/[?&]parcours/.test(location.search) ? `<h1>Ceci est un essai.</h1><div class="ok">Aucun e-mail n’est envoyé ici. Tape <b>6 chiffres au hasard</b> pour entrer et voir l’appli d’une nouvelle prothésiste.</div>` : `<h1>Regarde tes e-mails.</h1><div class="ok">Nous venons d’envoyer un e-mail à <b>${esc(envoye)}</b>. Le code est dans son titre.</div>`) + `
       <input id="cx-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Le code" style="text-align:center;letter-spacing:.3em;font-size:20px" data-mail="${esc(envoye)}">
       <button class="btn" data-a="cx-code">Me connecter</button><button class="lien-t" data-a="cx-retour">Changer d’adresse</button>`
-    : `<h1>Votre espace pro.</h1><p>Entrez votre adresse e-mail : nous vous envoyons un code pour vous connecter, sans mot de passe.</p>
-      <input id="cx-mail" type="email" inputmode="email" autocomplete="email" placeholder="votre@adresse.fr"><button class="btn" data-a="cx-envoi">Recevoir mon code</button>
-      ${/^https?:$/.test(location.protocol) && !/[?&]parcours/.test(location.search) ? `<div class="cx-neuve" style="margin-top:26px;border-radius:18px;background:#fff;padding:14px 16px;font-size:13.5px;line-height:1.5;text-align:left"><b style="font-weight:500">Pas encore de compte ?</b><br>Votre espace pro se crée en même temps que votre site, en 3 minutes.<a href="https://loginail.fr" style="display:block;margin-top:8px;font-weight:500;text-decoration:underline;text-underline-offset:3px;color:inherit">Créer mon site sur loginail.fr ›</a></div>` : ""}`}
-    <p class="cx-legal" style="margin-top:22px;font-size:12px;line-height:1.5;opacity:.7">En vous connectant, vous acceptez ${/^https?:$/.test(location.protocol) ? 'nos <a data-a="lien3" style="text-decoration:underline">conditions</a> et ' : ""}notre <a data-a="lien2" style="text-decoration:underline">politique de confidentialité</a>.</p>
+    : `<h1>Ton espace pro.</h1><p>Entre ton adresse e-mail : on t’envoie un code pour te connecter, sans mot de passe.</p>
+      <input id="cx-mail" type="email" inputmode="email" autocomplete="email" placeholder="ton@adresse.fr"><button class="btn" data-a="cx-envoi">Recevoir mon code</button>
+      ${/^https?:$/.test(location.protocol) && !/[?&]parcours/.test(location.search) ? `<div class="cx-neuve" style="margin-top:26px;border-radius:18px;background:#fff;padding:14px 16px;font-size:13.5px;line-height:1.5;text-align:left"><b style="font-weight:500">Pas encore de compte ?</b><br>Ton espace pro se crée en même temps que ton site, en 3 minutes.<a href="https://loginail.fr" style="display:block;margin-top:8px;font-weight:500;text-decoration:underline;text-underline-offset:3px;color:inherit">Créer mon site sur loginail.fr ›</a></div>` : ""}`}
+    <p class="cx-legal" style="margin-top:22px;font-size:12px;line-height:1.5;opacity:.7">En te connectant, tu acceptes ${/^https?:$/.test(location.protocol) ? 'nos <a data-a="lien3" style="text-decoration:underline">conditions</a> et ' : ""}notre <a data-a="lien2" style="text-decoration:underline">politique de confidentialité</a>.</p>
     </div></div><div class="toast"></div>`;
 }
 
@@ -159,7 +159,7 @@ function vueAccueil() {
       <div class="bts">${proch.clientes?.telephone ? `<button data-href="tel:${esc(proch.clientes.telephone.replace(/\s/g, ""))}">Appeler</button><button data-href="sms:${esc(proch.clientes.telephone.replace(/\s/g, ""))}">Message</button>` : ""}</div></div>`; }
   h += `<div class="k">Aujourd’hui · ${auj.length} rendez-vous <a data-go="ag">Agenda</a></div>`;
   h += auj.length ? `<div class="carte">${auj.slice(0, S.accTout ? 999 : 5).map(ligneRdv).join("")}${auj.length > 5 ? `<button class="acc-plus" data-su="acc-plus">${S.accTout ? "Voir moins" : "Voir les " + (auj.length - 5) + " autres rendez-vous"}</button>` : ""}</div>`
-    : `<div class="blanche vide2"><div class="t"><b>Pas de rendez-vous aujourd’hui</b><span>Les réservations de votre site arrivent ici toutes seules.</span></div><button class="pil noir" data-a="nouveau">Ajouter</button></div>`;
+    : `<div class="blanche vide2"><div class="t"><b>Pas de rendez-vous aujourd’hui</b><span>Les réservations de ton site arrivent ici toutes seules.</span></div><button class="pil noir" data-a="nouveau">Ajouter</button></div>`;
   return h;
 }
 const ligneRdv = r => { const d = new Date(r.debut), st = { fini: "fini", absente: "pas venue" }[r.statut];
@@ -187,7 +187,7 @@ function vueAgenda() {
     return `<button class="${n ? "plein" : ""}${memeJour(d, j) ? " on" : ""}" data-jour="${d.toISOString()}"><small>${memeJour(d, new Date()) ? "auj." : COURT[i]}</small><b>${d.getDate()}</b><i></i></button>`; }).join("") + "</div>";
   const duJour = S.rdv.filter(r => memeJour(new Date(r.debut), j));
   h += `<div class="k">${JOURS[(j.getDay() + 6) % 7]} ${j.getDate()} ${MOIS[j.getMonth()]} · ${duJour.filter(r => r.statut !== "annule").length} rendez-vous</div>`;
-  if (fermeJ) h += `<div class="blanche" style="margin:-4px 0 10px;padding:11px 14px;font-size:13px;color:#6B625C;text-align:left">Votre salon est fermé ce jour-là (vos horaires). Vous pouvez quand même ajouter un rendez-vous.</div>`;
+  if (fermeJ) h += `<div class="blanche" style="margin:-4px 0 10px;padding:11px 14px;font-size:13px;color:#6B625C;text-align:left">Ton salon est fermé ce jour-là (tes horaires). Tu peux quand même ajouter un rendez-vous.</div>`;
   let g = '<div class="pap">';
   for (let m = OUV; m < FERM; m += 30) g += `<div class="pl${m % 60 ? "" : " plein"}" data-a="creneau" data-m="${m}">${m % 60 ? "" : `<span>${m / 60}h</span>`}</div>`;
   duJour.forEach(r => { const d = new Date(r.debut), f = new Date(r.fin), m0 = d.getHours() * 60 + d.getMinutes(), m1 = f.getHours() * 60 + f.getMinutes();
@@ -216,7 +216,7 @@ function vueClientes() {
       const lettres = Object.keys(G).sort((x, y) => x === "#" ? 1 : y === "#" ? -1 : x.localeCompare(y));
       return `<div class="k">Toutes mes clientes</div><div class="carte" style="margin-right:16px">${lettres.map(l => G[l].map((c, i) => i ? ligne(c) : ligne(c).replace('<div class="cli"', `<div class="cli" id="L-${l === "#" ? "0" : l}"`)).join("")).join("")}</div>`
         + ""; })()
-    ?? (`<div class="blanche vide"><b>${q ? "Personne avec ce nom" : "Pas encore de clientes"}</b><span>${q ? "Essayez un autre nom." : "Elles s’ajoutent toutes seules quand elles réservent sur votre site."}</span></div>`));
+    ?? (`<div class="blanche vide"><b>${q ? "Personne avec ce nom" : "Pas encore de clientes"}</b><span>${q ? "Essaie un autre nom." : "Elles s’ajoutent toutes seules quand elles réservent sur ton site."}</span></div>`));
 }
 
 function vueSite() {
@@ -224,10 +224,10 @@ function vueSite() {
     + `<div class="k">Mettre en ligne</div><div class="liste"><div class="ligne" data-a="site"><div class="t">Mon adresse<span>${S.site ? esc(S.site.slug) : "Pas encore en ligne"}</span></div><span class="fl">›</span></div></div>`;
   const s = S.site, b = brouillon();
   return tete("Mon site", s?.en_ligne ? "En ligne" : "Pas encore en ligne")
-    + `<div class="noire siteb"><small>Mon site</small><div class="ms-nom"><b>${esc((b && b.nom) || S.profil?.nom_salon || "Votre salon")}</b><span>${s ? esc(s.slug) : "Pas encore d’adresse"}</span></div><div class="enl"><i></i>${s?.en_ligne ? "En ligne · réservations ouvertes" : "Hors ligne"}</div>
+    + `<div class="noire siteb"><small>Mon site</small><div class="ms-nom"><b>${esc((b && b.nom) || S.profil?.nom_salon || "Ton salon")}</b><span>${s ? esc(s.slug) : "Pas encore d’adresse"}</span></div><div class="enl"><i></i>${s?.en_ligne ? "En ligne · réservations ouvertes" : "Hors ligne"}</div>
       <div class="bts">${s?.en_ligne ? `<button class="plein" data-href="${(/^https?:$/.test(location.protocol) && location.hostname !== "app.loginail.fr") ? "" : "https://loginail.fr/"}loginail-creer/pret.html?public&appli=voir&s=${esc(s.slug)}" data-neuf>Voir mon site</button>` : ""}<button data-a="site">${s?.en_ligne ? "Mettre à jour" : "Mettre en ligne"}</button></div></div>`
-    + (b ? `<div class="k">Mon style</div><div class="liste">${[["style", "Changer de style", "Des sites à glisser : gardez vos coups de cœur"], ["perso", "Personnaliser", "La forme, le fond, les couleurs, l’écriture"], ["charms", "Mes charms", (b.stickers || []).length ? b.stickers.length + " charm" + (b.stickers.length > 1 ? "s" : "") + " posé" + (b.stickers.length > 1 ? "s" : "") : "Posez-les où vous voulez sur votre site"]].map(l => `<div class="ligne" data-pont="${l[0]}"><div class="t">${l[1]}<span>${l[2]}</span></div><span class="fl">›</span></div>`).join("")}</div>` : "")
-    + (b ? "" : `<div class="blanche vide" style="margin-top:12px"><b>Votre site n’est pas encore créé.</b><span>Il apparaîtra ici dès qu’il sera prêt.</span></div>`);
+    + (b ? `<div class="k">Mon style</div><div class="liste">${[["style", "Changer de style", "Des sites à glisser : garde tes coups de cœur"], ["perso", "Personnaliser", "La forme, le fond, les couleurs, l’écriture"], ["charms", "Mes charms", (b.stickers || []).length ? b.stickers.length + " charm" + (b.stickers.length > 1 ? "s" : "") + " posé" + (b.stickers.length > 1 ? "s" : "") : "Pose-les où tu veux sur ton site"]].map(l => `<div class="ligne" data-pont="${l[0]}"><div class="t">${l[1]}<span>${l[2]}</span></div><span class="fl">›</span></div>`).join("")}</div>` : "")
+    + (b ? "" : `<div class="blanche vide" style="margin-top:12px"><b>Ton site n’est pas encore créé.</b><span>Il apparaîtra ici dès qu’il sera prêt.</span></div>`);
 }
 function vueReglages() {
   const L = (t, sous, a, fin) => `<div class="ligne"${a ? ` data-a="${a}"` : ""}><div class="t">${t}${sous ? `<span>${sous}</span>` : ""}</div>${fin ?? (a ? '<span class="fl">›</span>' : "")}</div>`;
@@ -235,7 +235,7 @@ function vueReglages() {
   return tete("Réglages", S.user.email)
     + `<div class="k">Mon salon</div><div class="liste">${L("Mon salon", esc([S.profil.prenom, S.profil.nom_salon, S.profil.ville].filter(Boolean).join(" · ") || "Prénom, nom du salon, téléphone"), "salon")}
       ${L("Mes prestations", S.prestations.length ? S.prestations.length + " prestation" + (S.prestations.length > 1 ? "s" : "") : "À ajouter", "prestas")}</div>`
-    + `<div class="k">Mes réservations</div><div class="liste">${L("Réservation en ligne", S.site ? (S.site.en_ligne ? "Vos clientes réservent sur votre site" : "Fermée : votre site s’affiche, sans réservation") : "Mettez d’abord votre site en ligne", S.site ? null : "site", S.site ? `<button class="sw${S.site.en_ligne ? " on" : ""}" data-a="resa-sw" aria-label="Réservation en ligne"></button>` : undefined)}
+    + `<div class="k">Mes réservations</div><div class="liste">${L("Réservation en ligne", S.site ? (S.site.en_ligne ? "Tes clientes réservent sur ton site" : "Fermée : ton site s’affiche, sans réservation") : "Mets d’abord ton site en ligne", S.site ? null : "site", S.site ? `<button class="sw${S.site.en_ligne ? " on" : ""}" data-a="resa-sw" aria-label="Réservation en ligne"></button>` : undefined)}
       ${L("Acompte, retard, annulation", (regles.acompte === false ? "Sans acompte" : "Acompte " + (regles.montant || "15 €")) + " · annulation " + (regles.annulation || "48 h avant"), "ms-bon")}</div>`
     + `<div class="k">SMS à mes clientes</div><div class="liste">${L("Rappel la veille", "Voir le message et recevoir un essai", "sms-info")}</div>`
     + `<div class="k">Ma caisse</div><div class="liste">${L("Ma caisse", CAISSE() ? "Encaissé ce mois-ci : " + (euros(totalMois()) || "0 €") : "Pas utilisée", "caisse")}</div>`
@@ -246,14 +246,14 @@ function vueReglages() {
 async function exporteDonnees() {
   const t = ["profils", "prestations", "clientes", "rendez_vous", "tickets", "sites"], out = { exporte_le: new Date().toISOString(), compte: S.user.email };
   for (const n of t) { const { data, error } = await sb.from(n).select("*"); if (error) return oups(error); out[n] = data; }
-  partageFichier(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" }), "mes-donnees-loginail-" + new Date().toISOString().slice(0, 10) + ".json", "Vos données sont téléchargées ✓");
+  partageFichier(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" }), "mes-donnees-loginail-" + new Date().toISOString().slice(0, 10) + ".json", "Tes données sont téléchargées ✓");
 }
 function feuilleSuppr() {
-  ouvre(`<h3>Supprimer mon compte</h3><div class="sous">Votre site, vos clientes, vos rendez-vous et vos tickets seront effacés <b>pour toujours</b>. Pensez à télécharger vos données avant.</div>
+  ouvre(`<h3>Supprimer mon compte</h3><div class="sous">Ton site, tes clientes, tes rendez-vous et tes tickets seront effacés <b>pour toujours</b>. Pense à télécharger tes données avant.</div>
     <button class="btn clair" data-a="export">Télécharger mes données d’abord</button>
-    <div class="lab2" style="margin-top:16px">Pour confirmer, écrivez SUPPRIMER</div><input class="champ" id="suppr-ok" autocomplete="off" autocapitalize="characters">
+    <div class="lab2" style="margin-top:16px">Pour confirmer, écris SUPPRIMER</div><input class="champ" id="suppr-ok" autocomplete="off" autocapitalize="characters">
     <button class="btn" data-a="suppr-ok" style="background:#A04A4A">Supprimer définitivement</button>
-    <div class="sous" style="margin-top:12px;font-size:12px">Votre abonnement s’arrête aussi. Les tickets déjà donnés à vos clientes ne seront plus consultables.</div>`);
+    <div class="sous" style="margin-top:12px;font-size:12px">Ton abonnement s’arrête aussi. Les tickets déjà donnés à tes clientes ne seront plus consultables.</div>`);
 }
 const VUES = { acc: vueAccueil, ag: vueAgenda, cl: vueClientes, si: vueSite, re: vueReglages };
 function rendu() {
@@ -291,9 +291,9 @@ function feuilleNouveau(m) {   /* 17/11 (Marie) : d'abord la cliente, puis la pr
   const j = new Date(S.jour); j.setHours(0, 0, 0, 0); N = { jour: j, m: m ?? 9 * 60, cli: null, presta: null };
   const P = prestasDispo();
   ouvre(`<h3>Nouveau rendez-vous</h3><div class="sous">${JOURS[(j.getDay() + 6) % 7]} ${j.getDate()} ${MOIS[j.getMonth()]}</div>
-    <div class="lab2">Cliente</div><div style="display:flex;gap:8px;align-items:center"><input class="champ" id="n-cli" placeholder="Tapez la 1re lettre : A, B, C…" autocomplete="off" autocapitalize="words" style="flex:1;min-width:0;margin:0"><button class="n-plus" data-a="n-neuve" id="n-neuve" aria-label="Nouvelle cliente"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="8" r="3.4"/><path d="M3.8 19c.6-3.4 3.2-5.4 6.2-5.4s5.6 2 6.2 5.4"/><path d="M19 8v6M16 11h6"/></svg></button></div><div id="n-sug" class="n-sug"></div><datalist id="n-cl">${S.clientes.map(c => `<option value="${esc(nomCli(c))}">`).join("")}</datalist>
+    <div class="lab2">Cliente</div><div style="display:flex;gap:8px;align-items:center"><input class="champ" id="n-cli" placeholder="Tape la 1re lettre : A, B, C…" autocomplete="off" autocapitalize="words" style="flex:1;min-width:0;margin:0"><button class="n-plus" data-a="n-neuve" id="n-neuve" aria-label="Nouvelle cliente"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="8" r="3.4"/><path d="M3.8 19c.6-3.4 3.2-5.4 6.2-5.4s5.6 2 6.2 5.4"/><path d="M19 8v6M16 11h6"/></svg></button></div><div id="n-sug" class="n-sug"></div><datalist id="n-cl">${S.clientes.map(c => `<option value="${esc(nomCli(c))}">`).join("")}</datalist>
     <div id="n-neuve-z" hidden><div class="lab2">Son téléphone <small style="text-transform:none;letter-spacing:0;opacity:.6">facultatif</small></div><input class="champ" id="n-tel" inputmode="tel" placeholder="06 12 34 56 78" autocomplete="off"></div>
-    <div class="lab2">Prestation</div><div class="chips">${P.map((p, i) => `<button class="chip" data-np="${i}">${esc(p.nom)}<span>${duree(p.duree || 60)}</span></button>`).join("") || '<span class="sous">Ajoutez vos prestations dans Réglages</span>'}</div>
+    <div class="lab2">Prestation</div><div class="chips">${P.map((p, i) => `<button class="chip" data-np="${i}">${esc(p.nom)}<span>${duree(p.duree || 60)}</span></button>`).join("") || '<span class="sous">Ajoute tes prestations dans Réglages</span>'}</div>
     <div class="lab2">Heure</div><input class="champ" id="n-h" type="time" value="${String(Math.floor(N.m / 60)).padStart(2, "0")}:${String(N.m % 60).padStart(2, "0")}" step="900" style="font-size:16px;width:100%;min-width:0;max-width:100%;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block;text-align:left">
     <button class="btn" data-a="nouveau-ok" style="margin-top:16px">Enregistrer</button>`);
 }
@@ -312,7 +312,7 @@ const brouillon = () => { try { return JSON.parse(localStorage.getItem("loginail
 const enSlug = t => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
 function feuilleSite() {
   const b = brouillon(), slug = S.site?.slug || enSlug(b?.nom || S.profil.nom_salon);
-  ouvre(`<h3>Mon site sur internet</h3><div class="sous">Les réservations arrivent toutes seules dans votre agenda.</div>
+  ouvre(`<h3>Mon site sur internet</h3><div class="sous">Les réservations arrivent toutes seules dans ton agenda.</div>
     <div class="lab2">Son adresse</div><input class="champ" id="site-slug" value="${esc(slug)}" autocapitalize="off" autocomplete="off">
     <div class="sous" style="text-align:left;font-size:12px">Seulement des lettres, des chiffres et des tirets.</div>
     <button class="btn" data-a="site-ok"${b ? "" : " disabled"}>${S.site?.en_ligne ? "Mettre à jour mon site" : "Mettre mon site en ligne"}</button>`);
@@ -370,11 +370,11 @@ async function encaisser() {
   const mail = S.clientes.find(c => c.id === r.cliente_id)?.email || "";
   const corps = `Bonjour ${r.clientes?.prenom || ""},\n\nVoici votre ticket n° ${t.numero} :\n${TICKET_URL(t.id)}\n\nMerci et à bientôt !\n${lg.salon}`;
   location.href = `mailto:${encodeURIComponent(mail)}?subject=${encodeURIComponent("Votre ticket · " + lg.salon)}&body=${encodeURIComponent(corps)}`;
-  ferme(); dit("Encaissé ✓ · votre e-mail s’ouvre");
+  ferme(); dit("Encaissé ✓ · ton e-mail s’ouvre");
 }
 function montreQR(t) {
   let svg = ""; try { const q = qrcode(0, "M"); q.addData(TICKET_URL(t.id)); q.make(); svg = q.createSvgTag({ cellSize: 6, margin: 2, scalable: true }); } catch (e) {}
-  ouvre(`<h3>Son ticket, si elle le veut</h3><div class="sous">Elle scanne avec l’appareil photo de son téléphone et garde son ticket.<br>Elle n’en veut pas ? Pas de souci, touchez « C’est bon ».</div>
+  ouvre(`<h3>Son ticket, si elle le veut</h3><div class="sous">Elle scanne avec l’appareil photo de son téléphone et garde son ticket.<br>Elle n’en veut pas ? Pas de souci, touche « C’est bon ».</div>
     <div style="width:220px;margin:6px auto 18px;background:#fff;border-radius:18px;padding:12px">${svg}</div>
     <button class="btn" data-a="fermer">C’est bon, encaissé ✓</button>`);
 }
@@ -383,10 +383,10 @@ function feuilleCaisse() {
   const par = k => L.filter(t => t.moyen === k).reduce((a, t) => a + (+t.paye_au_salon || 0), 0), enl = L.reduce((a, t) => a + (+t.acompte_deduit || 0), 0);
   const auj = L.filter(t => memeJour(new Date(t.cree_le), m));
   ouvre(`<h3>Ma caisse</h3><div class="sous">${MOIS[m.getMonth()]} ${m.getFullYear()}</div>
-    <div class="liste"><div class="ligne"><div class="t">Utiliser la caisse<span>Facultatif · vous l’arrêtez quand vous voulez</span></div><button class="sw${CAISSE() ? " on" : ""}" data-a="caisse-sw"></button></div></div>
+    <div class="liste"><div class="ligne"><div class="t">Utiliser la caisse<span>Facultatif · tu l’arrêtes quand tu veux</span></div><button class="sw${CAISSE() ? " on" : ""}" data-a="caisse-sw"></button></div></div>
     <div class="noire" style="text-align:center;margin-top:12px"><small>Encaissé ce mois-ci</small><div style="font-weight:300;font-size:40px;margin:8px 0 2px">${euros(totalMois()) || "0 €"}</div><small>${L.length} ticket${L.length > 1 ? "s" : ""}</small></div>
     <div class="liste" style="margin-top:10px">${[["especes", "Espèces"], ["carte", "Carte"], ["virement", "Virement"]].map(x => `<div class="ligne"><div class="t">${x[1]}</div><em>${euros(par(x[0])) || "0 €"}</em></div>`).join("")}<div class="ligne"><div class="t">Acomptes en ligne</div><em>${euros(enl) || "0 €"}</em></div></div>
-    <div class="liste" style="margin-top:10px"><div class="ligne"><div class="t">À déclarer à l’URSSAF<span>Le total du mois, prêt pour votre déclaration</span></div><em>${euros(totalMois()) || "0 €"}</em></div></div>
+    <div class="liste" style="margin-top:10px"><div class="ligne"><div class="t">À déclarer à l’URSSAF<span>Le total du mois, prêt pour ta déclaration</span></div><em>${euros(totalMois()) || "0 €"}</em></div></div>
     <button class="btn" data-a="livre" style="margin-top:12px">Télécharger mon livre des recettes</button>
     <div class="k">Aujourd’hui</div>${auj.length ? `<div class="liste">${auj.map(t => `<div class="ligne" data-a="qr-voir" data-t="${t.id}"><div class="t">${esc(t.details?.cliente || "")}<span>${esc((t.details?.lignes || [])[0]?.nom || "")} · ${NOM_MOYEN[t.moyen] || ""}</span></div><em>${euros(t.total)}</em><span class="fl">›</span></div>`).join("")}</div>` : '<div class="blanche vide"><b>Rien encaissé aujourd’hui</b><span>Les tickets apparaissent ici.</span></div>'}`);
 }
@@ -400,7 +400,7 @@ function livreDesRecettes() {
 
 /* ---------- Photos de mes ongles (réalisations) : ajouter, enlever ---------- */
 MSF["ms-photos"] = () => { const b = brouillon() || {}, L = (b.photos || []).map((p, i) => [p, i]).filter(x => x[1] !== b.salon);
-  return `<h3>Photos de mes ongles</h3><div class="sous">Elles s’affichent dans « Réalisations » sur votre site</div>
+  return `<h3>Photos de mes ongles</h3><div class="sous">Elles s’affichent dans « Réalisations » sur ton site</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">${L.map(([p, i]) => `<div style="position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:#EFEAE4"><img src="${esc(p.url.startsWith("..") ? p.url.slice(1) : p.url)}" alt="" style="width:100%;height:100%;object-fit:cover"><button data-a="ph-x" data-i="${i}" aria-label="Enlever" style="position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(30,28,27,.75);color:#fff;font-size:15px;line-height:26px;padding:0;cursor:pointer">×</button></div>`).join("")}</div>
     <input type="file" accept="image/*" multiple hidden id="ph-in"><button class="btn" data-a="ph-ajout" style="margin-top:14px">Ajouter des photos</button>`; };
 E.addEventListener("change", ev => { if (ev.target.id !== "ph-in") return; const fs = [...ev.target.files].slice(0, 12); let n = fs.length; if (!n) return; dit("Un instant…");
@@ -433,12 +433,12 @@ E.addEventListener("click", async ev => {
   try {
     if (k.startsWith("ms-") && MSF[k]) return ouvre(MSF[k](a));
     if (k === "fermer") ferme();
-    else if (k === "cx-envoi") { const m = $("#cx-mail", E).value.trim(); if (!/^\S+@\S+\.\S+$/.test(m)) return dit("Vérifiez votre adresse e-mail");
+    else if (k === "cx-envoi") { const m = $("#cx-mail", E).value.trim(); if (!/^\S+@\S+\.\S+$/.test(m)) return dit("Vérifie ton adresse e-mail");
       if (m.toLowerCase() === "demo@loginail.fr" && !/[?&]parcours/.test(location.search)) { try { localStorage.setItem("loginail-demo", "1"); } catch (x) {} location.reload(); return; }   /* 12/11 : le salon de démonstration (aucun e-mail envoyé) */
       a.disabled = true; a.textContent = "Envoi…"; const { error } = await sb.auth.signInWithOtp({ email: m, options: { shouldCreateUser: false, emailRedirectTo: /^https?:$/.test(location.protocol) ? location.origin + location.pathname : "https://app.loginail.fr/" } });
-      if (error) { a.disabled = false; a.textContent = "Recevoir mon code"; return dit(error.status === 429 ? "Attendez une minute avant de redemander" : /signups? not allowed|not found|otp_disabled/i.test((error.code || "") + " " + (error.message || "")) ? "Aucun compte avec cette adresse" : "Oups, réessayez"); } ecranConnexion(m); }
+      if (error) { a.disabled = false; a.textContent = "Recevoir mon code"; return dit(error.status === 429 ? "Attends une minute avant de redemander" : /signups? not allowed|not found|otp_disabled/i.test((error.code || "") + " " + (error.message || "")) ? "Aucun compte avec cette adresse" : "Oups, réessaie"); } ecranConnexion(m); }
     else if (k === "cx-retour") ecranConnexion();
-    else if (k === "cx-code") { const c = $("#cx-code", E), code = c.value.replace(/\D/g, ""); if (code.length < 6) return dit("Tapez les chiffres du code");
+    else if (k === "cx-code") { const c = $("#cx-code", E), code = c.value.replace(/\D/g, ""); if (code.length < 6) return dit("Tape les chiffres du code");
       a.disabled = true; a.textContent = "Un instant…"; const { data, error } = await sb.auth.verifyOtp({ email: c.dataset.mail, token: code, type: "email" });
       if (error) { a.disabled = false; a.textContent = "Me connecter"; return dit("Code incorrect ou expiré"); } if (data.session) demarre(data.session); }
     else if (k === "sem") { S.lundi = plusJours(S.lundi, +a.dataset.n); S.jour = plusJours(S.jour, +a.dataset.n); await chargeSemaine(); rendu(); }
@@ -457,7 +457,7 @@ E.addEventListener("click", async ev => {
       if (error) return oups(error); ferme(); await chargeSemaine(); rendu(); dit("Rendez-vous enregistré ✓"); }
     else if (k === "statut") { const { error } = await sb.from("rendez_vous").update({ statut: a.dataset.s }).eq("id", a.dataset.id); if (error) return oups(error);
       const r0 = (S.rdv || []).concat(S.tous || []).find(x => x.id === a.dataset.id), c0 = r0 && r0.cliente_id && (S.clientes || []).find(x => x.id === r0.cliente_id);
-      const annul = !c0 || new Date(r0.debut) < new Date() ? "Rendez-vous annulé" : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((c0.email || "").trim()) ? "Annulé · la cliente reçoit un e-mail dans 1 minute" : "Annulé · pensez à prévenir la cliente (pas d’e-mail)";
+      const annul = !c0 || new Date(r0.debut) < new Date() ? "Rendez-vous annulé" : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((c0.email || "").trim()) ? "Annulé · la cliente reçoit un e-mail dans 1 minute" : "Annulé · pense à prévenir la cliente (pas d’e-mail)";
       ferme(); await chargeSemaine(); chargeVisites(); rendu(); dit({ fini: "C’est noté ✓", absente: "Marquée pas venue", annule: annul, prevu: "Remis comme prévu" }[a.dataset.s]); }
     /* 17/11 (Marie) : rendez-vous annulé → « Supprimer le créneau » : il disparaît de l'agenda.
        Si la pro vient d'annuler et que l'e-mail « Rendez-vous annulé » n'est pas encore parti (il part 1 minute après), on attend 2 minutes avant d'effacer pour de bon. */
@@ -468,21 +468,21 @@ E.addEventListener("click", async ev => {
       ferme(); await chargeSemaine(); rendu(); dit("Créneau supprimé ✓"); }
     else if (k === "tri-menu") { S.triOuvert = !S.triOuvert; rendu(); }
     else if (k === "tri") { S.tri = a.dataset.t; S.triOuvert = false; try { localStorage.setItem("loginail-tri", S.tri); } catch (x) {} rendu(); }
-    else if (k === "sms-info") ouvre(`<h3>Rappel la veille</h3><div class="sous">La veille au soir, chaque cliente qui a rendez-vous le lendemain reçoit un SMS. Vous n’avez rien à faire.</div>
+    else if (k === "sms-info") ouvre(`<h3>Rappel la veille</h3><div class="sous">La veille au soir, chaque cliente qui a rendez-vous le lendemain reçoit un SMS. Tu n’as rien à faire.</div>
       <div class="lab2">Le message</div><div class="blanche" style="font-size:13.5px;line-height:1.5;padding:12px 14px;text-align:left">Bonjour Jade ! RDV demain 9h00, ${esc([S.profil.adresse, S.profil.ville].filter(Boolean).join(" ") || "l’adresse de votre salon")}.${S.profil.telephone ? " Tél " + esc(S.profil.telephone) + "." : ""}</div>
       <div class="sous" style="margin-top:10px;font-size:12px">Il faut le numéro de portable de la cliente dans sa fiche.</div>
       <button class="btn" data-a="sms-test" style="margin-top:16px">Recevoir un essai sur mon téléphone</button>
-      <div class="sous" style="margin-top:8px;font-size:12px">L’essai arrive sur le numéro de votre salon${S.profil.telephone ? " (" + esc(S.profil.telephone) + ")" : ""}. 3 essais par jour au plus.</div>`);
-    else if (k === "sms-test") { if (!S.profil.telephone) return dit("Ajoutez d’abord votre numéro dans « Mon salon »"); a.disabled = true; a.textContent = "Envoi…";
+      <div class="sous" style="margin-top:8px;font-size:12px">L’essai arrive sur le numéro de ton salon${S.profil.telephone ? " (" + esc(S.profil.telephone) + ")" : ""}. 3 essais par jour au plus.</div>`);
+    else if (k === "sms-test") { if (!S.profil.telephone) return dit("Ajoute d’abord ton numéro dans « Mon salon »"); a.disabled = true; a.textContent = "Envoi…";
       let r = null; try { r = sb.functions ? await sb.functions.invoke("sms", { body: { action: "test" } }) : { data: { demo: true } }; } catch (x) { r = { error: x }; }
       a.disabled = false; a.textContent = "Recevoir un essai sur mon téléphone"; const d = r && r.data;
-      dit(d && d.demo ? "Dans le salon d’essai, aucun SMS ne part" : d && d.envoye ? "SMS envoyé : regardez votre téléphone ✓" : d && d.erreur ? d.erreur : "L’essai n’est pas parti. Réessayez plus tard."); }
+      dit(d && d.demo ? "Dans le salon d’essai, aucun SMS ne part" : d && d.envoye ? "SMS envoyé : regarde ton téléphone ✓" : d && d.erreur ? d.erreur : "L’essai n’est pas parti. Réessaie plus tard."); }
     else if (k === "decaler") { const r = S.rdv.find(x => x.id === a.dataset.id); if (!r) return; const d = new Date(r.debut), p2 = n => String(n).padStart(2, "0");
       ouvre(`<h3>Déplacer le rendez-vous</h3><div class="sous">${esc(nomRdv(r))} · ${esc(titreRdv(r))}</div>
         <div class="lab2">Nouveau jour</div><input class="champ" id="dc-j" type="date" value="${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}" style="font-size:16px;width:100%;min-width:0;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block">
         <div class="lab2">Nouvelle heure</div><input class="champ" id="dc-h" type="time" value="${p2(d.getHours())}:${p2(d.getMinutes())}" step="900" style="font-size:16px;width:100%;min-width:0;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block">
         <button class="btn" data-a="decaler-ok" data-id="${r.id}" style="margin-top:16px">Déplacer</button>`); }
-    else if (k === "decaler-ok") { const r = S.rdv.find(x => x.id === a.dataset.id), j = $("#dc-j", E).value, h = $("#dc-h", E).value; if (!r || !j || !h) return dit("Choisissez le jour et l’heure");
+    else if (k === "decaler-ok") { const r = S.rdv.find(x => x.id === a.dataset.id), j = $("#dc-j", E).value, h = $("#dc-h", E).value; if (!r || !j || !h) return dit("Choisis le jour et l’heure");
       const deb = new Date(j + "T" + h + ":00"), fin = new Date(deb.getTime() + (new Date(r.fin) - new Date(r.debut))), j0 = new Date(deb); j0.setHours(0, 0, 0, 0); const j1 = plusJours(j0, 1);
       a.disabled = true; const { data: autres } = await sb.from("rendez_vous").select("id,debut,fin,statut").gte("debut", j0.toISOString()).lt("debut", j1.toISOString());
       if ((autres || []).some(x => x.id !== r.id && x.statut !== "annule" && new Date(x.debut) < fin && new Date(x.fin) > deb)) { a.disabled = false; return dit("Ce créneau est déjà pris"); }
@@ -490,20 +490,20 @@ E.addEventListener("click", async ev => {
       await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit("Rendez-vous décalé ✓"); }
     else if (k === "cli-nouv") feuilleCliente(null);
     else if (k === "cli-ok") { const v = { prenom: $("#c-p", E).value.trim(), nom: $("#c-n", E).value.trim() || null, telephone: $("#c-t", E).value.trim() || null, email: $("#c-e", E).value.trim() || null, anniversaire: $("#c-a", E).value || null, notes: $("#c-no", E).value.trim() || null, ok_sms_anniv: !!($("#c-oka", E) && $("#c-oka", E).checked) };
-      if (!v.prenom) return dit("Écrivez au moins le prénom"); const id = a.dataset.id;
+      if (!v.prenom) return dit("Écris au moins le prénom"); const id = a.dataset.id;
       const { error } = id ? await sb.from("clientes").update(v).eq("id", id) : await sb.from("clientes").insert(v); if (error) return oups(error);
       const { data } = await sb.from("clientes").select("*").order("prenom"); S.clientes = data || []; rendu(); if (id) feuilleCliente(id); else ferme(); dit("C’est enregistré ✓"); }
     else if (k === "site") feuilleSite();
-    else if (k === "site-ok") { const b = brouillon(), slug = enSlug($("#site-slug", E).value); if (!b) return dit("Créez d’abord votre site"); if (slug.length < 3) return dit("Au moins 3 lettres");
+    else if (k === "site-ok") { const b = brouillon(), slug = enSlug($("#site-slug", E).value); if (!b) return dit("Crée d’abord ton site"); if (slug.length < 3) return dit("Au moins 3 lettres");
       const d = Object.assign({}, b); delete d.univers; delete d.exempleFictif; delete d._charmsU;
       const { data, error } = await sb.from("sites").upsert({ pro_id: S.user.id, slug, donnees: d, en_ligne: true, maj: new Date().toISOString() }).select().single();
-      if (error) return /duplicate|unique/i.test(error.message) ? dit("Cette adresse est déjà prise") : oups(error); S.site = data; ferme(); rendu(); dit("Votre site est en ligne ✓"); }
+      if (error) return /duplicate|unique/i.test(error.message) ? dit("Cette adresse est déjà prise") : oups(error); S.site = data; ferme(); rendu(); dit("Ton site est en ligne ✓"); }
     else if (k === "salon") feuilleSalon();
     else if (k === "salon-ok") { const v = { prenom: $("#s-p", E).value.trim() || null, nom_salon: $("#s-s", E).value.trim() || null, telephone: $("#s-t", E).value.trim() || null, ville: $("#s-v", E).value.trim() || null };
       const { data, error } = await sb.from("profils").update(v).eq("id", S.user.id).select().single(); if (error) return oups(error); S.profil = data; ferme(); rendu(); dit("C’est enregistré ✓"); }
     else if (k === "prestas") feuillePrestas();
     else if (k === "presta") feuillePresta(a.dataset.id || null);
-    else if (k === "presta-ok") { const nom = $("#p-n", E).value.trim(); if (!nom) return dit("Écrivez le nom"); const d = $(".chip.on[data-nd]", E);
+    else if (k === "presta-ok") { const nom = $("#p-n", E).value.trim(); if (!nom) return dit("Écris le nom"); const d = $(".chip.on[data-nd]", E);
       const v = { nom, prix: parseFloat(($("#p-p", E).value || "0").replace(",", ".")) || 0, duree_min: d ? +d.dataset.nd : 60 }, id = a.dataset.id;
       const { error } = id ? await sb.from("prestations").update(v).eq("id", id) : await sb.from("prestations").insert(v); if (error) return oups(error);
       const { data } = await sb.from("prestations").select("*").order("ordre").order("cree_le"); S.prestations = data || []; feuillePrestas(); rendu(); dit("C’est enregistré ✓"); }
@@ -514,7 +514,7 @@ E.addEventListener("click", async ev => {
     else if (k === "encaisser-ok") { a.disabled = true; a.textContent = "Un instant…"; await encaisser(); }
     else if (k === "qr-voir") { const t = (S.tickets || []).find(x => x.id === a.dataset.t); if (t) montreQR(t); }
     else if (k === "caisse") feuilleCaisse();
-    else if (k === "caisse-sw") { const on = !CAISSE(); const { data, error } = await sb.from("profils").update({ caisse_active: on }).eq("id", S.user.id).select().single(); if (error) return oups(error); S.profil = data; feuilleCaisse(); rendu(); dit(on ? "Caisse activée" : "Caisse arrêtée · vos tickets sont gardés"); }
+    else if (k === "caisse-sw") { const on = !CAISSE(); const { data, error } = await sb.from("profils").update({ caisse_active: on }).eq("id", S.user.id).select().single(); if (error) return oups(error); S.profil = data; feuilleCaisse(); rendu(); dit(on ? "Caisse activée" : "Caisse arrêtée · tes tickets sont gardés"); }
     else if (k === "livre") livreDesRecettes();
     else if (k === "ph-ajout") $("#ph-in", E).click();
     else if (k === "ph-x") { const b = brouillon() || {}, i = +a.dataset.i; b.photos.splice(i, 1); if (b.salon != null && b.salon > i) b.salon--; if (b.principale != null && b.principale >= b.photos.length) b.principale = 0;
@@ -523,7 +523,7 @@ E.addEventListener("click", async ev => {
       if (error) return oups(error); S.site = data; rendu(); dit(on ? "Réservation en ligne ouverte ✓" : "Réservation en ligne fermée"); }
     else if (k === "export") await exporteDonnees();
     else if (k === "suppr") feuilleSuppr();
-    else if (k === "suppr-ok") { if (($("#suppr-ok", E).value || "").trim().toUpperCase() !== "SUPPRIMER") return dit("Écrivez SUPPRIMER pour confirmer");
+    else if (k === "suppr-ok") { if (($("#suppr-ok", E).value || "").trim().toUpperCase() !== "SUPPRIMER") return dit("Écris SUPPRIMER pour confirmer");
       a.disabled = true; a.textContent = "Suppression…"; const { error } = await sb.rpc("supprimer_mon_compte"); if (error) { a.disabled = false; a.textContent = "Supprimer définitivement"; return oups(error); }
       try { localStorage.removeItem("loginail-brouillon"); } catch (e) {} await sb.auth.signOut(); S.user = null; ecranConnexion(); }
     else if (k === "aide") window.open("https://wa.me/33745266189?text=" + encodeURIComponent("Bonjour Loginail, j’ai besoin d’aide : "), "_blank", "noopener");   /* 12/11 (Marie) : WhatsApp, son numéro pour commencer */
@@ -541,7 +541,7 @@ E.addEventListener("click", async ev => {
    À passer à true le jour où Stripe est en vrai. Le serveur répond par la fonction SQL compte_actif(). */
 const BLOCAGE_ABONNEMENT = false;
 async function compteBloque() { if (!BLOCAGE_ABONNEMENT || window.SB_DEMO) return false; try { const { data, error } = await sb.rpc("compte_actif"); return !error && data === false; } catch (e) { return false; } }
-const ecranInactif = () => { E.innerHTML = `<div class="vue on"><div class="cx"><div class="marque">LOGINAIL</div><h1>Votre compte n’est pas actif.</h1><p>Votre abonnement est arrêté ou n’a pas encore commencé.</p>
+const ecranInactif = () => { E.innerHTML = `<div class="vue on"><div class="cx"><div class="marque">LOGINAIL</div><h1>Ton compte n’est pas actif.</h1><p>Ton abonnement est arrêté ou n’a pas encore commencé.</p>
   <button class="btn" data-a="reessayer">Réessayer</button><button class="lien-t" data-a="deco">Se déconnecter</button></div><div class="toast"></div></div>`; };
 /* 21/11 : filet de sécurité. Si la page d'après l'e-mail (loginail-creer/fin.html) n'a pas rangé son brouillon
    (bug du vrai compte de Marie : le lien l'avait renvoyée sur l'accueil de l'appli), l'appli le range à la connexion.
@@ -575,7 +575,7 @@ async function demarre(session) {
   S.demarre = session.user.id; setTimeout(() => { if (S.demarre === session.user.id && !S.pret) S.demarre = null; }, 20000);
   S.user = session.user; S.pret = false; S.onglet = "acc"; /* 17/11 (Marie) : après une connexion, toujours l'Accueil */ E.innerHTML = '<div class="charge">LOGINAIL</div>';
   /* 18/11 : « pret » = tout est chargé et affiché ; la notification attend ce moment pour ouvrir son rendez-vous */
-  try { if (await compteBloque()) { S.demarre = null; return ecranInactif(); } try { await rangeBrouillonOublie(session.user); } catch (e) { console.error(e); } await chargeTout(); squelette(); rendu(); S.pret = true; S.demarre = null; document.dispatchEvent(new Event("loginail-pret")); } catch (e) { S.demarre = null; console.error(e); E.innerHTML = '<div class="charge" style="flex-direction:column;gap:14px">Connexion impossible<span style="font-size:13px;letter-spacing:0;opacity:.7;text-transform:none">Vérifiez votre connexion internet.</span><button class="btn" data-a="reessayer" style="width:auto;padding:12px 26px">Réessayer</button><button class="lien-t" data-a="deco">Se déconnecter</button></div>'; }
+  try { if (await compteBloque()) { S.demarre = null; return ecranInactif(); } try { await rangeBrouillonOublie(session.user); } catch (e) { console.error(e); } await chargeTout(); squelette(); rendu(); S.pret = true; S.demarre = null; document.dispatchEvent(new Event("loginail-pret")); } catch (e) { S.demarre = null; console.error(e); E.innerHTML = '<div class="charge" style="flex-direction:column;gap:14px">Connexion impossible<span style="font-size:13px;letter-spacing:0;opacity:.7;text-transform:none">Vérifie ta connexion internet.</span><button class="btn" data-a="reessayer" style="width:auto;padding:12px 26px">Réessayer</button><button class="lien-t" data-a="deco">Se déconnecter</button></div>'; }
 }
 sb.auth.onAuthStateChange((_e, s) => setTimeout(() => demarre(s), 0));
 sb.auth.getSession().then(({ data }) => demarre(data.session));

@@ -301,7 +301,7 @@
       const b = E.querySelector('[data-dsp="partage"]'); if (b) b.disabled = false; };
     if (deja) montre(deja); else { const z = E.querySelector(".dsp-apercu"); if (z) z.classList.add("charge"); }
     try { const v = await obtenir(n); if (j === ETAT.jeton) montre(v); }
-    catch (e) { console.error(e); if (j === ETAT.jeton && !deja) { const zz = E.querySelector(".dsp-apercu"); if (zz) { zz.classList.remove("charge"); zz.innerHTML = '<span class="dsp-oups">Oups, l’image n’a pas pu se faire.<br>Réessayez.</span>'; } } } }
+    catch (e) { console.error(e); if (j === ETAT.jeton && !deja) { const zz = E.querySelector(".dsp-apercu"); if (zz) { zz.classList.remove("charge"); zz.innerHTML = '<span class="dsp-oups">Oups, l’image n’a pas pu se faire.<br>Réessaie.</span>'; } } } }
   function feuille() {
     ecrit("loginail-dispos-vu", "1"); ETAT.n = 0; ETAT.blob = null;
     const u = lien(), c0 = CACHE["0"];
@@ -309,10 +309,10 @@
       <div class="dsp-bascule" role="tablist"><button role="tab" data-dsp="sem" data-n="0" class="on" aria-selected="true">Cette semaine</button><button role="tab" data-dsp="sem" data-n="1" aria-selected="false">La suivante</button><button role="tab" data-dsp="sem" data-n="M" aria-selected="false">${(m => m.charAt(0).toUpperCase() + m.slice(1))(MOIS[(new Date().getMonth() + 1) % 12])}</button></div>
       <div class="dsp-apercu${c0 ? "" : " charge"}">${c0 ? apercuHtml(c0) : ""}</div>
       <button class="btn dsp-btn" data-dsp="partage"${c0 ? "" : " disabled"}><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 19h14"/></svg>Enregistrer mon image</button>
-      ${!MEDIA() && peutPartager() ? `<div class="dsp-astuce">Puis touchez « Enregistrer l’image »</div>` : ""}
-      <div class="dsp-copie${u ? "" : " non"}" aria-live="polite">${u ? "<i></i>Votre lien de réservation est copié" : "Mettez votre site en ligne pour avoir votre lien de réservation"}</div></div>`);
+      ${!MEDIA() && peutPartager() ? `<div class="dsp-astuce">Puis touche « Enregistrer l’image »</div>` : ""}
+      <div class="dsp-copie${u ? "" : " non"}" aria-live="polite">${u ? "<i></i>Ton lien de réservation est copié" : "Mets ton site en ligne pour avoir ton lien de réservation"}</div></div>`);
     E.querySelector(".feuille").classList.add("dsp-f");
-    if (u) copie().then(ok => { const m = E.querySelector(".dsp-copie"); if (m && !ok) { m.classList.add("attend"); m.innerHTML = "<i></i>Votre lien sera copié quand vous partagerez"; } });
+    if (u) copie().then(ok => { const m = E.querySelector(".dsp-copie"); if (m && !ok) { m.classList.add("attend"); m.innerHTML = "<i></i>Ton lien sera copié quand tu partageras"; } });
     prepare(0).then(() => { if (!CACHE["1"] || !CACHE.M) prechauffe(true); }); }
   /* 19/11 : « ?dispos=1 » ouvre directement « Mes dispos » (pour montrer les versions à Marie) */
   if (/[?&]dispos=1/.test(location.search)) document.addEventListener("loginail-pret", () => setTimeout(() => { try { feuille(); } catch (e) {} }, 1500), { once: true });
@@ -324,15 +324,15 @@
       if (!CACHE[String(n)]) { const p = E.querySelector('[data-dsp="partage"]'); if (p) p.disabled = true; } return prepare(n); }
     if (k === "partage") { if (!ETAT.blob) return;
       /* le lien d'abord (pendant que le toucher compte encore), puis le menu Partager du téléphone avec l'image */
-      copie().then(ok => { const m = E.querySelector(".dsp-copie"); if (m && ok) { m.classList.remove("attend"); m.innerHTML = "<i></i>Votre lien de réservation est copié"; } });
+      copie().then(ok => { const m = E.querySelector(".dsp-copie"); if (m && ok) { m.classList.remove("attend"); m.innerHTML = "<i></i>Ton lien de réservation est copié"; } });
       const d = ETAT.n === "M" ? null : plusJours(lundiDe(new Date()), 7 * ETAT.n), nomF = d ? `${d.getDate()}-${MOIS[d.getMonth()]}` : MOIS[(new Date().getMonth() + 1) % 12];
       const nom = `mes-dispos-${nomF.normalize("NFD").replace(/[̀-ͯ]/g, "")}.jpg`, M = MEDIA();
       if (!M) return partageFichier(ETAT.blob, nom, "Image enregistrée ✓");
       b.disabled = true;
       enDataUrl(ETAT.blob).then(u => M.savePhoto({ path: u, fileName: nom.replace(/\.jpg$/, "") }))
-        .then(() => dit("Image enregistrée dans vos photos ✓"))
+        .then(() => dit("Image enregistrée dans tes photos ✓"))
         .catch(err => { const m = String((err && err.message) || err || "");
-          if (/denied|refus|permission|authori/i.test(m)) dit("Autorisez Loginail dans Réglages › Loginail › Photos");
+          if (/denied|refus|permission|authori/i.test(m)) dit("Autorise Loginail dans Réglages › Loginail › Photos");
           else partageFichier(ETAT.blob, nom, "Image enregistrée ✓"); })
         .finally(() => { b.disabled = false; }); } }, true);
 
@@ -341,7 +341,7 @@
   VUES.acc = () => { const h = vAcc(); setTimeout(() => prechauffe(false), 1200);   /* 19/11 : les images se préparent pendant qu'elle regarde l'Accueil */
     const neuf = lit("loginail-dispos-vu", "") !== "1", s = (() => { try { return site(); } catch (e) { return { fond: null }; } })();
     const vig = s.fond ? `<span class="dsp-vig f100" aria-hidden="true">${s.fond.base === SITE ? s.fond.html.replace(/url\((?!['"]?(data:|https?:))(['"]?)/g, "url($2" + SITE) : s.fond.html}<i></i></span>` : '<span class="dsp-vig" aria-hidden="true"><i></i></span>';
-    return h + `<button class="dsp-ouvre" data-dsp="ouvre">${neuf ? '<span class="dsp-neuf">nouveau</span>' : ""}${vig}<span class="dsp-t"><b>Partager mes dispos</b><small>Votre story de la semaine, prête en 1 clic</small></span><span class="dsp-fl" aria-hidden="true">›</span></button>`; };
+    return h + `<button class="dsp-ouvre" data-dsp="ouvre">${neuf ? '<span class="dsp-neuf">nouveau</span>' : ""}${vig}<span class="dsp-t"><b>Partager mes dispos</b><small>Ta story de la semaine, prête en 1 clic</small></span><span class="dsp-fl" aria-hidden="true">›</span></button>`; };
   /* la vignette montre son fond : on charge les fonds une fois, puis on redessine l'accueil s'il est ouvert */
   chargeFonds().then(() => { if (S.onglet === "acc" && E.querySelector(".ong") && !E.classList.contains("fe")) try { rendu(); } catch (e) {} });
 

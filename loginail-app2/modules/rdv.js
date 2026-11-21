@@ -17,7 +17,7 @@
   let SEL = [];
   const majTot = () => { const z = document.querySelector(".fc .rv-tot"); if (!z) return; const t = somme(SEL); z.innerHTML = SEL.length ? `<span>${SEL.length > 1 ? SEL.length + " prestations · " : ""}${duree(t.duree)}</span><b>${euros(t.prix)}</b>` : ""; };
   new MutationObserver(() => { const c = document.querySelector(".fc .chips"); if (!c || c.dataset.multi) return; c.dataset.multi = "1"; SEL = []; c.insertAdjacentHTML("afterend", '<div class="rv-tot"></div>');
-    const lab = c.previousElementSibling; if (lab && lab.classList.contains("lab2")) lab.innerHTML = 'Prestations <small style="text-transform:none;letter-spacing:0;opacity:.6">touchez-en une ou plusieurs</small>'; }).observe(document.body, { childList: true, subtree: true });
+    const lab = c.previousElementSibling; if (lab && lab.classList.contains("lab2")) lab.innerHTML = 'Prestations <small style="text-transform:none;letter-spacing:0;opacity:.6">touches-en une ou plusieurs</small>'; }).observe(document.body, { childList: true, subtree: true });
   document.addEventListener("click", e => { const b = e.target.closest && e.target.closest(".fc .chips[data-multi] [data-np]"); if (!b) return; e.stopPropagation(); const i = +b.dataset.np, k = SEL.indexOf(i);
     if (k >= 0) SEL.splice(k, 1); else SEL.push(i); b.classList.toggle("on", k < 0);
     const t = somme(SEL); N.presta = SEL.length ? { id: P()[SEL[0]].id, nom: t.nom, duree: t.duree, prix: t.prix } : null; majTot(); }, true);
@@ -38,7 +38,7 @@
   let MD = null;
   const feuilleModif = r => { MD = { r, sel: parTitre(r) }; const t = somme(MD.sel);
     ouvre(`<h3>Modifier le rendez-vous</h3><div class="sous">${esc(nomRdv(r))}</div>
-      <div class="lab2">Prestations <small style="text-transform:none;letter-spacing:0;opacity:.6">touchez-en une ou plusieurs</small></div>
+      <div class="lab2">Prestations <small style="text-transform:none;letter-spacing:0;opacity:.6">touches-en une ou plusieurs</small></div>
       <div class="chips">${P().map((p, i) => `<button class="chip${MD.sel.includes(i) ? " on" : ""}" data-rvp="${i}">${esc(p.nom)}<span>${duree(p.duree || 60)}</span></button>`).join("")}</div>
       <div class="lab2">Prix</div><input class="champ" id="rv-prix" inputmode="decimal" value="${r.prix ?? t.prix ?? ""}" style="font-size:16px;width:100%;box-sizing:border-box">
       <div class="lab2">Note <small style="text-transform:none;letter-spacing:0;opacity:.6">facultatif</small></div><textarea class="msg" id="rv-note" style="height:80px" placeholder="Par exemple : veut du rouge, 10 minutes de retard la dernière fois">${esc(r.note || "")}</textarea>
@@ -54,7 +54,7 @@
       if (t && S.rdv.some(x => x.id !== r0.id && x.statut !== "annule" && new Date(x.debut) < new Date(v.fin) && new Date(x.fin) > deb)) return dit("La nouvelle durée déborde sur un autre rendez-vous");
       a.disabled = true; let { error } = await sb.from("rendez_vous").update(Object.assign({}, v, { note: note || null })).eq("id", r0.id);
       if (error && /note/.test(error.message || "")) { ({ error } = await sb.from("rendez_vous").update(v).eq("id", r0.id)); if (!error) dit("Enregistré (la note sera disponible bientôt)"); }
-      if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessayez."); }
+      if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessaie."); }
       await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit("Rendez-vous modifié ✓"); } }, true);
 
   /* 3 · l'agenda : « Pas venue » et « Annulé » écrits sur le rendez-vous ; la note en petit */
@@ -71,7 +71,7 @@
     const j = d => `${d.getDate()} ${MOIS[d.getMonth()]}`;
     b.insertAdjacentHTML("afterend", `<div class="rv-ferm"><div class="lab2" style="margin-top:22px">Déjà fermé</div><div class="su-carte">${G.map(g => `<div class="su-lg"><div>${g.ids.length > 1 ? "Du " + j(g.deb) + " au " + j(g.fin) : j(g.deb)}<span>${esc(g.t.replace(/^Fermé · /, ""))}</span></div><button class="su-b" data-rvf="${g.ids.join(",")}">Rouvrir</button></div>`).join("")}</div></div>`); }).observe(document.body, { childList: true, subtree: true });
   document.addEventListener("click", async e => { const a = e.target.closest && e.target.closest("[data-rvf]"); if (!a) return; e.stopPropagation(); const ids = a.dataset.rvf.split(","); a.disabled = true;
-    const { error } = await sb.from("rendez_vous").delete().in("id", ids); if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessayez."); }
+    const { error } = await sb.from("rendez_vous").delete().in("id", ids); if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessaie."); }
     await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit(ids.length > 1 ? ids.length + " jours rouverts ✓" : "Jour rouvert ✓"); }, true);
 })();
 

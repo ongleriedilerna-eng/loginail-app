@@ -27,30 +27,30 @@ label.btn{display:flex!important;align-items:center;justify-content:center}
 
   /* les réponses toutes prêtes (aussi utilisées si le serveur ne répond pas) */
   const FAQ = [
-    [/importer|r[ée]cup[ée]rer|mes clientes|contacts|fichier|planity|excel/i, "Pour récupérer vos clientes : Réglages › Importer mes clientes.\n\nDepuis votre iPhone : ouvrez Contacts, restez appuyée sur une liste, puis « Exporter » et « Enregistrer dans Fichiers ». Revenez dans Loginail et choisissez ce fichier.\n\nDepuis une autre appli de réservation : demandez-lui l’export de vos clientes. Elle doit vous le donner, ce sont vos données."],
-    [/vacances|cong[ée]|fermer|ferm[ée]/i, "Pour fermer votre salon (vacances, formation) : Agenda › le rond barré en haut › choisissez du… au…. Ces jours-là, plus personne ne peut réserver."],
-    [/bloquer|pause|cr[ée]neau/i, "Pour bloquer un créneau : Agenda › touchez l’heure › « Bloquer ce créneau ». Choisissez la durée, ou « Autre… » pour l’heure de fin que vous voulez."],
-    [/d[ée]caler|d[ée]placer|changer.*heure/i, "Pour décaler un rendez-vous : touchez-le › « Décaler », choisissez le jour et l’heure. Dans l’agenda, vous pouvez aussi rester appuyée dessus et le faire glisser."],
-    [/fid[ée]lit[ée]/i, "La carte de fidélité s’allume dans Réglages › Carte de fidélité. Choisissez le nombre de visites et le cadeau. Chaque rendez-vous terminé compte une visite."],
+    [/importer|r[ée]cup[ée]rer|mes clientes|contacts|fichier|planity|excel/i, "Pour récupérer tes clientes : Réglages › Importer mes clientes.\n\nDepuis ton iPhone : ouvre Contacts, reste appuyée sur une liste, puis « Exporter » et « Enregistrer dans Fichiers ». Reviens dans Loginail et choisis ce fichier.\n\nDepuis une autre appli de réservation : demande-lui l’export de tes clientes. Elle doit te le donner, ce sont tes données."],
+    [/vacances|cong[ée]|fermer|ferm[ée]/i, "Pour fermer ton salon (vacances, formation) : Agenda › le rond barré en haut › choisis du… au…. Ces jours-là, plus personne ne peut réserver."],
+    [/bloquer|pause|cr[ée]neau/i, "Pour bloquer un créneau : Agenda › touche l’heure › « Bloquer ce créneau ». Choisis la durée, ou « Autre… » pour l’heure de fin que tu veux."],
+    [/d[ée]caler|d[ée]placer|changer.*heure/i, "Pour décaler un rendez-vous : touche-le › « Décaler », choisis le jour et l’heure. Dans l’agenda, tu peux aussi rester appuyée dessus et le faire glisser."],
+    [/fid[ée]lit[ée]/i, "La carte de fidélité s’allume dans Réglages › Carte de fidélité. Choisis le nombre de visites et le cadeau. Chaque rendez-vous terminé compte une visite."],
     [/sms|rappel/i, "La veille au soir, chaque cliente qui a rendez-vous reçoit un SMS de rappel. Il faut son numéro de portable dans sa fiche. Réglages › Rappel la veille pour voir le message."],
-    [/site|couleur|fond|charm|photo/i, "Pour changer votre site : onglet Mon site › « Personnaliser mon site » (style, couleurs, fond, charms). Vos photos, prix, horaires et adresse sont juste en dessous."],
-    [/prix|prestation|tarif/i, "Vos prestations et vos prix : Réglages › Mes prestations. Touchez une prestation pour la changer, ou ajoutez-en une."],
+    [/site|couleur|fond|charm|photo/i, "Pour changer ton site : onglet Mon site › « Personnaliser mon site » (style, couleurs, fond, charms). Tes photos, prix, horaires et adresse sont juste en dessous."],
+    [/prix|prestation|tarif/i, "Tes prestations et tes prix : Réglages › Mes prestations. Touche une prestation pour la changer, ou ajoutes-en une."],
   ];
-  const repLocale = q => (FAQ.find(f => f[0].test(q)) || [0, "Je n’ai pas encore la réponse à cette question. Écrivez-nous : Réglages › Besoin d’aide ?, on vous répond vite."])[1];
+  const repLocale = q => (FAQ.find(f => f[0].test(q)) || [0, "Je n’ai pas encore la réponse à cette question. Écris-nous : Réglages › Besoin d’aide ?, on te répond vite."])[1];
   /* les questions toutes prêtes (Marie pourra en ajouter : une ligne = [la question, la réponse]) */
   const QR = [
     ["Comment récupérer mes clientes ?", FAQ[0][1]],
     ["Comment fermer mon salon pour les vacances ?", FAQ[1][1]],
     ["Comment bloquer un créneau ?", FAQ[2][1]],
     ["Comment décaler un rendez-vous ?", FAQ[3][1]],
-    ["Comment ajouter un rendez-vous ?", "Agenda › le « + » en haut, ou touchez directement l’heure voulue › « Nouveau rendez-vous ». Choisissez la cliente (ou « + Nouvelle cliente »), la prestation, puis Enregistrer."],
-    ["Comment ajouter une cliente ?", "Clientes › « Ajouter une cliente ». Seul le prénom est obligatoire. Vous pouvez aussi la créer directement en prenant un rendez-vous."],
+    ["Comment ajouter un rendez-vous ?", "Agenda › le « + » en haut, ou touche directement l’heure voulue › « Nouveau rendez-vous ». Choisis la cliente (ou « + Nouvelle cliente »), la prestation, puis Enregistrer."],
+    ["Comment ajouter une cliente ?", "Clientes › « Ajouter une cliente ». Seul le prénom est obligatoire. Tu peux aussi la créer directement en prenant un rendez-vous."],
     ["Comment marche la carte de fidélité ?", FAQ[4][1]],
     ["Comment marche le SMS de rappel ?", FAQ[5][1]],
     ["Comment changer mon site ?", FAQ[6][1]],
     ["Comment changer mes prix ?", FAQ[7][1]],
-    ["Comment relancer une cliente qui ne revient pas ?", "Clientes › « À relancer » : ce sont les clientes pas revenues depuis 6 semaines. « Lui écrire » ouvre vos Messages avec un texte tout prêt. Vous pouvez changer ce texte dans Réglages › Mon message de relance."],
-    ["Comment voir ce que j’ai gagné ?", "Réglages › Mon bilan : ce mois-ci, cette semaine, ce qui est encore prévu, vos nouvelles clientes."],
+    ["Comment relancer une cliente qui ne revient pas ?", "Clientes › « À relancer » : ce sont les clientes pas revenues depuis 6 semaines. « Lui écrire » ouvre tes Messages avec un texte tout prêt. Tu peux changer ce texte dans Réglages › Mon message de relance."],
+    ["Comment voir ce que j’ai gagné ?", "Réglages › Mon bilan : ce mois-ci, cette semaine, ce qui est encore prévu, tes nouvelles clientes."],
   ];
   let FIL = [];
   const dessine = () => { const z = document.querySelector(".fc .ai-fil"); if (!z) return; z.innerHTML = FIL.map(m => `<div class="ai-m ${m.role === "user" ? "elle" : "lui"}">${esc(m.content)}</div>`).join("");
@@ -58,7 +58,7 @@ label.btn{display:flex!important;align-items:center;justify-content:center}
   const liste = () => { const deja = new Set(FIL.filter(m => m.role === "user").map(m => m.content));
     return `<div class="ai-sug">${FIL.length ? '<div class="lab2" style="margin:6px 0 2px">Une autre question ?</div>' : ""}${QR.filter(x => !deja.has(x[0])).map(x => `<button data-ai="sug">${x[0]}</button>`).join("")}
       <button data-ai="autre" style="background:none;text-decoration:underline;text-underline-offset:3px;color:#6B625C;text-align:center">Ma question n’est pas là</button></div>`; };
-  const feuilleAide = () => { ouvre(`<h3>L’assistante Loginail</h3><div class="sous">Bonjour ! Touchez votre question, je vous explique.</div><div class="ai-fil"></div><div class="ai-l">${liste()}</div>`); dessine(); };
+  const feuilleAide = () => { ouvre(`<h3>L’assistante Loginail</h3><div class="sous">Bonjour ! Touche ta question, je t’explique.</div><div class="ai-fil"></div><div class="ai-l">${liste()}</div>`); dessine(); };
   function demande(q) { const r = QR.find(x => x[0] === q); if (!r) return; FIL.push({ role: "user", content: q }, { role: "assistant", content: r[1] }); dessine();
     const l = document.querySelector(".fc .ai-l"); if (l) l.innerHTML = liste(); const f = document.querySelector(".feuille"), m = document.querySelectorAll(".fc .ai-m"); if (f && m.length > 1) f.scrollTop = m[m.length - 2].offsetTop - 20; }
   const acc0 = VUES.acc;
@@ -75,7 +75,7 @@ label.btn{display:flex!important;align-items:center;justify-content:center}
   const cl0 = VUES.cl;
   VUES.cl = () => { let h = cl0().replace(/<button class="s5-plus" data-s5="plusieurs">[^<]*<\/button>/, ""); const i = h.indexOf("</h1></div>");
     if (i >= 0) h = h.slice(0, i + 11) + IMP + h.slice(i + 11);
-    return h.replace("Elles s’ajoutent toutes seules quand elles réservent sur votre site.</span>", "Elles s’ajoutent toutes seules quand elles réservent sur votre site.</span><button class=\"btn clair\" data-s5=\"plusieurs\" style=\"margin-top:12px\">Importer mes clientes</button>"); };
+    return h.replace("Elles s’ajoutent toutes seules quand elles réservent sur ton site.</span>", "Elles s’ajoutent toutes seules quand elles réservent sur ton site.</span><button class=\"btn clair\" data-s5=\"plusieurs\" style=\"margin-top:12px\">Importer mes clientes</button>"); };
 
   /* les lettres : à droite, au milieu, posées sur l'écran (pas dans la liste qui défile) ; on glisse le doigt dessus */
   const L = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#".split("");
@@ -113,6 +113,6 @@ label.btn{display:flex!important;align-items:center;justify-content:center}
     if (a.dataset.sup === "non") { feuilleCliente(id); return; }
     a.disabled = true; const maint = new Date().toISOString();
     await sb.from("rendez_vous").update({ statut: "annule" }).eq("cliente_id", id).eq("statut", "prevu").gte("debut", maint);
-    const { error } = await sb.from("clientes").delete().eq("id", id); if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessayez."); }
+    const { error } = await sb.from("clientes").delete().eq("id", id); if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessaie."); }
     S.clientes = S.clientes.filter(x => x.id !== id); await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit("Cliente supprimée"); }, true);
 })();

@@ -15,34 +15,34 @@
 .cs-sup{display:block;width:100%;margin-top:9px;border:0;background:none;color:#A04A4A;font:inherit;font-size:13px;text-decoration:underline;cursor:pointer}`;
   document.head.appendChild(st);
   /* --- Prestations et prix --- */
-  MSF["ms-presta"]=()=>{const l=lit().prestations||[];return croix+`<h3>Prestations et prix</h3><div class="sous">${l.length} prestation${l.length>1?"s":""} · touchez pour modifier</div>
+  MSF["ms-presta"]=()=>{const l=lit().prestations||[];return croix+`<h3>Prestations et prix</h3><div class="sous">${l.length} prestation${l.length>1?"s":""} · touche pour modifier</div>
     <div class="liste" style="margin-top:12px">${l.map((p,i)=>`<div class="ligne" data-cs-p="${i}"><div class="t">${esc(p.nom)}${p.duree?`<span>${duree(p.duree)}</span>`:""}</div><em>${prix(p.prix)}</em><span class="fl">›</span></div>`).join("")||'<div class="ligne"><div class="t">Aucune prestation pour l’instant</div></div>'}</div>
     <button class="btn" data-cs-p="-1" style="width:100%;margin-top:14px">Ajouter une prestation</button>`};
   const pedit=i=>{const p=i>=0?(lit().prestations||[])[i]||{}:{};return croix+`<h3>${i>=0?esc(p.nom):"Nouvelle prestation"}</h3><div class="form" style="margin-top:12px">
     <label>Nom<input data-cs-nom value="${esc(p.nom)}" placeholder="Par exemple : Pose américaine"></label>
     <label>Prix en €<input data-cs-prix value="${p.prix==null?"":String(p.prix).replace(".",",")}" placeholder="Par exemple : 55" inputmode="decimal"></label></div>
     <div class="lab" style="margin-top:12px">Durée</div><div class="chips" data-cs-dur>${DUR.map(d=>`<button class="chip${d[0]===p.duree?" on":""}" data-cs-d="${d[0]}">${d[1]}</button>`).join("")}</div>
-    <div class="sous" style="margin-top:12px;font-size:11.5px">Sans prix, elle s’affiche « Sur devis » sur votre site.</div>
+    <div class="sous" style="margin-top:12px;font-size:11.5px">Sans prix, elle s’affiche « Sur devis » sur ton site.</div>
     <button class="btn" data-cs-ok="presta" data-i="${i}" style="width:100%;margin-top:10px">Enregistrer</button>
     ${i>=0?`<button class="cs-sup" data-cs-sup="${i}">Supprimer cette prestation</button>`:""}`};
   /* --- Horaires --- */
-  MSF["ms-horaires"]=()=>{const h=lit().horaires||Array(7).fill(null),hp=h.find(x=>x&&x.pd&&x.pf);/* 21/11 (Marie) : « Je ferme le midi », une pause pour tous les jours ouverts */return croix+`<h3>Horaires</h3><div class="sous">Ils s’affichent sur votre site</div>
+  MSF["ms-horaires"]=()=>{const h=lit().horaires||Array(7).fill(null),hp=h.find(x=>x&&x.pd&&x.pf);/* 21/11 (Marie) : « Je ferme le midi », une pause pour tous les jours ouverts */return croix+`<h3>Horaires</h3><div class="sous">Ils s’affichent sur ton site</div>
     <div class="cs-p${hp?" on":""}" data-cs-midi><div class="r"><div>Je ferme le midi<span>Pas de réservation pendant la pause</span></div><button class="sw${hp?" on":""}" data-cs-psw aria-label="Je ferme le midi"></button></div><div class="cs-hr">Pause de<input type="time" data-cs-pd value="${hp?hp.pd:"12:00"}">à<input type="time" data-cs-pf value="${hp?hp.pf:"14:00"}"></div></div>
     <div class="liste" style="margin-top:12px;padding:0">${JOURS.map((j,i)=>{const x=h[i];return `<div class="cs-h${x?"":" ferme"}" data-cs-j="${i}"><b>${j}</b><span style="display:flex;align-items:center;gap:8px">${x?"":'<span class="cs-f">Fermé</span>'}<button class="sw${x?" on":""}" data-cs-sw></button></span>
       <div class="cs-hr">De<input type="time" data-cs-de value="${x?x.d:"09:00"}">à<input type="time" data-cs-a value="${x?x.f:"18:00"}"></div></div>`}).join("")}</div>
     <button class="btn" data-cs-ok="horaires" style="width:100%;margin-top:14px">Enregistrer</button>`};
   /* --- Adresse --- */
-  MSF["ms-adresse"]=()=>{const b=lit(),A=b.acces||{};return croix+`<h3>Adresse</h3><div class="sous">Elle s’affiche avec le plan sur votre site</div><div class="form" style="margin-top:12px">
+  MSF["ms-adresse"]=()=>{const b=lit(),A=b.acces||{};return croix+`<h3>Adresse</h3><div class="sous">Elle s’affiche avec le plan sur ton site</div><div class="form" style="margin-top:12px">
     <label>Rue<input data-cs-k="rue" value="${esc(b.rue)}" placeholder="Par exemple : 12 rue des Lilas"></label>
     <label>Code postal<input data-cs-k="cp" value="${esc(b.cp)}" inputmode="numeric" placeholder="Par exemple : 20137"></label>
     <label>Ville<input data-cs-k="ville" value="${esc(b.ville)}" placeholder="Par exemple : Porto-Vecchio"></label>
-    <label>Téléphone<input data-cs-k="telephone" value="${esc(b.telephone)}" inputmode="tel" placeholder="Pour que les clientes vous appellent"></label>
+    <label>Téléphone<input data-cs-k="telephone" value="${esc(b.telephone)}" inputmode="tel" placeholder="Pour que les clientes t’appellent"></label>
     <label>Comment me trouver <small>facultatif</small><input data-cs-a="etage" value="${esc(A.etage)}" placeholder="Par exemple : 1er étage, porte de droite"></label>
     <label>Se garer <small>facultatif</small><input data-cs-a="garer" value="${esc(A.garer)}" placeholder="Par exemple : parking gratuit devant"></label></div>
     <div class="liste" style="margin-top:12px"><div class="ligne"><div class="t">Cacher mon adresse exacte<span>Je travaille chez moi : la cliente la reçoit par SMS après sa réservation</span></div><button class="sw${b.adresseCachee?" on":""}" data-cs-cache></button></div></div>
     <button class="btn" data-cs-ok="adresse" style="width:100%;margin-top:14px">Enregistrer</button>`};
   /* --- À propos de moi --- */
-  MSF["ms-apropos"]=()=>{const b=lit();return croix+`<h3>À propos de moi</h3><div class="sous">Quelques lignes, avec vos mots</div>
+  MSF["ms-apropos"]=()=>{const b=lit();return croix+`<h3>À propos de moi</h3><div class="sous">Quelques lignes, avec tes mots</div>
     <textarea class="msg" data-cs-txt style="height:170px" placeholder="Par exemple : Passionnée par les ongles, je vous accueille dans mon salon…">${esc(b.presentation)}</textarea>
     <button class="btn" data-cs-ok="apropos" style="width:100%;margin-top:12px">Enregistrer</button>`};
   /* --- après chaque enregistrement : la page Mon site et l'aperçu se mettent à jour --- */
@@ -59,19 +59,19 @@
     const ca=t.closest("[data-cs-cache]");if(ca){ev.stopPropagation();ca.classList.toggle("on");return}
     const sup=t.closest("[data-cs-sup]");if(sup){ev.stopPropagation();const b=lit();(b.prestations||[]).splice(+sup.dataset.csSup,1);if(!ecrit(b))return;apres(null,"");if(fc)fc.innerHTML=MSF["ms-presta"]();toast(e,"Prestation supprimée");return}
     const ok=t.closest("[data-cs-ok]");if(!ok||!fc)return;ev.stopPropagation();const k=ok.dataset.csOk,b=lit();
-    if(k==="presta"){const nom=fc.querySelector("[data-cs-nom]").value.trim();if(!nom){toast(e,"Écrivez le nom de la prestation");return}
+    if(k==="presta"){const nom=fc.querySelector("[data-cs-nom]").value.trim();if(!nom){toast(e,"Écris le nom de la prestation");return}
       const px=fc.querySelector("[data-cs-prix]").value.replace(",",".").replace(/[^\d.]/g,"");const dd=fc.querySelector("[data-cs-d].on");const i=+ok.dataset.i;
       b.prestations=b.prestations||[];const p=i>=0?b.prestations[i]||{}:{};Object.assign(p,{nom,prix:px===""?null:+px,duree:dd?+dd.dataset.csD:null});if(i<0)b.prestations.push(p);else b.prestations[i]=p;
-      if(!ecrit(b))return;apres(null,"");fc.innerHTML=MSF["ms-presta"]();toast(e,"Prestation enregistrée ✓ · votre site est à jour");return}
+      if(!ecrit(b))return;apres(null,"");fc.innerHTML=MSF["ms-presta"]();toast(e,"Prestation enregistrée ✓ · ton site est à jour");return}
     if(k==="horaires"){const P=fc.querySelector("[data-cs-midi]"),pOn=P&&P.classList.contains("on"),pd=pOn&&fc.querySelector("[data-cs-pd]").value,pf=pOn&&fc.querySelector("[data-cs-pf]").value,pause=pd&&pf&&pd<pf;
       b.horaires=[...fc.querySelectorAll("[data-cs-j]")].map(r=>{if(!r.querySelector("[data-cs-sw]").classList.contains("on"))return null;const x={d:r.querySelector("[data-cs-de]").value||"09:00",f:r.querySelector("[data-cs-a]").value||"18:00"};if(pause&&pd>x.d&&pf<x.f){x.pd=pd;x.pf=pf}return x})}
     if(k==="adresse"){fc.querySelectorAll("[data-cs-k]").forEach(i=>b[i.dataset.csK]=i.value.trim());b.acces=b.acces||{};fc.querySelectorAll("[data-cs-a]").forEach(i=>{const v=i.value.trim();if(v)b.acces[i.dataset.csA]=v;else delete b.acces[i.dataset.csA]});
       b.adresseCachee=fc.querySelector("[data-cs-cache]").classList.contains("on")}
     if(k==="apropos")b.presentation=fc.querySelector("[data-cs-txt]").value.trim();
-    if(!ecrit(b))return;apres(e,"Enregistré ✓ · votre site est à jour")},true);
+    if(!ecrit(b))return;apres(e,"Enregistré ✓ · ton site est à jour")},true);
   /* les petits résumés sous chaque ligne de « Mon contenu » */
   const resume=()=>{const b=lit();const h=b.horaires||[];const ouv=h.filter(Boolean).length;
-    const R={"ms-presta":(b.prestations||[]).length+" prestations","ms-horaires":ouv?ouv+" jours ouverts"+(h[0]?" · "+h[0].d+" – "+h[0].f:""):"À remplir","ms-adresse":b.adresseCachee?(b.ville||"")+" · adresse cachée":[b.rue,b.ville].filter(Boolean).join(", ")||"À remplir","ms-apropos":b.presentation?"Votre texte est en ligne":"À remplir"};
+    const R={"ms-presta":(b.prestations||[]).length+" prestations","ms-horaires":ouv?ouv+" jours ouverts"+(h[0]?" · "+h[0].d+" – "+h[0].f:""):"À remplir","ms-adresse":b.adresseCachee?(b.ville||"")+" · adresse cachée":[b.rue,b.ville].filter(Boolean).join(", ")||"À remplir","ms-apropos":b.presentation?"Ton texte est en ligne":"À remplir"};
     document.querySelectorAll('.vue[data-p="si"] .ligne[data-a]').forEach(l=>{const r=R[l.dataset.a];if(r==null)return;const t=l.querySelector(".t");if(!t)return;let s=t.querySelector("span");if(!s){s=document.createElement("span");t.appendChild(s)}if(s.textContent!==r)s.textContent=r})};
   new MutationObserver(resume).observe(document.body,{childList:true,subtree:true});setTimeout(resume,700);
 })();

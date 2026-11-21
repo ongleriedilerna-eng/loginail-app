@@ -26,7 +26,7 @@
     msg: '<svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="#1E1C1B" stroke-width="1.6" stroke-linejoin="round"/></svg>',
     crayon: '<svg viewBox="0 0 24 24"><path d="M4 20l1-4L16 5l3 3L8 19z" fill="none" stroke="#1E1C1B" stroke-width="1.6" stroke-linejoin="round"/></svg>' };
   const QUESTIONS = [["couple", "Elle est en couple ?", "♡"], ["enfants", "Elle a des enfants ?", "☺"], ["animal", "Elle a un animal ?", "❀"], ["travail", "Elle travaille dans quoi ?", "✎"], ["vacances", "Elle part en vacances ?", "✈"], ["papote", "Elle aime papoter ?", "☕"]];
-  const PARLER = { vacances: "Parlez-lui de ses vacances.", enfants: "Demandez-lui des nouvelles de ses enfants.", animal: "Demandez-lui des nouvelles de son animal.", travail: "Demandez-lui comment ça se passe au travail." };
+  const PARLER = { vacances: "Parle-lui de ses vacances.", enfants: "Demande-lui des nouvelles de ses enfants.", animal: "Demande-lui des nouvelles de son animal.", travail: "Demande-lui comment ça se passe au travail." };
   const JOURS3 = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
   const tel = t => String(t || "").replace(/[^\d+]/g, "");
 
@@ -42,7 +42,7 @@
   /* ---------- les notes ---------- */
   const litNotes = c => { const t = c.notes || ""; if (t[0] === "{") try { const o = JSON.parse(t); if (o && o.v) return { t: o.t || "", s: o.s || [], fp: +o.fp || 0 }; } catch (e) {} return { t, s: [], fp: 0 }; };
   async function ecritNotes(id, o) { const c0 = S.clientes.find(x => x.id === id), fp = o.fp != null ? o.fp : (c0 ? litNotes(c0).fp : 0); const notes = (o.s.length || fp) ? JSON.stringify({ v: 1, t: o.t, s: o.s, fp }) : (o.t || null); const c = S.clientes.find(x => x.id === id); if (c) c.notes = notes;
-    const { error } = await sb.from("clientes").update({ notes }).eq("id", id); if (error) dit("Pas enregistré, réessayez"); }
+    const { error } = await sb.from("clientes").update({ notes }).eq("id", id); if (error) dit("Pas enregistré, réessaie"); }
 
   /* ---------- la fiche ---------- */
   let ID = null, ONG = "fiche", RDV = null, TOUT = false, AIDE = false, SAISIE = null;
@@ -68,15 +68,15 @@
     h += hist.length ? `<div class="fi-carte">${(TOUT ? hist : hist.slice(0, 4)).map(r => `<div class="fi-lg" data-rdv="${r.id}"><div>${d(r.debut).getDate()} ${MOISC[d(r.debut).getMonth()]} ${d(r.debut).getFullYear()}<span>${esc((r.prestations && r.prestations.nom) || r.titre || "Rendez-vous")}${r.statut === "absente" ? " · absente" : ""}</span></div><em>${r.statut === "absente" ? "" : euros(r.prix)}</em></div>`).join("")}</div>${hist.length > 4 && !TOUT ? `<button class="fi-lien" data-fi="tout">Voir tout (${hist.length})</button>` : ""}`
       : `<div class="fi-carte"><div class="fi-lg"><div>Rien pour l’instant<span>Ses rendez-vous passés s’afficheront ici.</span></div></div></div>`;
     return h; }
-  function pageNotes(c) { const o = litNotes(c), su = k => o.s.find(x => x.q === k), parle = (o.s.map(x => PARLER[x.q]).filter(Boolean)[0]) || "Demandez-lui ce qu’elle a fait de beau ces derniers temps.";
+  function pageNotes(c) { const o = litNotes(c), su = k => o.s.find(x => x.q === k), parle = (o.s.map(x => PARLER[x.q]).filter(Boolean)[0]) || "Demande-lui ce qu’elle a fait de beau ces derniers temps.";
     const reste = QUESTIONS.filter(q => !su(q[0]));
     const champ = (k, ph) => `<input class="fi-in" id="fi-rep" placeholder="${ph}" maxlength="80" autocomplete="off"><button class="fi-b" data-fi="ok" data-q="${k}">OK</button>`;
     let h = `<div class="fi-k" style="margin-top:4px">Ce que je sais <button class="fi-q" data-fi="aide" aria-label="À propos de ces notes" style="background:none;width:20px;height:20px;font-size:10px;padding:0">?</button></div>`;
-    if (AIDE) h += `<div class="fi-aide">Ces notes ne sont vues que par vous. Notez seulement ce qui vous aide à bien la recevoir, jamais rien sur sa santé. Si elle le demande, vous devez pouvoir lui montrer ou effacer ce qui est écrit sur elle.</div>`;
-    h += o.s.length ? `<div class="fi-carte">${o.s.map((x, i) => `<div class="fi-lg"><span class="fi-ic">${(QUESTIONS.find(q => q[0] === x.q) || [0, 0, "✦"])[2]}</span><div>${esc(x.r)}</div><button class="fi-x" data-fi="oter" data-i="${i}" aria-label="Enlever">×</button></div>`).join("")}</div>` : `<div class="sous" style="text-align:left;margin:0 2px">Rien pour l’instant. Répondez aux questions du dessous quand vous le savez.</div>`;
-    if (reste.length) h += `<div class="fi-k">Pas encore</div><div class="fi-carte">${reste.map(q => `<div class="fi-lg"><span class="fi-q">?</span>${SAISIE === q[0] ? champ(q[0], "Votre réponse") : `<div>${q[1]}</div><button class="fi-b" data-fi="sais" data-q="${q[0]}">Je sais</button>`}</div>`).join("")}</div>`;
+    if (AIDE) h += `<div class="fi-aide">Ces notes ne sont vues que par toi. Note seulement ce qui t’aide à bien la recevoir, jamais rien sur sa santé. Si elle le demande, tu dois pouvoir lui montrer ou effacer ce qui est écrit sur elle.</div>`;
+    h += o.s.length ? `<div class="fi-carte">${o.s.map((x, i) => `<div class="fi-lg"><span class="fi-ic">${(QUESTIONS.find(q => q[0] === x.q) || [0, 0, "✦"])[2]}</span><div>${esc(x.r)}</div><button class="fi-x" data-fi="oter" data-i="${i}" aria-label="Enlever">×</button></div>`).join("")}</div>` : `<div class="sous" style="text-align:left;margin:0 2px">Rien pour l’instant. Réponds aux questions du dessous quand tu le sais.</div>`;
+    if (reste.length) h += `<div class="fi-k">Pas encore</div><div class="fi-carte">${reste.map(q => `<div class="fi-lg"><span class="fi-q">?</span>${SAISIE === q[0] ? champ(q[0], "Ta réponse") : `<div>${q[1]}</div><button class="fi-b" data-fi="sais" data-q="${q[0]}">Je sais</button>`}</div>`).join("")}</div>`;
     h += SAISIE === "+" ? `<div class="fi-carte" style="margin-top:10px"><div class="fi-lg">${champ("+", "Par exemple : aime les formes amande")}</div></div>` : `<button class="fi-plus" data-fi="sais" data-q="+">+ Autre chose que je sais</button>`;
-    h += `<div class="fi-k">Mes notes libres</div><textarea class="msg" id="fi-libre" placeholder="Tout ce que vous voulez garder en tête">${esc(o.t)}</textarea>`;
+    h += `<div class="fi-k">Mes notes libres</div><textarea class="msg" id="fi-libre" placeholder="Tout ce que tu veux garder en tête">${esc(o.t)}</textarea>`;
     return h; }
   function montre(garde) { const c = S.clientes.find(x => x.id === ID); if (!c) return ferme(); const z = $(".feuille", E), y = garde && z ? z.scrollTop : 0;
     ouvre(tete(c) + (ONG === "fiche" ? pageFiche(c) : pageNotes(c))); if (z && garde) z.scrollTop = y; const r = $("#fi-rep", E); if (r) r.focus(); }
@@ -93,7 +93,7 @@
     else if (k === "aide") { AIDE = !AIDE; montre(true); }
     else if (k === "modifier") { formulaire(ID); const t = $("#c-no", E); if (t) { t.value = (c && c.notes) || ""; t.style.display = "none"; const l = t.previousElementSibling; if (l && l.classList.contains("lab2")) l.style.display = "none"; } }
     else if (k === "sais") { SAISIE = a.dataset.q; montre(true); }
-    else if (k === "ok" && c) { const v = ($("#fi-rep", E).value || "").trim(); if (!v) return dit("Écrivez votre réponse"); const o = litNotes(c); o.s = o.s.filter(x => a.dataset.q === "+" || x.q !== a.dataset.q); o.s.push(a.dataset.q === "+" ? { r: v } : { q: a.dataset.q, r: v }); SAISIE = null; await ecritNotes(ID, o); montre(true); }
+    else if (k === "ok" && c) { const v = ($("#fi-rep", E).value || "").trim(); if (!v) return dit("Écris ta réponse"); const o = litNotes(c); o.s = o.s.filter(x => a.dataset.q === "+" || x.q !== a.dataset.q); o.s.push(a.dataset.q === "+" ? { r: v } : { q: a.dataset.q, r: v }); SAISIE = null; await ecritNotes(ID, o); montre(true); }
     else if (k === "oter" && c) { const o = litNotes(c); o.s.splice(+a.dataset.i, 1); await ecritNotes(ID, o); montre(true); }
     /* la fidélité, dans les Réglages */
     else if (k === "fid-on") { const f = litFid(); f.on = !f.on; ecritFid(f); rendu(); }
@@ -110,6 +110,6 @@
     const bloc = `<div class="k">Fidélité</div><div class="liste"><div class="ligne"><div class="t">Carte de fidélité<span>${f.on ? "Une visite de plus à chaque rendez-vous passé" : "Désactivée"}</span></div><button class="sw${f.on ? " on" : ""}" data-fi="fid-on" aria-label="Carte de fidélité"></button></div>
       ${f.on ? `<div class="ligne"><div class="t">Cadeau après</div><span class="fi-pas"><button data-fi="fid-n" data-d="-1" aria-label="Moins">−</button><b>${f.n}</b><button data-fi="fid-n" data-d="1" aria-label="Plus">+</button></span><span style="font-size:13px;opacity:.6;margin-left:8px">visites</span></div>
       <div class="ligne" style="display:block"><div class="t">Le cadeau</div><div class="fi-puces">${CADEAUX.map(c => `<button data-fi="fid-c" data-c="${c}" class="${f.cadeau === c ? "on" : ""}">${c}</button>`).join("")}</div>
-        <input class="fi-in" id="fi-cad" style="width:100%;margin-top:10px" placeholder="Ou écrivez le vôtre" value="${CADEAUX.includes(f.cadeau) ? "" : esc(f.cadeau)}" maxlength="40" autocomplete="off"></div>` : ""}</div>`;
+        <input class="fi-in" id="fi-cad" style="width:100%;margin-top:10px" placeholder="Ou écris le tien" value="${CADEAUX.includes(f.cadeau) ? "" : esc(f.cadeau)}" maxlength="40" autocomplete="off"></div>` : ""}</div>`;
     const h = v0(); return h.includes(repere) ? h.replace(repere, bloc + repere) : h + bloc; };
 })();

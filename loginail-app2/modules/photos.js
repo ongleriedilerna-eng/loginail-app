@@ -7,7 +7,7 @@
 .ph2.rond{width:150px;height:150px;aspect-ratio:auto;border-radius:50%;margin:16px auto 6px}.ph2 img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.ph2 svg{width:46px;height:46px;fill:none;stroke:currentColor;stroke-width:1.2}`;document.head.appendChild(st);
   const icS='<svg viewBox="0 0 24 24"><path d="M3 20h18M5 20V9l7-5 7 5v11M9.5 20v-6h5v6"/></svg>',icP='<svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c1.2-3.6 4-5 7-5s5.8 1.4 7 5"/></svg>';
   const feuille=(type)=>{const b=lit(),u=type==="salon"?salonUrl(b):(b.quiPhoto||"");
-    return croix+`<h3>${type==="salon"?"Photo de mon salon":"Ma photo"}</h3><div class="sous">Facultatif · ${type==="salon"?"elle s’affiche dans « Le salon » sur votre site":"elle s’affiche dans « À propos de moi »"}</div>
+    return croix+`<h3>${type==="salon"?"Photo de mon salon":"Ma photo"}</h3><div class="sous">Facultatif · ${type==="salon"?"elle s’affiche dans « Le salon » sur ton site":"elle s’affiche dans « À propos de moi »"}</div>
     <div class="ph2${type==="moi"?" rond":""}">${u?`<img src="${u}" alt="">`:(type==="salon"?icS:icP)}</div>
     <input type="file" accept="image/*" hidden data-ph2-in="${type}">
     <button class="btn" data-ph2="${type}" style="width:100%;margin-top:12px">${u?"Changer la photo":"Choisir une photo"}</button>
@@ -19,7 +19,7 @@
     if(type==="salon"){if(url){if(b.salon!=null&&b.photos[b.salon])b.photos[b.salon]={url,auteurs:[]};else{b.photos.push({url,auteurs:[]});b.salon=b.photos.length-1}}
       else if(b.salon!=null){b.photos.splice(b.salon,1);if(b.principale!=null&&b.principale>b.salon)b.principale--;b.salon=null}}
     else b.quiPhoto=url||null;
-    if(!ecrit(b)){try{dit("Photo trop lourde, essayez-en une autre")}catch(_){}return}
+    if(!ecrit(b)){try{dit("Photo trop lourde, essaies-en une autre")}catch(_){}return}
     try{dit(url?"Photo enregistrée ✓":"Photo retirée")}catch(_){}
     document.querySelectorAll('.vue[data-p="si"]').forEach(vu=>{const y=vu.scrollTop;vu.innerHTML=MS.rgk();vu.scrollTop=y});
     document.querySelectorAll(".ph2").forEach(z=>{const f=z.closest("[class]");});

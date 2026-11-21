@@ -46,10 +46,10 @@
   VUES.cl = () => { const h = cl0(), l = aRelancer(), rep = "Ajouter une cliente</button>"; if (!l.length || !h.includes(rep) || S.cherche.trim()) return h;
     return h.replace(rep, rep + `<button class="su-rel" data-su="relance"><div>À relancer<span>${l.length} cliente${l.length > 1 ? "s" : ""} pas revenue${l.length > 1 ? "s" : ""} depuis ${SEM} semaines</span></div><span style="font-size:16px;margin:0">›</span></button>`); };
   const feuilleRelance = () => { const l = aRelancer(), V = S.vis || {};
-    ouvre(`<h3>À relancer</h3><div class="sous">Pas revenues depuis ${SEM} semaines, et sans rendez-vous prévu. « Lui écrire » ouvre vos Messages avec un texte tout prêt.</div>
-      <div class="su-carte" style="margin-top:14px">${l.length ? l.map(c => `<div class="su-lg"><div data-cli="${c.id}">${esc(nomCli(c))}<span>Pas venue depuis ${depuis(V[c.id].der)}</span></div>${c.telephone ? `<button class="su-b" data-href="sms:${tel(c.telephone)}?&body=${encodeURIComponent(texte(c))}">Lui écrire</button>` : `<span style="font-size:12px;color:#8A847E">Pas de numéro</span>`}</div>`).join("") : `<div class="su-lg"><div>Personne à relancer<span>Toutes vos clientes sont revenues ou ont un rendez-vous.</span></div></div>`}</div>
-      <button class="su-rel" data-su="msg" style="background:none;padding:14px 2px"><div>Changer mon message<span>Le texte envoyé quand vous touchez « Lui écrire »</span></div><span style="font-size:16px;margin:0">›</span></button>`); };
-  const feuilleMsg = () => ouvre(`<h3>Mon message de relance</h3><div class="sous">{prénom} devient le prénom de la cliente, {salon} le nom de votre salon, {lien} l’adresse de votre site.</div>
+    ouvre(`<h3>À relancer</h3><div class="sous">Pas revenues depuis ${SEM} semaines, et sans rendez-vous prévu. « Lui écrire » ouvre tes Messages avec un texte tout prêt.</div>
+      <div class="su-carte" style="margin-top:14px">${l.length ? l.map(c => `<div class="su-lg"><div data-cli="${c.id}">${esc(nomCli(c))}<span>Pas venue depuis ${depuis(V[c.id].der)}</span></div>${c.telephone ? `<button class="su-b" data-href="sms:${tel(c.telephone)}?&body=${encodeURIComponent(texte(c))}">Lui écrire</button>` : `<span style="font-size:12px;color:#8A847E">Pas de numéro</span>`}</div>`).join("") : `<div class="su-lg"><div>Personne à relancer<span>Toutes tes clientes sont revenues ou ont un rendez-vous.</span></div></div>`}</div>
+      <button class="su-rel" data-su="msg" style="background:none;padding:14px 2px"><div>Changer mon message<span>Le texte envoyé quand tu touches « Lui écrire »</span></div><span style="font-size:16px;margin:0">›</span></button>`); };
+  const feuilleMsg = () => ouvre(`<h3>Mon message de relance</h3><div class="sous">{prénom} devient le prénom de la cliente, {salon} le nom de ton salon, {lien} l’adresse de ton site.</div>
     <textarea class="msg" id="su-msg" style="height:150px;margin-top:12px">${esc(litMsg())}</textarea><button class="btn" data-su="msg-ok" style="margin-top:12px">Enregistrer</button><button class="lien-t" data-su="msg-def">Remettre le message d’origine</button>`);
 
   /* ---------- I · mon bilan ---------- */
@@ -61,7 +61,7 @@
       <div class="su-b2"><div><small>Cette semaine</small><b>${som(fait(entre(l0, l1)))} €</b></div><div><small>Encore prévu ce mois</small><b>${som(mois.filter(r => new Date(r.fin) > now && r.statut === "prevu"))} €</b></div>
         <div><small>Nouvelles clientes</small><b>${S.clientes.filter(c => c.cree_le && new Date(c.cree_le) >= m0).length}</b></div><div><small>Pas venues</small><b>${mois.filter(r => r.statut === "absente").length}</b></div>
         <div><small>Réservé en ligne</small><b>${mois.filter(r => r.source === "en_ligne").length}</b></div><div><small>À relancer</small><b>${aRelancer().length}</b></div></div>
-      <div class="sous" style="margin-top:12px;font-size:12px">Compté d’après les prix de vos rendez-vous passés (sans les annulés ni les absentes).</div>`); };
+      <div class="sous" style="margin-top:12px;font-size:12px">Compté d’après les prix de tes rendez-vous passés (sans les annulés ni les absentes).</div>`); };
   const re0 = VUES.re;
   VUES.re = () => { const h = re0(), rep = '<div class="k">Ma caisse</div>', L = (t, s, a) => `<div class="ligne" data-su="${a}"><div class="t">${t}<span>${s}</span></div><span class="fl">›</span></div>`;
     const bloc = `<div class="k">Mon activité</div><div class="liste">${L("Mon bilan", "Ce que j’ai gagné ce mois-ci", "bilan")}${L("Mon message de relance", "Pour les clientes pas revenues", "msg")}</div>`;
@@ -83,18 +83,18 @@
       <button class="btn" data-su="rep-fin" style="margin-top:14px">Parfait</button>`);
     ouvre(`<h3>Son prochain rendez-vous ?</h3><div class="sous">${esc(nomRdv(r))}${titreRdv(r) ? " · " + esc(titreRdv(r)) : ""}</div>
       <div class="su-puces" style="flex-wrap:nowrap">${[2, 3, 4].map(n => `<button data-su="rep-sem" data-n="${n}" class="${REP.sem === n ? "on" : ""}" style="flex:1;padding-left:6px;padding-right:6px">${n} sem.</button>`).join("")}<button data-su="rep-sem" data-n="${REP.sem > 4 ? REP.sem + 1 : 5}" class="${REP.sem > 4 ? "on" : ""}" style="flex:1;padding-left:6px;padding-right:6px">${REP.sem > 4 ? REP.sem + " sem. +" : "+"}</button></div>
-      <div class="k">Créneaux libres</div><div class="su-carte">${cs.length ? cs.map(c => `<div class="su-lg"><div style="text-transform:capitalize">${JOURS[(c.getDay() + 6) % 7]} ${c.getDate()} ${MOIS[c.getMonth()]}<span style="text-transform:none">${hh(c)}${c.getDay() === d0.getDay() && c.getHours() === d0.getHours() && c.getMinutes() === d0.getMinutes() ? " · comme aujourd’hui" : ""}</span></div><button class="su-b" data-su="rep-ok" data-d="${c.toISOString()}">Choisir</button></div>`).join("") : `<div class="su-lg"><div>Rien de libre cette semaine-là<span>Essayez une autre semaine.</span></div></div>`}</div>
+      <div class="k">Créneaux libres</div><div class="su-carte">${cs.length ? cs.map(c => `<div class="su-lg"><div style="text-transform:capitalize">${JOURS[(c.getDay() + 6) % 7]} ${c.getDate()} ${MOIS[c.getMonth()]}<span style="text-transform:none">${hh(c)}${c.getDay() === d0.getDay() && c.getHours() === d0.getHours() && c.getMinutes() === d0.getMinutes() ? " · comme aujourd’hui" : ""}</span></div><button class="su-b" data-su="rep-ok" data-d="${c.toISOString()}">Choisir</button></div>`).join("") : `<div class="su-lg"><div>Rien de libre cette semaine-là<span>Essaie une autre semaine.</span></div></div>`}</div>
       <button class="btn clair" data-su="plustard" style="margin-top:14px">Plus tard</button>`); };
 
   /* ---------- G · poser des congés ---------- */
   let CG = { raison: "Vacances" };
   const iso = d => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
   const feuilleConges = () => { const j = S.jour, d = CG.du || iso(j), f = CG.au || d, n = Math.max(1, Math.round((new Date(f) - new Date(d)) / 864e5) + 1);
-    ouvre(`<h3>Fermer mon salon</h3><div class="sous">Ces jours-là sont bloqués dans votre agenda.</div>
+    ouvre(`<h3>Fermer mon salon</h3><div class="sous">Ces jours-là sont bloqués dans ton agenda.</div>
       <div class="su-puces">${["Vacances", "Jour off", "Formation"].map(x => `<button data-su="cg-r" data-r="${x}" class="${CG.raison === x ? "on" : ""}">${x}</button>`).join("")}</div>
       <div class="lab2">Du</div><input class="champ su-champ" id="cg-du" type="date" value="${d}"><div class="lab2">Au</div><input class="champ su-champ" id="cg-au" type="date" value="${f}">
       <button class="btn" data-su="cg-ok" style="margin-top:16px">Fermer ${n > 1 ? "ces " + n + " jours" : "ce jour"}</button>
-      <div class="sous" style="margin-top:10px;font-size:12px">Pour rouvrir un jour : touchez le bloc « Fermé » dans l’agenda, puis « Annuler le rendez-vous ».</div>`); };
+      <div class="sous" style="margin-top:10px;font-size:12px">Pour rouvrir un jour : touche le bloc « Fermé » dans l’agenda, puis « Annuler le rendez-vous ».</div>`); };
   const ag0 = VUES.ag;
   VUES.ag = () => { const h = ag0().replace(/<strong>00:00 – 23:59<\/strong> /g, ""), rep = '<button data-a="mois"';
     return h.includes(rep) ? h.replace(rep, `<button data-su="conges" aria-label="Fermer mon salon (congés)" style="width:46px;height:46px;border-radius:50%;border:0;display:grid;place-items:center;padding:0;background:#fff"><svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6.5 17.5l11-11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>` + rep) : h; };
@@ -108,21 +108,21 @@
     if (k === "libre") { S.jour = new Date(); S.lundi = lundiDe(S.jour); feuilleNouveau(+a.dataset.m); }
     else if (k === "relance") feuilleRelance();
     else if (k === "msg") feuilleMsg();
-    else if (k === "msg-ok") { const v = ($("#su-msg", E).value || "").trim(); if (!v) return dit("Écrivez votre message"); try { localStorage.setItem("loginail-msg-relance", v); } catch (x) {} ferme(); dit("C’est enregistré ✓"); }
+    else if (k === "msg-ok") { const v = ($("#su-msg", E).value || "").trim(); if (!v) return dit("Écris ton message"); try { localStorage.setItem("loginail-msg-relance", v); } catch (x) {} ferme(); dit("C’est enregistré ✓"); }
     else if (k === "msg-def") { try { localStorage.removeItem("loginail-msg-relance"); } catch (x) {} feuilleMsg(); }
     else if (k === "bilan") feuilleBilan();
     else if (k === "rep-sem") { REP.sem = Math.min(12, +a.dataset.n); feuilleReprendre(); }
-    else if (k === "plustard") { ferme(); dit("D’accord : pensez à la relancer plus tard"); }
+    else if (k === "plustard") { ferme(); dit("D’accord : pense à la relancer plus tard"); }
     else if (k === "rep-fin") { ferme(); }
     else if (k === "rep-ok") { const r = REP.r, deb = new Date(a.dataset.d), fin = new Date(+deb + (new Date(r.fin) - new Date(r.debut))); a.disabled = true;
       const { error } = await sb.from("rendez_vous").insert({ cliente_id: r.cliente_id, prestation_id: r.prestation_id || null, titre: r.titre || titreRdv(r) || null, debut: deb.toISOString(), fin: fin.toISOString(), prix: r.prix ?? null });
-      if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessayez."); } await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit("Rendez-vous pris ✓"); }
+      if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessaie."); } await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit("Rendez-vous pris ✓"); }
     else if (k === "conges") { CG = { raison: "Vacances" }; feuilleConges(); }
     else if (k === "cg-r") { CG.du = $("#cg-du", E).value; CG.au = $("#cg-au", E).value; CG.raison = a.dataset.r; feuilleConges(); }
-    else if (k === "cg-ok") { const d = $("#cg-du", E).value, f = $("#cg-au", E).value; if (!d || !f || f < d) return dit("Vérifiez les deux dates"); const n = Math.round((new Date(f) - new Date(d)) / 864e5) + 1; if (n > 60) return dit("60 jours au maximum");
+    else if (k === "cg-ok") { const d = $("#cg-du", E).value, f = $("#cg-au", E).value; if (!d || !f || f < d) return dit("Vérifie les deux dates"); const n = Math.round((new Date(f) - new Date(d)) / 864e5) + 1; if (n > 60) return dit("60 jours au maximum");
       const jours = []; for (let i = 0; i < n; i++) { const x = new Date(d + "T00:00:00"); x.setDate(x.getDate() + i); const y = new Date(x); y.setHours(23, 59, 0, 0); jours.push({ cliente_id: null, prestation_id: null, titre: "Fermé · " + CG.raison, debut: x.toISOString(), fin: y.toISOString(), prix: null }); }
-      const pris = jours.filter(x => prisLe(new Date(x.debut)).some(r => r.cliente_id)).length; if (pris) return dit(pris > 1 ? "Il y a déjà des rendez-vous ces jours-là : décalez-les d’abord" : "Il y a déjà des rendez-vous ce jour-là : décalez-les d’abord");
-      a.disabled = true; const { error } = await sb.from("rendez_vous").insert(jours); if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessayez."); }
+      const pris = jours.filter(x => prisLe(new Date(x.debut)).some(r => r.cliente_id)).length; if (pris) return dit(pris > 1 ? "Il y a déjà des rendez-vous ces jours-là : décale-les d’abord" : "Il y a déjà des rendez-vous ce jour-là : décale-les d’abord");
+      a.disabled = true; const { error } = await sb.from("rendez_vous").insert(jours); if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessaie."); }
       await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit(n > 1 ? n + " jours fermés ✓" : "Jour fermé ✓"); }
   }, true);
   document.addEventListener("change", e => { if (e.target.id === "cg-du" || e.target.id === "cg-au") { CG.du = $("#cg-du", E).value; CG.au = $("#cg-au", E).value; if (CG.au < CG.du) CG.au = CG.du; feuilleConges(); } });
@@ -140,7 +140,7 @@
   const finG = async () => { if (!G) return; clearTimeout(G.t); const g = G; G = null; if (g.sc) g.sc.style.overflowY = g.ov || ""; if (!g.on) return; avale = Date.now(); g.el.classList.remove("su-tient");
     const mn = g.dy / R * 30; if (!mn) { g.el.style.transform = ""; return; } const deb = new Date(+new Date(g.r.debut) + mn * 60000), fin = new Date(+new Date(g.r.fin) + mn * 60000);
     if (!memeJour(deb, new Date(g.r.debut)) || deb.getHours() * 60 + deb.getMinutes() < OUV || !libre(deb, fin, g.r.id)) { rendu(); return dit(libre(deb, fin, g.r.id) ? "Trop tôt ou trop tard" : "Ce créneau est déjà pris"); }
-    const { error } = await sb.from("rendez_vous").update({ debut: deb.toISOString(), fin: fin.toISOString() }).eq("id", g.r.id); if (error) { rendu(); return dit("Oups, ça n’a pas marché. Réessayez."); }
+    const { error } = await sb.from("rendez_vous").update({ debut: deb.toISOString(), fin: fin.toISOString() }).eq("id", g.r.id); if (error) { rendu(); return dit("Oups, ça n’a pas marché. Réessaie."); }
     await chargeSemaine(); chargeVisites(); rendu(); dit("Décalé à " + hh(deb) + " ✓"); };
   E.addEventListener("touchstart", e => { const el = e.target.closest(".pap .pr[data-rdv]"); if (el && e.touches.length === 1) debutG(el, e.touches[0].clientY); }, { passive: true });
   E.addEventListener("touchmove", e => bougeG(e.touches[0].clientY, e), { passive: false });
@@ -204,16 +204,16 @@
   const deCsv = t => { const L = t.split(/\r?\n/).filter(x => x.trim()), sep = (L[0] || "").split(";").length > (L[0] || "").split(",").length ? ";" : ",", cols = L.map(l => l.split(sep).map(x => x.replace(/^"|"$/g, "").trim()));
       const h = (cols[0] || []).map(x => x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")), i = r => h.findIndex(x => r.test(x)), ip = i(/prenom|first/), inn = i(/^nom|last|family/), it = i(/tel|phone|mobile|portable/), entete = ip >= 0 || inn >= 0 || it >= 0;
       return (entete ? cols.slice(1) : cols).map(c => entete ? [c[ip] || "", c[inn] || "", c[it] || ""].join(" ").trim() : c.join(" ").trim()).filter(Boolean).join("\n"); };
-  const feuillePlusieurs = () => ouvre(`<h3>Importer mes clientes</h3><div class="sous">Pour ne pas tout retaper quand vous commencez.</div>
+  const feuillePlusieurs = () => ouvre(`<h3>Importer mes clientes</h3><div class="sous">Pour ne pas tout retaper quand tu commences.</div>
       <label class="btn" style="display:block;margin-top:16px;text-align:center;cursor:pointer">Choisir un fichier<input type="file" id="s5-fic" accept=".vcf,.csv,.txt,text/vcard,text/csv,text/plain" hidden></label>
       <details style="margin-top:10px;font-size:13px;line-height:1.5;color:#6B625C"><summary style="cursor:pointer;font-weight:500;color:#1E1C1B">Comment récupérer mes clientes ?</summary>
-        <p style="margin:8px 0 0"><b>Depuis les contacts de mon iPhone :</b> ouvrez Contacts, touchez une liste (ou créez-en une « Clientes »), restez appuyée dessus, puis « Exporter » et « Enregistrer dans Fichiers ». Revenez ici et choisissez ce fichier.</p>
-        <p style="margin:8px 0 0"><b>Depuis une autre appli de réservation :</b> écrivez à son service client et demandez « l’export de mon fichier clientes ». Ce sont vos données : elle doit vous les rendre. Vous recevez en général un fichier Excel : ouvrez-le, « Enregistrer sous » en CSV, puis choisissez-le ici.</p></details>
-      <div class="lab2" style="margin-top:16px">Ou écrivez-les : une par ligne</div><div class="sous" style="text-align:left;margin:-2px 0 8px;font-size:12.5px">D’abord le prénom, puis le nom, puis le numéro. Le nom et le numéro ne sont pas obligatoires.</div>
+        <p style="margin:8px 0 0"><b>Depuis les contacts de mon iPhone :</b> ouvre Contacts, touche une liste (ou crées-en une « Clientes »), reste appuyée dessus, puis « Exporter » et « Enregistrer dans Fichiers ». Reviens ici et choisis ce fichier.</p>
+        <p style="margin:8px 0 0"><b>Depuis une autre appli de réservation :</b> écris à son service client et demande « l’export de mon fichier clientes ». Ce sont tes données : elle doit te les rendre. Tu reçois en général un fichier Excel : ouvre-le, « Enregistrer sous » en CSV, puis choisis-le ici.</p></details>
+      <div class="lab2" style="margin-top:16px">Ou écris-les : une par ligne</div><div class="sous" style="text-align:left;margin:-2px 0 8px;font-size:12.5px">D’abord le prénom, puis le nom, puis le numéro. Le nom et le numéro ne sont pas obligatoires.</div>
       <textarea class="msg" id="s5-liste" style="height:150px" placeholder="Prénom Nom Téléphone&#10;&#10;Par exemple :&#10;Jade Martin 06 12 34 56 78&#10;Inès Moreau&#10;Sarah"></textarea>
       <button class="btn" data-s5="pl-ok" style="margin-top:12px" disabled>Ajouter</button>`);
   document.addEventListener("change", e => { if (e.target.id !== "s5-fic") return; const f = e.target.files && e.target.files[0]; if (!f) return; const r = new FileReader();
-    r.onload = () => { const t = String(r.result || ""), l = /BEGIN:VCARD/i.test(t) ? deVcf(t) : deCsv(t), z = E.querySelector("#s5-liste"); if (!l) return dit("Aucune cliente trouvée dans ce fichier"); z.value = (z.value.trim() ? z.value.trim() + "\n" : "") + l; z.dispatchEvent(new Event("input", { bubbles: true })); dit("Vérifiez la liste, puis touchez « Ajouter »"); };
+    r.onload = () => { const t = String(r.result || ""), l = /BEGIN:VCARD/i.test(t) ? deVcf(t) : deCsv(t), z = E.querySelector("#s5-liste"); if (!l) return dit("Aucune cliente trouvée dans ce fichier"); z.value = (z.value.trim() ? z.value.trim() + "\n" : "") + l; z.dispatchEvent(new Event("input", { bubbles: true })); dit("Vérifie la liste, puis touche « Ajouter »"); };
     r.readAsText(f); });
   const cl1 = VUES.cl; VUES.cl = () => { const h = cl1(), rep = "Ajouter une cliente</button>"; return h.includes(rep) && S.clientes.length < 10 && !S.cherche.trim() ? h.replace(rep, rep + `<button class="s5-plus" data-s5="plusieurs">J’ai déjà des clientes : les importer</button>`) : h; };
   const re2 = VUES.re; VUES.re = () => { const h = re2(), rep = '<div class="k">Mes données</div><div class="liste">'; return h.includes(rep) ? h.replace(rep, rep + `<div class="ligne" data-s5="plusieurs">${sv('<path d="M12 20V9M7 13l5-5 5 5M5 4h14"/>')}<div class="t">Importer mes clientes<span>Depuis les contacts de mon téléphone ou un fichier</span></div><span class="fl">›</span></div>`) : h; };
@@ -231,10 +231,10 @@
       const deb = new Date(S.jour); deb.setHours(0, BL.m, 0, 0); const fin = new Date(+deb + BL.d * 60000), note = (E.querySelector("#bl-n").value || "").trim();
       if (S.rdv.some(r => r.statut !== "annule" && new Date(r.debut) < fin && new Date(r.fin) > deb)) return dit("Il y a déjà un rendez-vous sur ce créneau");
       a.disabled = true; const { error } = await sb.from("rendez_vous").insert({ cliente_id: null, prestation_id: null, titre: note || "Bloqué", debut: deb.toISOString(), fin: fin.toISOString(), prix: null });
-      if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessayez."); } await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit("Créneau bloqué ✓"); }
+      if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessaie."); } await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit("Créneau bloqué ✓"); }
     else if (k === "plusieurs") feuillePlusieurs();
-    else if (k === "pl-ok") { const deja = new Set(S.clientes.map(c => nomCli(c).toLowerCase())), l = lis(E.querySelector("#s5-liste").value).filter((c, i, t) => !deja.has(nomCli(c).toLowerCase()) && t.findIndex(x => nomCli(x).toLowerCase() === nomCli(c).toLowerCase()) === i); if (!l.length) return dit("Ces clientes sont déjà dans votre liste"); a.disabled = true; a.textContent = "Un instant…";
-      const { error } = await sb.from("clientes").insert(l); if (error) { a.disabled = false; a.textContent = "Ajouter"; return dit("Oups, ça n’a pas marché. Réessayez."); }
+    else if (k === "pl-ok") { const deja = new Set(S.clientes.map(c => nomCli(c).toLowerCase())), l = lis(E.querySelector("#s5-liste").value).filter((c, i, t) => !deja.has(nomCli(c).toLowerCase()) && t.findIndex(x => nomCli(x).toLowerCase() === nomCli(c).toLowerCase()) === i); if (!l.length) return dit("Ces clientes sont déjà dans ta liste"); a.disabled = true; a.textContent = "Un instant…";
+      const { error } = await sb.from("clientes").insert(l); if (error) { a.disabled = false; a.textContent = "Ajouter"; return dit("Oups, ça n’a pas marché. Réessaie."); }
       const { data } = await sb.from("clientes").select("*").order("prenom"); S.clientes = data || []; ferme(); rendu(); dit(l.length > 1 ? l.length + " clientes ajoutées ✓" : "Cliente ajoutée ✓"); }
   }, true);
 })();
@@ -295,12 +295,12 @@
     const cl = loin ? (avant ? "" : " arrive") : " part";
     return h.replace('<button data-a="mois"', `<button data-su="auj" aria-label="Revenir à aujourd’hui" class="su-auj2${cl}"${loin ? "" : ' tabindex="-1" aria-hidden="true"'}><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Aujourd’hui</button><button data-a="mois"`); };
   const re0 = VUES.re; VUES.re = () => { const h = re0(), on = localStorage.getItem("loginail-agenda-horaires") !== "non";
-    const l = `<div class="ligne"><div class="t">Mon agenda suit mes horaires<span>${on ? "L’agenda montre seulement vos heures d’ouverture" : "L’agenda montre toute la journée, de 8h à 20h"}</span></div><button class="sw${on ? " on" : ""}" data-su="ag-hor" aria-label="Mon agenda suit mes horaires"></button></div>`;
+    const l = `<div class="ligne"><div class="t">Mon agenda suit mes horaires<span>${on ? "L’agenda montre seulement tes heures d’ouverture" : "L’agenda montre toute la journée, de 8h à 20h"}</span></div><button class="sw${on ? " on" : ""}" data-su="ag-hor" aria-label="Mon agenda suit mes horaires"></button></div>`;
     for (const rep of ['<div class="k">Mes réservations</div><div class="liste">', '<div class="k">Mon salon</div><div class="liste">', '<div class="k">Mes données</div><div class="liste">']) if (h.includes(rep)) return h.replace(rep, rep + l);
     return h; };
   document.addEventListener("click", async e => { const t = e.target; if (!t.closest) return;
     if (t.closest('[data-su="auj"]')) { e.stopPropagation(); e.preventDefault(); const d = auj(); S.jour = d; S.lundi = plusJours(d, -((d.getDay() + 6) % 7)); await chargeSemaine(); rendu(); return; }
-    if (t.closest('[data-su="ag-hor"]')) { e.stopPropagation(); e.preventDefault(); const on = localStorage.getItem("loginail-agenda-horaires") !== "non"; localStorage.setItem("loginail-agenda-horaires", on ? "non" : "oui"); rendu(); dit(on ? "L’agenda montre toute la journée" : "L’agenda suit vos horaires"); } }, true);
+    if (t.closest('[data-su="ag-hor"]')) { e.stopPropagation(); e.preventDefault(); const on = localStorage.getItem("loginail-agenda-horaires") !== "non"; localStorage.setItem("loginail-agenda-horaires", on ? "non" : "oui"); rendu(); dit(on ? "L’agenda montre toute la journée" : "L’agenda suit tes horaires"); } }, true);
 })();
 
 /* ===== 13/11 (Marie, essai iPhone 3) : heures bien centrées · cliente qu'on retrouve en tapant la 1re lettre · accueil : 5 rendez-vous puis « voir les autres »,
@@ -334,7 +334,7 @@
       .sort((a, b) => (sansAcc(b.prenom).startsWith(q) - sansAcc(a.prenom).startsWith(q)) || nomCli(a).localeCompare(nomCli(b), "fr"));
     if (l.length === 1 && sansAcc(nomCli(l[0])) === q) { z.innerHTML = ""; return; }
     z.innerHTML = l.slice(0, 8).map(c => `<button type="button" data-su="n-pick" data-n="${esc(nomCli(c))}"><i>${esc(((c.prenom || "")[0] || "") + ((c.nom || "")[0] || "")).toUpperCase()}</i>${esc(nomCli(c))}${c.telephone ? `<span>${esc(c.telephone)}</span>` : ""}</button>`).join("")
-      + (l.length > 8 ? `<div class="sous" style="font-size:12px">+ ${l.length - 8} autres : tapez la suite du prénom</div>` : "")
+      + (l.length > 8 ? `<div class="sous" style="font-size:12px">+ ${l.length - 8} autres : tape la suite du prénom</div>` : "")
       + (!l.length ? `<div class="sous" style="font-size:12.5px;text-align:left">Aucune cliente à ce nom : elle sera créée.</div>` : ""); };
   document.addEventListener("input", e => { if (e.target.id === "n-cli") propose(); });
   /* l'accueil : les anniversaires du jour, au-dessus de « Aujourd'hui » */
@@ -343,7 +343,7 @@
     const gateau = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M5 20v-6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v6M5 16c1.5 1 3 1 4.5 0s3-1 4.5 0 3 1 4.5 0M12 12V8M12 5.5c.8-.8.8-1.7 0-2.5-.8.8-.8 1.7 0 2.5z"/></svg>';
     const salon = (S.profil && S.profil.nom_salon) || "votre salon";
     const b = l.map(c => { const tel = (c.telephone || "").replace(/\s/g, ""), txt = encodeURIComponent(`Joyeux anniversaire ${c.prenom || ""} ! Très belle journée de la part de ${salon}.`);
-      return `<div class="anv"><div class="ic">${gateau}</div><div class="t">C’est l’anniversaire de <b>${esc(nomCli(c))}</b><span>${c.ok_sms_anniv ? "Elle reçoit votre SMS d’anniversaire aujourd’hui ✓" : tel ? "Envoyez-lui un petit mot, elle va adorer" : "Ajoutez son numéro pour lui écrire"}</span></div>${!c.ok_sms_anniv && tel ? `<a href="sms:${esc(tel)}&body=${txt}">Lui écrire</a>` : ""}</div>`; }).join("");
+      return `<div class="anv"><div class="ic">${gateau}</div><div class="t">C’est l’anniversaire de <b>${esc(nomCli(c))}</b><span>${c.ok_sms_anniv ? "Elle reçoit ton SMS d’anniversaire aujourd’hui ✓" : tel ? "Envoie-lui un petit mot, elle va adorer" : "Ajoute son numéro pour lui écrire"}</span></div>${!c.ok_sms_anniv && tel ? `<a href="sms:${esc(tel)}&body=${txt}">Lui écrire</a>` : ""}</div>`; }).join("");
     for (const rep of ['<div class="su-t3">', '<div class="k">Encore libre', '<div class="k">Aujourd’hui']) if (h.includes(rep)) return h.replace(rep, `<div style="margin-top:4px">${b}</div>` + rep); return h + b; };
   document.addEventListener("click", e => { const t = e.target; if (!t.closest) return;
     const pk = t.closest('[data-su="n-pick"]'); if (pk) { e.stopPropagation(); e.preventDefault(); const inp = E.querySelector("#n-cli"); if (inp) { inp.value = pk.dataset.n; inp.dispatchEvent(new Event("change", { bubbles: true })); } E.querySelector("#n-sug").innerHTML = ""; return; }
@@ -369,25 +369,25 @@
   document.head.appendChild(st);
   const DEF = "Bonjour {prénom} ! RDV demain {heure}, {adresse}. Tél {tél}.";
   const adr = () => [S.profil.adresse, [S.profil.code_postal, S.profil.ville].filter(Boolean).join(" ")].filter(Boolean).join(" ");
-  const rempli = m => m.replace(/\{pr[ée]nom\}/gi, "Jade").replace(/\{heure\}/gi, "9h00").replace(/\{adresse\}/gi, adr() || "[votre adresse]").replace(/\{t[ée]l\}/gi, S.profil.telephone || "[votre numéro]").replace(/\s+/g, " ").trim();
-  const feuille = (val) => { const m = val != null ? val : (S.profil.msg_rappel || DEF), ex = rempli(m), n = [...ex].length, manque = [!adr() && "votre adresse", !S.profil.telephone && "votre numéro"].filter(Boolean);
+  const rempli = m => m.replace(/\{pr[ée]nom\}/gi, "Jade").replace(/\{heure\}/gi, "9h00").replace(/\{adresse\}/gi, adr() || "[ton adresse]").replace(/\{t[ée]l\}/gi, S.profil.telephone || "[ton numéro]").replace(/\s+/g, " ").trim();
+  const feuille = (val) => { const m = val != null ? val : (S.profil.msg_rappel || DEF), ex = rempli(m), n = [...ex].length, manque = [!adr() && "ton adresse", !S.profil.telephone && "ton numéro"].filter(Boolean);
     ouvre(`<h3>Rappel la veille</h3><div class="sous">La veille au soir, chaque cliente qui a rendez-vous le lendemain reçoit ce SMS. C’est automatique.</div>
-      <div class="lab2">Votre message</div><textarea class="rp-t" id="rp-m" maxlength="200">${esc(m)}</textarea>
+      <div class="lab2">Ton message</div><textarea class="rp-t" id="rp-m" maxlength="200">${esc(m)}</textarea>
       <div class="rp-tags">${["{prénom}", "{heure}", "{adresse}", "{tél}"].map(t => `<button type="button" data-su="rp-tag" data-t="${t}">+ ${t.slice(1, -1)}</button>`).join("")}</div>
-      <div class="sous" style="font-size:12px;text-align:left;margin-top:6px">Les mots entre { } changent pour chaque cliente : son prénom, l’heure de son rendez-vous, votre adresse, votre numéro.</div>
-      <div class="lab2">Exemple : ce que reçoit Jade</div><div class="rp-apercu" id="rp-ap">${esc(ex)}</div><div class="rp-n${n > 160 ? " trop" : ""}" id="rp-n">${n} / 160 caractères${n > 160 ? " · trop long : raccourcissez" : ""}</div>
-      ${manque.length ? `<div class="rp-alerte">Il manque ${manque.join(" et ")} : ajoutez-${manque.length > 1 ? "les" : "la"} dans Réglages › Mon salon, sinon vos clientes ne sauront pas où venir.</div>` : ""}
+      <div class="sous" style="font-size:12px;text-align:left;margin-top:6px">Les mots entre { } changent pour chaque cliente : son prénom, l’heure de son rendez-vous, ton adresse, ton numéro.</div>
+      <div class="lab2">Exemple : ce que reçoit Jade</div><div class="rp-apercu" id="rp-ap">${esc(ex)}</div><div class="rp-n${n > 160 ? " trop" : ""}" id="rp-n">${n} / 160 caractères${n > 160 ? " · trop long : raccourcis" : ""}</div>
+      ${manque.length ? `<div class="rp-alerte">Il manque ${manque.join(" et ")} : ajoute-${manque.length > 1 ? "les" : "la"} dans Réglages › Mon salon, sinon tes clientes ne sauront pas où venir.</div>` : ""}
       <button class="btn" data-su="rp-ok" style="margin-top:14px"${n > 160 ? " disabled" : ""}>Enregistrer</button>
       <button class="lien-t" data-su="rp-def" style="display:block;margin:10px auto 0">Remettre le message de Loginail</button>
       <button class="btn clair" data-a="sms-test" style="margin-top:16px">M’envoyer un essai</button>
-      <div class="sous" style="margin-top:8px;font-size:12px">L’essai arrive seulement sur <b>votre</b> téléphone${S.profil.telephone ? " (" + esc(S.profil.telephone) + ")" : ""}, pour voir le SMS. Vos clientes, elles, reçoivent le vrai rappel la veille de leur rendez-vous. 3 essais par jour au plus.</div>`); };
+      <div class="sous" style="margin-top:8px;font-size:12px">L’essai arrive seulement sur <b>ton</b> téléphone${S.profil.telephone ? " (" + esc(S.profil.telephone) + ")" : ""}, pour voir le SMS. Tes clientes, elles, reçoivent le vrai rappel la veille de leur rendez-vous. 3 essais par jour au plus.</div>`); };
   const maj = () => { const t = E.querySelector("#rp-m"); if (!t) return; const ex = rempli(t.value), n = [...ex].length, ap = E.querySelector("#rp-ap"), nn = E.querySelector("#rp-n"), ok = E.querySelector('[data-su="rp-ok"]');
-    ap.textContent = ex; nn.textContent = n + " / 160 caractères" + (n > 160 ? " · trop long : raccourcissez" : ""); nn.classList.toggle("trop", n > 160); if (ok) ok.disabled = n > 160 || !t.value.trim(); };
+    ap.textContent = ex; nn.textContent = n + " / 160 caractères" + (n > 160 ? " · trop long : raccourcis" : ""); nn.classList.toggle("trop", n > 160); if (ok) ok.disabled = n > 160 || !t.value.trim(); };
   document.addEventListener("input", e => { if (e.target.id === "rp-m") maj(); });
   /* l'accueil : « Ma caisse » tant qu'elle n'a pas choisi */
   const choisi = () => { try { return localStorage.getItem("loginail-caisse-choisi") === "1"; } catch (e) { return true; } };
   const acc2 = VUES.acc; VUES.acc = () => { const h = acc2(); if (choisi() || !S.profil) return h; const on = !!S.profil.caisse_active;
-    const b = `<div class="acc-caisse"><div class="t">Ma caisse<span>${on ? "Activée : vous notez ce que vous encaissez. Vous faites surtout des espèces ? Vous pouvez l’arrêter." : "Arrêtée. Activez-la pour suivre ce que vous encaissez."}</span></div><button class="sw${on ? " on" : ""}" data-su="acc-caisse" aria-label="Utiliser la caisse"></button><button class="x" data-su="acc-caisse-x" aria-label="Masquer">×</button></div>`;
+    const b = `<div class="acc-caisse"><div class="t">Ma caisse<span>${on ? "Activée : tu notes ce que tu encaisses. Tu fais surtout des espèces ? Tu peux l’arrêter." : "Arrêtée. Active-la pour suivre ce que tu encaisses."}</span></div><button class="sw${on ? " on" : ""}" data-su="acc-caisse" aria-label="Utiliser la caisse"></button><button class="x" data-su="acc-caisse-x" aria-label="Masquer">×</button></div>`;
     for (const rep of ['<div class="su-t3">', '<div class="k">Encore libre', '<div class="k">Aujourd’hui']) if (h.includes(rep)) return h.replace(rep, b + rep); return h + b; };
   document.addEventListener("click", async e => { const t = e.target; if (!t.closest) return;
     if (t.closest('[data-a="sms-info"]')) { e.stopPropagation(); e.preventDefault(); return feuille(); }
@@ -395,10 +395,10 @@
     if (t.closest('[data-su="rp-def"]')) { e.stopPropagation(); return feuille(DEF); }
     const ok = t.closest('[data-su="rp-ok"]'); if (ok) { e.stopPropagation(); const v = E.querySelector("#rp-m").value.replace(/\s+/g, " ").trim(); ok.disabled = true;
       const { data, error } = await sb.from("profils").update({ msg_rappel: v === DEF ? null : v }).eq("id", S.user.id).select().single();
-      if (error) { ok.disabled = false; return dit("Oups, ça n’a pas marché. Réessayez."); } S.profil = data; ferme(); return dit("Votre rappel est enregistré ✓"); }
+      if (error) { ok.disabled = false; return dit("Oups, ça n’a pas marché. Réessaie."); } S.profil = data; ferme(); return dit("Ton rappel est enregistré ✓"); }
     if (t.closest('[data-su="acc-caisse"]')) { e.stopPropagation(); e.preventDefault(); const on = !S.profil.caisse_active;
-      const { data, error } = await sb.from("profils").update({ caisse_active: on }).eq("id", S.user.id).select().single(); if (error) return dit("Oups, ça n’a pas marché. Réessayez.");
-      S.profil = data; try { localStorage.setItem("loginail-caisse-choisi", "1"); } catch (x) {} rendu(); return dit(on ? "Caisse activée · elle reste dans Réglages › Ma caisse" : "Caisse arrêtée · vous pourrez la remettre dans Réglages › Ma caisse"); }
+      const { data, error } = await sb.from("profils").update({ caisse_active: on }).eq("id", S.user.id).select().single(); if (error) return dit("Oups, ça n’a pas marché. Réessaie.");
+      S.profil = data; try { localStorage.setItem("loginail-caisse-choisi", "1"); } catch (x) {} rendu(); return dit(on ? "Caisse activée · elle reste dans Réglages › Ma caisse" : "Caisse arrêtée · tu pourras la remettre dans Réglages › Ma caisse"); }
     if (t.closest('[data-su="acc-caisse-x"]')) { e.stopPropagation(); e.preventDefault(); try { localStorage.setItem("loginail-caisse-choisi", "1"); } catch (x) {} rendu(); } }, true);
 })();
 
@@ -423,7 +423,7 @@ h3 .lap{font-size:11px;vertical-align:4px}
   const montre = () => { if (!ban.isConnected) E.appendChild(ban); ban.classList.toggle("on", navigator.onLine === false); E.classList.toggle("horsl", navigator.onLine === false); };
   addEventListener("offline", montre); addEventListener("online", () => { montre(); if (S.user) { try { chargeSemaine().then(() => { chargeVisites(); rendu(); }); } catch (e) {} dit("La connexion est revenue ✓"); } });
   setTimeout(montre, 1500);
-  const dit0 = dit; dit = t => dit0(navigator.onLine === false && /Oups|pas marché|Réessayez|Pas enregistré/i.test(t) ? "Pas de connexion : ce n’est pas enregistré. Réessayez quand le réseau revient." : t);
+  const dit0 = dit; dit = t => dit0(navigator.onLine === false && /Oups|pas marché|Réessaie|Réessayez|Pas enregistré/i.test(t) ? "Pas de connexion : ce n’est pas enregistré. Réessaie quand le réseau revient." : t);
 })();
 
 /* ===== 13/11 (Marie) : les photos des ongles — après « C'est fini » et dans la fiche (privées : rangées dans photos-clientes/<sa pro>/<cliente>/) ===== */
@@ -460,7 +460,7 @@ h3 .lap{font-size:11px;vertical-align:4px}
     for (const f of fs) { const b = await allege(f), chemin = `${S.user.id}/${c.cliente_id}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.jpg`;
       const { error } = await sb.storage.from(BUCKET).upload(chemin, b, { contentType: "image/jpeg", upsert: false }); if (error) continue;
       const r = await sb.from("photos_clientes").insert({ cliente_id: c.cliente_id, rendez_vous_id: c.rendez_vous_id || null, chemin }); if (!r.error) ok++; }
-    await charge(c.cliente_id, c.rangee); dit(ok ? (ok > 1 ? ok + " photos ajoutées ✓" : "Photo ajoutée ✓") : "Oups, la photo n’est pas passée. Réessayez."); });
+    await charge(c.cliente_id, c.rangee); dit(ok ? (ok > 1 ? ok + " photos ajoutées ✓" : "Photo ajoutée ✓") : "Oups, la photo n’est pas passée. Réessaie."); });
   const bloc = (titre, cliente_id) => `<div class="ph-bloc" data-cli-ph="${cliente_id}"><div class="t"><div>${titre}<div class="nb" style="font-size:12px;opacity:.55;margin-top:2px">…</div></div><button data-ph="ajout">${ICO}Ajouter</button></div><div class="ph-rang"></div></div>`;
   /* 1 · juste après « C'est fini » : la feuille « Son prochain rendez-vous ? » propose la photo */
   let DERNIER = null; document.addEventListener("loginail-reprendre", e => { DERNIER = e.detail; });
@@ -477,7 +477,7 @@ h3 .lap{font-size:11px;vertical-align:4px}
   /* les clics : ajouter, voir en grand, supprimer */
   const vue = document.createElement("div"); vue.className = "ph-vue"; let LISTE = [], IDX = 0;
   const montreN = () => { const p = LISTE[IDX]; if (!p) return; const d = new Date(p.d);
-    vue.innerHTML = `<button class="x" data-ph="fermer" aria-label="Fermer">×</button>${LISTE.length > 1 ? `<div class="n">${IDX + 1} / ${LISTE.length}</div>` : ""}<img src="${p.u}" alt="Photo de la pose" draggable="false"><div class="d">${d.getDate()} ${MOIS[d.getMonth()]} ${d.getFullYear()}${LISTE.length > 1 ? " · glissez pour voir les autres" : ""}</div><button class="sup" data-ph="sup" data-id="${p.id}" data-c="${p.c}">Supprimer cette photo</button>`; };
+    vue.innerHTML = `<button class="x" data-ph="fermer" aria-label="Fermer">×</button>${LISTE.length > 1 ? `<div class="n">${IDX + 1} / ${LISTE.length}</div>` : ""}<img src="${p.u}" alt="Photo de la pose" draggable="false"><div class="d">${d.getDate()} ${MOIS[d.getMonth()]} ${d.getFullYear()}${LISTE.length > 1 ? " · glisse pour voir les autres" : ""}</div><button class="sup" data-ph="sup" data-id="${p.id}" data-c="${p.c}">Supprimer cette photo</button>`; };
   { let x0 = null, y0 = 0; vue.addEventListener("touchstart", e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
     vue.addEventListener("touchend", e => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null; if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
       const n = IDX + (dx < 0 ? 1 : -1); if (n < 0 || n >= LISTE.length) return; IDX = n; montreN(); }, { passive: true }); }
@@ -486,9 +486,9 @@ h3 .lap{font-size:11px;vertical-align:4px}
     const vo = t.closest('[data-ph="voir"]'); if (vo) { e.stopPropagation(); e.preventDefault(); LISTE = [...vo.closest(".ph-rang").querySelectorAll('[data-ph="voir"]')].map(x => ({ ...x.dataset })); IDX = LISTE.findIndex(x => x.id === vo.dataset.id);
       vue.dataset.cli = vo.closest(".ph-bloc")?.dataset.cliPh || ""; montreN(); E.appendChild(vue); return; }
     if (t.closest('[data-ph="fermer"]')) { e.stopPropagation(); vue.remove(); return; }
-    const su = t.closest('[data-ph="sup"]'); if (su) { e.stopPropagation(); if (su.dataset.ok !== "1") { su.dataset.ok = "1"; su.textContent = "Touchez encore pour supprimer"; return; }
+    const su = t.closest('[data-ph="sup"]'); if (su) { e.stopPropagation(); if (su.dataset.ok !== "1") { su.dataset.ok = "1"; su.textContent = "Touche encore pour supprimer"; return; }
       await sb.storage.from(BUCKET).remove([su.dataset.c]); const { error } = await sb.from("photos_clientes").delete().eq("id", su.dataset.id); vue.remove();
-      const z = E.querySelector(`.fc .ph-bloc[data-cli-ph="${vue.dataset.cli}"]`); if (z) charge(vue.dataset.cli, z.querySelector(".ph-rang")); dit(error ? "Oups, réessayez." : "Photo supprimée"); } }, true);
+      const z = E.querySelector(`.fc .ph-bloc[data-cli-ph="${vue.dataset.cli}"]`); if (z) charge(vue.dataset.cli, z.querySelector(".ph-rang")); dit(error ? "Oups, réessaie." : "Photo supprimée"); } }, true);
 })();
 
 /* ===== 13/11 (Marie) : dans l'agenda d'aujourd'hui, l'heure en cours (14h entre 14h00 et 14h59) en plus gras ===== */
@@ -507,7 +507,7 @@ h3 .lap{font-size:11px;vertical-align:4px}
   let jeton = null, branche = false;
   const brancher = () => { const p = PN(); if (!p || branche) return; branche = true;
     p.addListener("registration", async t => { jeton = t.value; if (!S.user) return; await sb.from("appareils").upsert({ jeton: t.value, pro_id: S.user.id, plateforme: "ios", maj_le: new Date().toISOString() }); });
-    p.addListener("registrationError", () => dit("Les notifications n’ont pas pu s’activer. Réessayez plus tard."));
+    p.addListener("registrationError", () => dit("Les notifications n’ont pas pu s’activer. Réessaie plus tard."));
     /* 18/11 : appli fermée → l'iPhone donne le toucher AVANT que l'appli ait fini de charger. Avant, on ouvrait tout de suite,
        puis le chargement du démarrage (semaine en cours, Accueil) passait par-dessus → mauvais jour, rendez-vous pas ouvert.
        Maintenant on garde le rendez-vous de côté et on l'ouvre seulement quand l'appli est prête. */
@@ -526,22 +526,22 @@ h3 .lap{font-size:11px;vertical-align:4px}
   brancher(); /* on écoute le toucher dès le lancement (pas besoin de l'autorisation pour écouter) */
   const activer = async () => { const p = PN(); if (!p) return false; brancher(); let perm = await p.checkPermissions();
     if (perm.receive === "prompt" || perm.receive === "prompt-with-rationale") perm = await p.requestPermissions();
-    if (perm.receive !== "granted") { ecrit("non"); dit("Vous pourrez les activer dans Réglages › Notifications de l’iPhone"); return false; }
+    if (perm.receive !== "granted") { ecrit("non"); dit("Tu pourras les activer dans Réglages › Notifications de l’iPhone"); return false; }
     await p.register(); ecrit("oui"); return true; };
   const arreter = async () => { const p = PN(); ecrit("non"); if (jeton) await sb.from("appareils").delete().eq("jeton", jeton); try { await p.unregister(); } catch (e) {} };
   /* au démarrage : si elle a dit oui, on redonne le jeton (il peut changer) */
   const t0 = setInterval(() => { if (!S.user || !PN()) return; clearInterval(t0); if (lit() === "oui") activer(); }, 1500);
   /* Réglages : l'interrupteur */
   const re0 = VUES.re; VUES.re = () => { const h = re0(); if (!PN()) return h; const on = lit() === "oui";
-    const l = `<div class="ligne"><div class="t">Être prévenue des réservations<span>Une notification quand une cliente réserve sur votre site</span></div><button class="sw${on ? " on" : ""}" data-su="notif-sw" aria-label="Notifications de réservation"></button></div>`;
+    const l = `<div class="ligne"><div class="t">Être prévenue des réservations<span>Une notification quand une cliente réserve sur ton site</span></div><button class="sw${on ? " on" : ""}" data-su="notif-sw" aria-label="Notifications de réservation"></button></div>`;
     for (const rep of ['<div class="k">Mes réservations</div><div class="liste">', '<div class="k">Mon salon</div><div class="liste">']) if (h.includes(rep)) return h.replace(rep, rep + l); return h; };
   /* l'accueil : une seule fois, on lui propose */
   const acc0 = VUES.acc; VUES.acc = () => { const h = acc0(); if (!PN() || lit()) return h;
-    const b = `<div class="acc-caisse"><div class="t">Être prévenue quand une cliente réserve ?<span>Une notification sur votre iPhone à chaque réservation sur votre site.</span></div><button class="pil noir" data-su="notif-oui" style="flex:none;border:0;background:var(--acc,#1E1C1B);color:#fff;border-radius:99px;padding:8px 13px;font:inherit;font-size:12.5px">Activer</button><button class="x" data-su="notif-x" aria-label="Plus tard">×</button></div>`;
+    const b = `<div class="acc-caisse"><div class="t">Être prévenue quand une cliente réserve ?<span>Une notification sur ton iPhone à chaque réservation sur ton site.</span></div><button class="pil noir" data-su="notif-oui" style="flex:none;border:0;background:var(--acc,#1E1C1B);color:#fff;border-radius:99px;padding:8px 13px;font:inherit;font-size:12.5px">Activer</button><button class="x" data-su="notif-x" aria-label="Plus tard">×</button></div>`;
     for (const rep of ['<div class="su-t3">', '<div class="k">Encore libre', '<div class="k">Aujourd’hui']) if (h.includes(rep)) return h.replace(rep, b + rep); return h + b; };
   document.addEventListener("click", async e => { const t = e.target; if (!t.closest) return;
-    if (t.closest('[data-su="notif-sw"]')) { e.stopPropagation(); e.preventDefault(); if (lit() === "oui") { await arreter(); dit("Notifications arrêtées"); } else if (await activer()) dit("C’est activé ✓ Vous serez prévenue à chaque réservation"); rendu(); return; }
-    if (t.closest('[data-su="notif-oui"]')) { e.stopPropagation(); e.preventDefault(); if (await activer()) dit("C’est activé ✓ Vous serez prévenue à chaque réservation"); rendu(); return; }
+    if (t.closest('[data-su="notif-sw"]')) { e.stopPropagation(); e.preventDefault(); if (lit() === "oui") { await arreter(); dit("Notifications arrêtées"); } else if (await activer()) dit("C’est activé ✓ Tu seras prévenue à chaque réservation"); rendu(); return; }
+    if (t.closest('[data-su="notif-oui"]')) { e.stopPropagation(); e.preventDefault(); if (await activer()) dit("C’est activé ✓ Tu seras prévenue à chaque réservation"); rendu(); return; }
     if (t.closest('[data-su="notif-x"]')) { e.stopPropagation(); e.preventDefault(); ecrit("plus-tard"); rendu(); } }, true);
 })();
 
@@ -625,7 +625,7 @@ h3 .lap{font-size:11px;vertical-align:4px}
       const futur = d && d > new Date(), mail = c && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((c.email || "").trim());
       const p = (c && String(c.prenom || "").trim()) || "", de = !p ? "de cette cliente" : /^[aeiouyhàâéèêëîïôöùûü]/i.test(p) ? `d’${p}` : `de ${p}`;
       const titre = c ? `Annuler le rendez-vous ${esc(de)} ?` : "Rouvrir ce créneau ?";
-      const info = !c ? esc(quand) : `${esc(quand)}${futur ? (mail ? "<br>Elle recevra un e-mail pour la prévenir." : "<br>Pensez à la prévenir (pas d’e-mail).") : ""}`;
+      const info = !c ? esc(quand) : `${esc(quand)}${futur ? (mail ? "<br>Elle recevra un e-mail pour la prévenir." : "<br>Pense à la prévenir (pas d’e-mail).") : ""}`;
       const z = b.closest(".petits") || b; z.style.display = "none";
       z.insertAdjacentHTML("afterend", `<div class="an-conf"><b>${titre}</b><span>${info}</span><div class="an-bts"><button class="an-non" data-an="non">Non, le garder</button><button class="an-oui" data-a="statut" data-s="annule" data-ok="1" data-id="${b.dataset.id}">Oui, annuler</button></div></div>`);
       return; }

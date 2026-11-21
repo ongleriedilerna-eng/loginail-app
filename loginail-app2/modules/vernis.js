@@ -87,6 +87,23 @@
           return `<div class="v-l${annul ? " v-annul" : ""}" data-rdv="${r.id}"><span class="v-h">${JOURS[(d.getDay() + 6) % 7].slice(0, 3).toLowerCase()}. ${d.getDate()}<br>${hh(d)}</span><div class="v-t">${esc(nomRdv(r))}<small>${annul ? `a annulé ${ilya(new Date(t))}${titreRdv(r) ? " · " + esc(titreRdv(r)) : ""}` : `${esc(titreRdv(r))}${titreRdv(r) ? " · " : ""}réservé ${ilya(new Date(t))}`}</small></div>${annul ? `<span class="v-p v-annule">Annulé</span>` : r.prix ? `<span class="v-p">${euros(r.prix)}</span>` : ""}</div>`; }).join("")}</div>`
       : `<div class="blanche vide"><b>Rien de nouveau</b><span>Aucune réservation ni annulation depuis hier.</span></div>`)); }, true);
 
+  /* 21/11 (Marie, D68) : le carré de bienvenue, version A. Seulement tant qu'elle n'a pas appuyé sur « C'est noté » :
+     mémorisé dans son compte (user_metadata.bienvenue_vue, donc aussi sur un 2e appareil) + dans le téléphone pour aller vite. */
+  const bvCle = () => "loginail-bienvenue-" + ((S.user && S.user.id) || "");
+  const bvVue = () => !!(S.user && S.user.user_metadata && S.user.user_metadata.bienvenue_vue) || lit(bvCle(), "") === "vue";
+  let bvAnime = false;
+  const BV = [["moi", "Ta prochaine cliente", "l’appeler ou lui écrire en un geste"], ["horloge", "Tes heures encore libres", "un rendez-vous en un appui"],
+    ["cadeau", "Les anniversaires de tes clientes", "un petit mot qui fait plaisir"], ["cloche", "Les réservations de ton site", "dès qu’une cliente réserve en ligne"]];
+  const IC_BV = { moi: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 4-6 7-6s6 2 7 6"/>', horloge: '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
+    cadeau: '<path d="M5 11h14v9H5zM4 8h16v3H4zM12 8v12M12 8c-2-4-6-3-5 0M12 8c2-4 6-3 5 0"/>', cloche: '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20h4"/>' };
+  const bienvenue = () => { if (!S.user || bvVue()) return ""; const calme = bvAnime; bvAnime = true;
+    return `<div class="v-bv${calme ? " calme" : ""}" role="region" aria-label="Bienvenue"><div class="v-bv-t">Bienvenue chez <em>toi</em> ✦</div><p>Ici, c’est ta journée. Chaque fois que tu ouvres l’appli, tu trouves :</p>${BV.map(([i, t, s]) => `<div class="v-bv-it"><span class="v-ico">${svg(IC_BV[i], 17)}</span><div>${t}<small>${s}</small></div></div>`).join("")}<button class="v-bv-ok" data-v-bv>C’est noté</button></div>`; };
+  document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-v-bv]"); if (!b) return; e.stopPropagation(); e.preventDefault();
+    ecrit(bvCle(), "vue"); if (S.user) { S.user.user_metadata = Object.assign({}, S.user.user_metadata, { bienvenue_vue: true });
+      try { if (sb.auth && sb.auth.updateUser) sb.auth.updateUser({ data: { bienvenue_vue: true } }).catch(() => {}); } catch (x) {} }
+    const c = b.closest(".v-bv"); if (!c) return; c.style.maxHeight = c.offsetHeight + "px"; c.offsetHeight; c.classList.add("parti");
+    setTimeout(() => c.remove(), 450); }, true);
+
   VUES.acc = () => { const f = dom(vAcc()), now = new Date(), prenom = S.profil.prenom || "", salon = (S.profil && S.profil.nom_salon) || "votre salon";
     const ai = f.querySelector(".ai-b"), dem = [...f.querySelectorAll(".k")].find(k => /Pour bien démarrer/.test(k.textContent));
     const notif = f.querySelector('[data-su="notif-oui"]'), caisse = f.querySelector('[data-su="acc-caisse"]'), vide = f.querySelector(".vide2");
@@ -96,6 +113,7 @@
     const proch = cli.find(r => r !== ici && new Date(r.fin) > now && new Date(r.debut) > now && r.statut === "prevu");
     const nouv = clocheListe(now), vu = clocheVu(), nonvu = nouv.filter(x => new Date(x.t) > vu).length;
     let h = `<div class="v-haut v-haut-acc">${etoiles("acc")}<div class="tete"><div><h1 style="--n:${(JOURS[(now.getDay() + 6) % 7] + " " + now.getDate() + " " + MOIS[now.getMonth()]).length}">${JOURS[(now.getDay() + 6) % 7]} <em>${now.getDate()} ${MOIS[now.getMonth()]}</em></h1></div><div class="v-btns"><button class="ai-b v-cloche${nonvu ? " sonne" : ""}" data-v-cloche aria-label="Réservations en ligne${nonvu ? " : " + nonvu + " nouvelle" + (nonvu > 1 ? "s" : "") : ""}">${CLOCHE}${nonvu ? `<span class="v-badge">${nonvu}</span>` : ""}</button>${ai ? ai.outerHTML : ""}</div></div>`;
+    h += bienvenue();
     if (proch) { const d = new Date(proch.debut), mn = Math.round((d - now) / 60000), tel = (proch.clientes && proch.clientes.telephone || "").replace(/\s/g, "");
       h += `<div class="v-prochain" data-rdv="${proch.id}"><div class="v-lab">Prochaine cliente</div><div class="v-grand"><b>${hh(d)}</b><span>dans ${mn >= 60 ? duree(mn) : mn + " min"}</span></div>
         <div class="v-cli"><span class="v-av">${esc(((proch.clientes && proch.clientes.prenom) || nomRdv(proch) || "?")[0].toUpperCase())}</span><div>${esc(nomRdv(proch))}<small>${esc(titreRdv(proch))}${proch.prix ? " · " + euros(proch.prix) : ""}</small></div></div>
@@ -114,9 +132,9 @@
     else if (vide) h += vide.outerHTML;
     const md = p2(now.getMonth() + 1) + "-" + p2(now.getDate()), anv = S.clientes.filter(c => c.anniversaire && String(c.anniversaire).slice(5, 10) === md);
     if (anv.length) h += `<div class="k">Anniversaires</div><div class="liste v-liste">${anv.map(c => { const tel = (c.telephone || "").replace(/\s/g, ""), txt = encodeURIComponent(`Joyeux anniversaire ${c.prenom || ""} ! Très belle journée de la part de ${salon}.`);
-      return `<div class="v-l"><span class="v-av petit">${esc((c.prenom || "?")[0].toUpperCase())}</span><div class="v-t">${esc(nomCli(c))}<small>${c.ok_sms_anniv ? "Elle reçoit votre SMS aujourd’hui ✓" : tel ? "Un petit mot lui fera plaisir" : "Ajoutez son numéro pour lui écrire"}</small></div>${!c.ok_sms_anniv && tel ? `<a class="v-btn plein petit" href="sms:${esc(tel)}&body=${txt}">Écrire</a>` : ""}</div>`; }).join("")}</div>`;
+      return `<div class="v-l"><span class="v-av petit">${esc((c.prenom || "?")[0].toUpperCase())}</span><div class="v-t">${esc(nomCli(c))}<small>${c.ok_sms_anniv ? "Elle reçoit ton SMS aujourd’hui ✓" : tel ? "Un petit mot lui fera plaisir" : "Ajoute son numéro pour lui écrire"}</small></div>${!c.ok_sms_anniv && tel ? `<a class="v-btn plein petit" href="sms:${esc(tel)}&body=${txt}">Écrire</a>` : ""}</div>`; }).join("")}</div>`;
     if (caisse) { const on = caisse.classList.contains("on");
-      h += `<div class="k">Ma caisse</div><div class="liste v-liste"><div class="v-l"><div class="v-t">Noter ce que j’encaisse<small>${on ? "Pratique si on vous paie en espèces" : "Arrêtée : activez-la pour suivre vos encaissements"}</small></div><button class="sw${on ? " on" : ""}" data-su="acc-caisse" aria-label="Utiliser la caisse"></button><button class="v-x" data-su="acc-caisse-x" aria-label="Masquer">×</button></div></div>`; }
+      h += `<div class="k">Ma caisse</div><div class="liste v-liste"><div class="v-l"><div class="v-t">Noter ce que j’encaisse<small>${on ? "Pratique si on te paie en espèces" : "Arrêtée : active-la pour suivre tes encaissements"}</small></div><button class="sw${on ? " on" : ""}" data-su="acc-caisse" aria-label="Utiliser la caisse"></button><button class="v-x" data-su="acc-caisse-x" aria-label="Masquer">×</button></div></div>`; }
     if (notif) h += notif.closest(".acc-caisse").outerHTML;
     return h; };
 
@@ -231,20 +249,20 @@
     if (te) { const sm = te.querySelector("small"), h1 = te.querySelector("h1"); if (sm) sm.innerHTML = s && s.en_ligne ? `<span class="v-enligne">En ligne</span> · ${esc(s.slug)}` : "Pas encore en ligne"; if (h1) h1.textContent = "Mon site"; }
     const ap = f.querySelector(".ms2-apercu");
     if (ap) { const ph = (ap.querySelector(".ms2-photo") || { style: {} }).style.backgroundImage || "", nom = b.nom || S.profil.nom_salon || "Mon salon";
-      const nv = dom(`<div class="v-apercu"><div class="v-img" data-ms2="voir" role="button" aria-label="Voir mon site"><div class="v-nomsite">${esc(nom)}</div></div><div class="v-bas"><div class="v-voir" data-ms2="voir">Voir mon site<small>Comme vos clientes le voient</small></div>${s && s.en_ligne ? '<button class="v-btn" data-v-partage>Partager</button>' : ""}</div></div>`);
+      const nv = dom(`<div class="v-apercu"><div class="v-img" data-ms2="voir" role="button" aria-label="Voir mon site"><div class="v-nomsite">${esc(nom)}</div></div><div class="v-bas"><div class="v-voir" data-ms2="voir">Voir mon site<small>Comme tes clientes le voient</small></div>${s && s.en_ligne ? '<button class="v-btn" data-v-partage>Partager</button>' : ""}</div></div>`);
       if (ph && !/url\(["']?["']?\)/.test(ph)) nv.querySelector(".v-img").style.backgroundImage = ph; else nv.querySelector(".v-img").classList.add("sans");
       ap.replaceWith(nv); }
     const pe = f.querySelector('.btn[data-ms2="nouveau"]'); if (pe) { pe.removeAttribute("style"); pe.classList.add("v-large"); }
     const chiffres = [], resa = (S.tous || []).filter(r => r.source === "en_ligne" && r.cree_le && new Date(r.cree_le).getMonth() === now.getMonth() && new Date(r.cree_le).getFullYear() === now.getFullYear()).length;
     if (s) chiffres.push([resa, "réservation" + (resa > 1 ? "s" : "") + " en ligne ce mois"]);
     if (b.note) chiffres.push([String(Math.round(b.note * 10) / 10).replace(".", ","), "sur Google" + (b.nbAvis ? " · " + b.nbAvis + " avis" : "")]);
-    if (s && s.en_ligne && visites() && chiffres.length && /réservation/.test(chiffres[0][1])) chiffres.shift();   /* les réservations sont dans « Ce mois sur votre site » : pas deux fois */
+    if (s && s.en_ligne && visites() && chiffres.length && /réservation/.test(chiffres[0][1])) chiffres.shift();   /* les réservations sont dans « Ce mois sur ton site » : pas deux fois */
     if (chiffres.length && pe) pe.insertAdjacentHTML("afterend", `<div class="v-chiffres v-c${chiffres.length}">${chiffres.map(c => `<div><b>${c[0]}</b><span>${c[1]}</span></div>`).join("")}</div>`);
     /* 18/11 (Marie : « Visites ce mois », version maison) : le chemin du mois — visites → « Réserver » → réservations, et d'où viennent les visites.
        Compté sans cookie par le site public (serveur/sql/22-visites.sql) ; ici on lit seulement les chiffres de SON site. */
     if (s && s.en_ligne && pe) { const V = visites(); const c = f.querySelector(".v-chiffres") || pe;
       if (V) { const src = [["google", "Google"], ["instagram", "Instagram"], ["tiktok", "TikTok"], ["facebook", "Facebook"]].map(x => [V.src[x[0]] || 0, x[1]]).filter(x => x[0]).sort((x, y) => y[0] - x[0]).slice(0, 2);
-        c.insertAdjacentHTML("afterend", `<div class="v-chemin"><div class="v-ch-k">Ce mois sur votre site</div><div class="v-ch-l"><div><b>${V.visite}</b><span>visite${V.visite > 1 ? "s" : ""}</span></div><i>›</i><div><b>${V.reserver}</b><span>ont touché « Réserver »</span></div><i>›</i><div><b>${resa}</b><span>réservation${resa > 1 ? "s" : ""}</span></div></div>${V.visite ? (src.length ? `<div class="v-ch-s">dont ${src.map(x => x[0] + " venue" + (x[0] > 1 ? "s" : "") + (/^[AEIOU]/.test(x[1]) ? " d’" : " de ") + x[1]).join(" · ")}</div>` : "") : `<div class="v-ch-s">Les visites se comptent depuis le 18 novembre.</div>`}</div>`); } }
+        c.insertAdjacentHTML("afterend", `<div class="v-chemin"><div class="v-ch-k">Ce mois sur ton site</div><div class="v-ch-l"><div><b>${V.visite}</b><span>visite${V.visite > 1 ? "s" : ""}</span></div><i>›</i><div><b>${V.reserver}</b><span>ont touché « Réserver »</span></div><i>›</i><div><b>${resa}</b><span>réservation${resa > 1 ? "s" : ""}</span></div></div>${V.visite ? (src.length ? `<div class="v-ch-s">dont ${src.map(x => x[0] + " venue" + (x[0] > 1 ? "s" : "") + (/^[AEIOU]/.test(x[1]) ? " d’" : " de ") + x[1]).join(" · ")}</div>` : "") : `<div class="v-ch-s">Les visites se comptent depuis le 18 novembre.</div>`}</div>`); } }
     f.querySelectorAll(".ligne").forEach(l => { const k = l.dataset.v || l.dataset.a; if (LIG[k] && !l.querySelector(".v-ico")) l.insertAdjacentHTML("afterbegin", `<span class="v-ico">${svg(LIG[k])}</span>`);
       if (k === "perso") { const sp = l.querySelector(".t span"); if (sp) sp.textContent = sp.textContent.replace(/^La forme, le fond, les couleurs, l’écriture · /, ""); } });
     const lp = f.querySelector('.ligne[data-a="ms-photos"]'), ph = (b.photos || []).filter((p, i) => i !== b.salon && p && p.url).slice(0, 3);
@@ -252,10 +270,10 @@
     enHaut(f, "si", [te, f.querySelector(".v-apercu"), pe]);
     return enTexte(f); };
   document.addEventListener("click", async e => { const p = e.target.closest && e.target.closest("[data-v-partage]"); if (!p) return; e.stopPropagation();
-    const st = S.site; if (!st || !st.en_ligne || !st.slug) return dit("Mettez d’abord votre site en ligne");
+    const st = S.site; if (!st || !st.en_ligne || !st.slug) return dit("Mets d’abord ton site en ligne");
     const url = lienDuSite(st),   /* 18/11 : la page du salon (son nom et sa photo dans l'aperçu du lien) */ nom = (brouillon() || {}).nom || S.profil.nom_salon || "Mon site";
     if (navigator.share) { try { await navigator.share({ title: nom, url }); return; } catch (x) { if (x && x.name === "AbortError") return; } }
-    try { await navigator.clipboard.writeText(url); dit("Lien copié ✓"); } catch (x) { dit("Impossible de copier, réessayez"); } }, true);
+    try { await navigator.clipboard.writeText(url); dit("Lien copié ✓"); } catch (x) { dit("Impossible de copier, réessaie"); } }, true);
 
   /* ---------- 8 · Réglages : seul le dessin change (mêmes rubriques, même ordre, mêmes mots) ---------- */
   const vRe = VUES.re;
@@ -274,7 +292,7 @@
       const salon = S.profil.nom_salon || (brouillon() || {}).nom || "Mon salon";
       fsw.closest(".ligne").insertAdjacentHTML("afterend", `<div class="v-fid"><div class="v-fid-carte"><div class="v-fid-t"><span>${esc(salon)}</span><span aria-hidden="true">✦</span></div>
         <div class="v-fid-p${n > 12 ? " serre" : ""}" style="grid-template-columns:repeat(${n},1fr)">${Array.from({ length: n }, (_, i) => `<i${i < fait ? ' class="ok"' : ""}></i>`).join("")}</div>
-        <div class="v-fid-b">${fait} sur ${n} · encore ${reste} visite${reste > 1 ? "s" : ""} pour ${esc(cad)}</div></div><div class="v-fid-leg">Exemple : la carte que voit votre cliente</div></div>`); }
+        <div class="v-fid-b">${fait} sur ${n} · encore ${reste} visite${reste > 1 ? "s" : ""} pour ${esc(cad)}</div></div><div class="v-fid-leg">Exemple : la carte que voit ta cliente</div></div>`); }
     enHaut(f, "re", [te]);
     return enTexte(f); };
   document.addEventListener("click", e => { const t = e.target.closest && e.target.closest("[data-v-t]");
@@ -282,8 +300,8 @@
       try { E.animate([{ opacity: .55 }, { opacity: 1 }], { duration: 260, easing: "ease-out" }); } catch (x) {} return; }
     const bb = e.target.closest && e.target.closest("[data-v-ban]");
     if (bb) { e.stopPropagation(); const on = !ban(); ecrit("loginail-appli-bandeau", on ? "oui" : "non");
-      if (on && !fondDuSite()) dit("Choisissez d’abord un fond pour votre site, dans Mon site");
-      else if (on) prepareFond().then(() => { if (FOND.nom !== fondDuSite()) dit("Votre fond ne peut pas encore s’afficher dans l’appli"); });
+      if (on && !fondDuSite()) dit("Choisis d’abord un fond pour ton site, dans Mon site");
+      else if (on) prepareFond().then(() => { if (FOND.nom !== fondDuSite()) dit("Ton fond ne peut pas encore s’afficher dans l’appli"); });
       rendu(); } }, true);
 
   /* ---------- 9 · après chaque dessin : le bouton « + » de l'agenda, le bandeau, les lettres ---------- */
@@ -337,6 +355,17 @@
 #E .v-cloche.sonne svg{animation:v-sonne .9s .35s ease-in-out 2}
 @keyframes v-sonne{0%,100%{transform:rotate(0)}15%{transform:rotate(14deg)}30%{transform:rotate(-11deg)}45%{transform:rotate(7deg)}60%{transform:rotate(-4deg)}75%{transform:rotate(2deg)}}
 @media (prefers-reduced-motion:reduce){#E .v-cloche.sonne svg{animation:none}}
+#E .v-bv{position:relative;z-index:1;background:#fff;border-radius:24px;padding:20px 18px 16px;margin:18px 0 4px;box-shadow:0 18px 40px -26px color-mix(in srgb,var(--v-acc) 70%,#000);overflow:hidden;transition:opacity .22s ease,transform .22s ease,max-height .3s ease .12s,margin .3s ease .12s,padding .3s ease .12s;animation:vBvMonte .45s cubic-bezier(.2,.8,.2,1) .15s both}
+#E .v-bv-t{font:500 26px/1.1 'Cormorant Garamond',Georgia,serif;color:var(--v-fonce)}#E .v-bv-t em{font-style:italic;color:var(--v-acc)}
+#E .v-bv p{font-size:13.5px;color:#776D64;margin:6px 0 12px;line-height:1.45}
+#E .v-bv-it{display:flex;align-items:center;gap:12px;padding:8px 0;font-size:14px;line-height:1.3;animation:vBvVient .35s ease both}
+#E .v-bv-it small{display:block;font-size:12px;color:#776D64;margin-top:1px}#E .v-bv .v-ico{width:34px;height:34px;border-radius:11px}
+#E .v-bv-it:nth-of-type(1){animation-delay:.45s}#E .v-bv-it:nth-of-type(2){animation-delay:.55s}#E .v-bv-it:nth-of-type(3){animation-delay:.65s}#E .v-bv-it:nth-of-type(4){animation-delay:.75s}
+#E .v-bv-ok{display:block;width:100%;height:44px;border-radius:14px;border:0;background:var(--v-fonce);color:#fff;font:inherit;font-size:14px;margin-top:12px;cursor:pointer;transition:transform .12s}#E .v-bv-ok:active{transform:scale(.97)}
+#E .v-bv.calme,#E .v-bv.calme .v-bv-it{animation:none}
+#E .v-bv.parti{opacity:0;transform:scale(.96);max-height:0!important;margin:0;padding-top:0;padding-bottom:0}
+@keyframes vBvMonte{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}@keyframes vBvVient{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#E .v-bv,#E .v-bv-it{animation:none}}
 #E .v-cl-liste .v-h{line-height:1.3;font-size:12.5px;white-space:nowrap;width:auto;min-width:54px}
 #E .v-cl-liste .v-annul .v-h{text-decoration:line-through;opacity:.55}#E .v-cl-liste .v-annule{font-size:12.5px;color:#A04A4A}
 #E .v-haut-acc .tete{container-type:inline-size}#E .v-haut-acc .tete h1{white-space:nowrap;font-size:min(38px,calc((100cqw - 112px) / (var(--n, 21) * .48)))}

@@ -58,8 +58,8 @@
   /* la page « Mon site » */
   const PAGE=()=>{const b=lit();return tete("Modifier mon site","En ligne")
     +`<div class="ms2-apercu" data-ms2="voir"><iframe tabindex="-1" title="Mon site"></iframe><div class="ms2-photo" style="background-image:url('${String((((b.photos||[])[b.salon!=null?b.salon:(b.principale||0)])||{}).url||"").replace(/^\.\.\//,"").replace(/'/g,"%27")}')"></div><div class="ms2-nom2" style="font-family:${POLF[b.police||"elegante"]||"Italiana"},serif"><span class="cl">${String(b.nom||"Mon salon").replace(/</g,"&lt;")}</span><span class="ms2-fc">${String(b.nom||"Mon salon").replace(/</g,"&lt;")}</span></div><div class="ms2-info"><small>Prothésiste ongulaire${b.ville?" · "+String(b.ville).replace(/</g,"&lt;"):""}</small><em>Voir mon site en grand ›</em></div></div><button class="btn" data-ms2="nouveau" data-v="perso" style="width:100%;margin:0 0 6px">Personnaliser mon site</button>`
-    +'<div class="k">Mon style</div><div class="liste">'+`<div class="ligne" data-ms2="nouveau" data-v="style"><div class="t">Changer de style<span>Des sites à glisser : gardez vos coups de cœur</span></div><span class="fl">›</span></div>`+`<div class="ligne" data-ms2="nouveau" data-v="perso"><div class="t">Personnaliser<span>La forme, le fond, les couleurs, l’écriture · ${resume(b)}${b.fond?" · "+b.fond:""}</span></div><span class="fl">›</span></div>`+`<div class="ligne" data-ms2="nouveau" data-v="charms"><div class="t">Mes charms<span>${(b.stickers||[]).length?(b.stickers.length+" charms posés"):"Posez-les où vous voulez sur votre site"}</span></div><span class="fl">›</span></div></div>`
-    +(DEMO?'<div class="k">Et aussi</div><div class="liste"><div class="ligne"><div class="t">Vos prix, vos photos, vos horaires, votre adresse…<span>Tout se change ici, en 2 secondes</span></div></div></div>':'')
+    +'<div class="k">Mon style</div><div class="liste">'+`<div class="ligne" data-ms2="nouveau" data-v="style"><div class="t">Changer de style<span>Des sites à glisser : garde tes coups de cœur</span></div><span class="fl">›</span></div>`+`<div class="ligne" data-ms2="nouveau" data-v="perso"><div class="t">Personnaliser<span>La forme, le fond, les couleurs, l’écriture · ${resume(b)}${b.fond?" · "+b.fond:""}</span></div><span class="fl">›</span></div>`+`<div class="ligne" data-ms2="nouveau" data-v="charms"><div class="t">Mes charms<span>${(b.stickers||[]).length?(b.stickers.length+" charms posés"):"Pose-les où tu veux sur ton site"}</span></div><span class="fl">›</span></div></div>`
+    +(DEMO?'<div class="k">Et aussi</div><div class="liste"><div class="ligne"><div class="t">Tes prix, tes photos, tes horaires, ton adresse…<span>Tout se change ici, en 2 secondes</span></div></div></div>':'')
     +(DEMO?'':'<div class="k">Mon contenu</div><div class="liste">'
     +[["Prestations et prix",(b.prestations||[]).length+" prestations","ms-presta"],["Photos de mes ongles",(b.photos||[]).filter((p,i)=>i!==b.salon).length+" photos","ms-photos"],["Photo de mon salon",(b.salon!=null&&b.photos&&b.photos[b.salon]?"Ajoutée":"Facultatif"),"ms-salon"],["Horaires","","ms-horaires"],["Adresse","","ms-adresse"],["À propos de moi","","ms-apropos"],["Ma photo",(b.quiPhoto?"Ajoutée":"Facultatif · dans « À propos de moi »"),"ms-photo"],["Bon à savoir","Acompte, retard, annulation","ms-bon"]].map(l=>`<div class="ligne" data-a="${l[2]}"><div class="t">${l[0]}${l[1]?`<span>${l[1]}</span>`:""}</div><span class="fl">›</span></div>`).join("")+'</div>'
     +'<div class="k">Faire connaître mon site</div><div class="liste">'
@@ -68,7 +68,7 @@
   const ORDRE=[0,2,3,5,1,4];
   const PAGED=()=>{const b=lit();return tete("Mon site","En ligne")
     +`<div class="ms2-apercu" data-ms2="voir"><iframe tabindex="-1" title="Mon site"></iframe><span class="ms2-direct">● En direct</span></div>`
-    +`<div class="ms2-d-aide">👇 Touchez, votre site change tout de suite</div>`
+    +`<div class="ms2-d-aide">👇 Touche, ton site change tout de suite</div>`
     +`<div class="lab">Partir d’un univers</div><div class="ms2-p ms2-univ">${ORDRE.map(i=>`<button data-ms2="univ" data-v="${i}" data-u="${UNIV[i][0]}"${UNIV[i][0]===b.univers?' class="on"':""}>${UNIV[i][0]}</button>`).join("")}</div>`
     +`<div class="lab">La forme</div><div class="ms2-p">${FORMES.map(f=>`<button data-ms2="style" data-v="${f[0]}"${f[0]===forme(b)?' class="on"':""}>${f[1]}</button>`).join("")}</div>`
     +`<div class="lab">Couleur</div><div class="ms2-dots">${COUL.slice(0,9).map(c=>`<button data-ms2="couleur" data-v="${c[0]}" style="background:${c[1]}"${c[0]===b.couleur?' class="on"':""}></button>`).join("")}</div>`
@@ -78,7 +78,7 @@
     +`<div class="lab">L’écriture du nom</div><div class="ms2-p">${POL.map(p=>`<button data-ms2="police" data-v="${p[0]}" style="font-family:${POLF[p[0]]},serif"${p[0]===(b.police||"elegante")?' class="on"':""}>${p[1]}</button>`).join("")}</div>`
     +`<div class="lab">Paillettes</div><div class="ms2-p">${PAIL.map(p=>`<button data-ms2="paillettes" data-v="${p[0]}"${p[0]===(b.paillettes||"non")?' class="on"':""}>${p[1]}</button>`).join("")}</div>`
     +`<div class="lab">Charms</div><div class="ms2-p"><button data-ms2="charmsoui" data-v="1"${(b.charms||[]).length?' class="on"':""}>Avec charms</button><button data-ms2="charmsoui" data-v="0"${(b.charms||[]).length?"":' class="on"'}>Sans charms</button></div>`
-    +`<div class="ms2-d-fin">Et aussi vos prix, vos photos, vos horaires… tout se change ici, en 2 secondes.</div>`};
+    +`<div class="ms2-d-fin">Et aussi tes prix, tes photos, tes horaires… tout se change ici, en 2 secondes.</div>`};
   if(DEMO){st.textContent+=`html.demo-ms .ms2-apercu{height:300px;background:#EAE5DF!important;cursor:pointer}
 html.demo-ms .ms2-apercu iframe{display:block!important}html.demo-ms .ms2-apercu:after{display:none}
 .ms2-direct{position:absolute;left:10px;top:10px;z-index:2;background:rgba(30,28,27,.78);color:#fff;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;border-radius:99px;padding:5px 9px}
@@ -99,18 +99,18 @@ html.demo-ms .ms2-dots{grid-template-columns:repeat(9,1fr);margin-bottom:4px}
   /* feuille 1 : univers, forme, couleur, clair/foncé, fond */
   const ronds=b=>{setTimeout(()=>__ajusteRonds(),60);setTimeout(()=>__ajusteRonds(),400);if(!window.F100)return '<div class="sous">Chargement des fonds…</div>';const D=FONDS100;const l=F100.liste("Tous");
     return `<div class="ms2-ronds"><button data-ms2="fond" data-v=""${b.fond?"":' class="on"'}>Aucun</button>${l.map(i=>`<button data-ms2="fond" data-v="${D.f[i][0].replace(/"/g,"&quot;")}"${D.f[i][0]===b.fond?' class="on"':""}>${F100.rond(i)}</button>`).join("")}</div>`};
-  MSF["ms-style2"]=()=>{const b=lit();chargeF();return croix+`<h3>Style, couleur et fond</h3><div class="sous">Chaque choix change votre site tout de suite</div>
+  MSF["ms-style2"]=()=>{const b=lit();chargeF();return croix+`<h3>Style, couleur et fond</h3><div class="sous">Chaque choix change ton site tout de suite</div>
     <div class="lab" style="margin-top:12px">Partir d’un univers</div><div class="ms2-p">${UNIV.map((u,i)=>`<button data-ms2="univ" data-v="${i}"${u[0]===b.univers?' class="on"':""}>${u[0]}</button>`).join("")}</div>
     <div class="lab" style="margin-top:10px">La forme du site</div><div class="ms2-p">${FORMES.map(f=>`<button data-ms2="style" data-v="${f[0]}"${f[0]===forme(b)?' class="on"':""}>${f[1]}</button>`).join("")}</div>
     <div class="lab" style="margin-top:10px">Couleur</div><div class="ms2-dots">${COUL.map(c=>`<button data-ms2="couleur" data-v="${c[0]}" style="background:${c[1]}"${c[0]===b.couleur?' class="on"':""}></button>`).join("")}</div>
     <div class="lab" style="margin-top:10px">Clair ou foncé</div><div class="ms2-p"><button data-ms2="mode" data-v="jour"${b.mode!=="nuit"?' class="on"':""}>Clair</button><button data-ms2="mode" data-v="nuit"${b.mode==="nuit"?' class="on"':""}>Foncé</button></div>
     <div class="lab" style="margin-top:10px">Fond</div><div class="ms2-fonds">${ronds(b)}</div>`};
   /* feuille 2 : écriture, paillettes, charms */
-  MSF["ms-details2"]=()=>{const b=lit();return croix+`<h3>Écriture, paillettes et charms</h3><div class="sous">Les petits détails qui font votre style</div>
+  MSF["ms-details2"]=()=>{const b=lit();return croix+`<h3>Écriture, paillettes et charms</h3><div class="sous">Les petits détails qui font ton style</div>
     <div class="lab" style="margin-top:12px">L’écriture du nom</div><div class="ms2-p">${POL.map(p=>`<button data-ms2="police" data-v="${p[0]}"${p[0]===(b.police||"elegante")?' class="on"':""}>${p[1]}</button>`).join("")}</div>
     <div class="lab" style="margin-top:10px">Paillettes au toucher</div><div class="ms2-p">${PAIL.map(p=>`<button data-ms2="paillettes" data-v="${p[0]}"${p[0]===(b.paillettes||"non")?' class="on"':""}>${p[1]}</button>`).join("")}</div>
     <div class="lab" style="margin-top:10px">Charms</div><div class="ms2-p"><button data-ms2="charmsoui" data-v="1"${(b.charms||[]).length?' class="on"':""}>Avec charms</button><button data-ms2="charmsoui" data-v="0"${(b.charms||[]).length?"":' class="on"'}>Sans charms</button></div>
-    <div class="sous" style="margin-top:6px;font-size:11.5px">Les charms de votre univers. Bientôt : les choisir un par un.</div>`};
+    <div class="sous" style="margin-top:6px;font-size:11.5px">Les charms de ton univers. Bientôt : les choisir un par un.</div>`};
   let fCharge=0;const chargeF=()=>{if(window.F100||fCharge)return;fCharge=1;addEventListener("f100",()=>{document.querySelectorAll(".ms2-fonds").forEach(z=>z.innerHTML=ronds(lit()));
     if(!document.getElementById("mcCss")){const c=document.createElement("style");c.id="mcCss";c.textContent=FONDS100.css;document.head.appendChild(c)}},{once:true});
     if(!document.querySelector('script[src*="fonds-100.js"]')){const sc=document.createElement("script");sc.src="https://loginail.fr/loginail-site/fonds-100.js";document.head.appendChild(sc)}};
@@ -158,5 +158,5 @@ html.demo-ms .ms2-dots{grid-template-columns:repeat(9,1fr);margin-bottom:4px}
 
 /* 12/11 : « Copier le lien de mon site » */
 document.addEventListener("click",async e=>{const a=e.target.closest&&e.target.closest('[data-a="bio"]');if(!a)return;
-  try{const st=typeof S!=="undefined"&&S.site;if(!st||!st.en_ligne||!st.slug){dit("Mettez d’abord votre site en ligne");return}
-    await navigator.clipboard.writeText(lienDuSite(st));dit("Lien copié ✓")}catch(x){try{dit("Impossible de copier, réessayez")}catch(y){}}},true);
+  try{const st=typeof S!=="undefined"&&S.site;if(!st||!st.en_ligne||!st.slug){dit("Mets d’abord ton site en ligne");return}
+    await navigator.clipboard.writeText(lienDuSite(st));dit("Lien copié ✓")}catch(x){try{dit("Impossible de copier, réessaie")}catch(y){}}},true);
