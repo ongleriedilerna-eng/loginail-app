@@ -1,41 +1,49 @@
 /* 21/11 (Marie) : « quand je descends, ça ne fait pas comme si la page se chargeait »
-   1) Tirer vers le bas en haut de l'Accueil, de l'Agenda ou des Clientes : un rond apparaît, suit le doigt, tourne, et la page se recharge.
-   2) Quand elle revient dans l'appli (après un SMS, une autre appli…), tout se recharge tout seul, sans rien demander. */
+   21/11 soir (retours sur l'iPhone) : comme Instagram — la PAGE descend avec le doigt (les 5 onglets), le haut qui apparaît reste ROSE
+   (la couleur de l'en-tête), et une roue à petits traits : les traits apparaissent un par un quand on tire, puis la roue tourne.
+   Quand elle revient dans l'appli (après un SMS…), tout se recharge tout seul, sans rien demander. */
 {
+  const N = 8, TRAITS = Array.from({ length: N }, (_, i) => `<i style="transform:rotate(${i * 360 / N}deg)"></i>`).join("");
   const st = document.createElement("style");
-  st.textContent = `.tire{position:absolute;left:50%;top:calc(10px + env(safe-area-inset-top));z-index:60;width:40px;height:40px;margin-left:-20px;border-radius:50%;background:#fff;
-    box-shadow:0 6px 18px -6px rgba(30,28,27,.35);display:grid;place-items:center;pointer-events:none;opacity:0;transform:translateY(-60px) scale(.6)}
-  .tire svg{width:22px;height:22px;display:block}
-  .tire circle{fill:none;stroke:var(--noir,#1E1C1B);stroke-width:2.4;stroke-linecap:round;stroke-dasharray:50.3;stroke-dashoffset:50.3}
-  .tire.lache{transition:transform .28s cubic-bezier(.2,.9,.3,1.2),opacity .2s}
-  .tire.tourne svg{animation:tire-t .7s linear infinite}
-  .tire.tourne circle{stroke-dashoffset:14;transition:stroke-dashoffset .2s}
-  @keyframes tire-t{to{transform:rotate(360deg)}}
-  @media (prefers-reduced-motion:reduce){.tire.tourne svg{animation-duration:1.6s}}`;
+  /* 21/11 : c'est le CONTENU qui descend, le fond rose de la page reste en place (sinon on voyait un trait là où il s'arrêtait) */
+  st.textContent = `#E .vue{overscroll-behavior-y:none}
+  #E .vue.tire-x>*{translate:0 var(--tire,0px)}
+  #E .vue.tire-r>*{transition:translate .42s cubic-bezier(.2,.9,.25,1)}
+  .roue{position:absolute;left:50%;top:0;z-index:60;width:28px;height:28px;margin-left:-14px;pointer-events:none;opacity:0}
+  .roue i{position:absolute;left:12.5px;top:0;width:3px;height:8.5px;border-radius:2px;background:var(--v-acc,#B5475E);transform-origin:1.5px 14px;opacity:0}
+  .roue.tourne i{animation:roue-t .8s linear infinite}
+  ${Array.from({ length: N }, (_, i) => `.roue.tourne i:nth-child(${i + 1}){animation-delay:${((i - N) * .8 / N).toFixed(2)}s}`).join("")}
+  @keyframes roue-t{0%{opacity:.85}100%{opacity:.15}}`;
   document.head.appendChild(st);
 
-  const SEUIL = 70, MAX = 110, PAGES = ["acc", "ag", "cl"];
-  let rond = null, y0 = null, x0 = 0, dy = 0, enCours = false, dernier = Date.now();
-  const R = () => { if (!rond || !rond.isConnected) { rond = document.createElement("div"); rond.className = "tire"; rond.innerHTML = '<svg viewBox="0 0 22 22"><circle cx="11" cy="11" r="8" transform="rotate(-90 11 11)"/></svg>'; E.appendChild(rond); } return rond; };
-  const place = d => { const r = R(), p = Math.min(1, d / SEUIL), y = Math.min(d, MAX) * .7 - 10;
-    r.style.opacity = Math.min(1, p * 1.4); r.style.transform = `translateY(${y}px) scale(${.6 + .4 * p})`;
-    const c = r.querySelector("circle"); c.style.strokeDashoffset = 50.3 * (1 - p * .85); r.querySelector("svg").style.transform = `rotate(${p * 270}deg)`; };
-  const cache = () => { const r = R(); r.classList.add("lache"); r.classList.remove("tourne"); r.style.opacity = 0; r.style.transform = "translateY(-60px) scale(.6)";
-    r.querySelector("circle").style.strokeDashoffset = ""; r.querySelector("svg").style.transform = ""; };
-  /* tout ce qui défile au-dessus du doigt doit être tout en haut */
+  const SEUIL = 72, TENU = 64, PAGES = ["acc", "ag", "cl", "si", "re"];
+  /* la hauteur de la barre de l'heure de l'iPhone (on ne met pas la roue dessous) */
+  const HAUT = () => { const m = document.createElement("div"); m.style.cssText = "position:absolute;visibility:hidden;padding-top:env(safe-area-inset-top)"; E.appendChild(m); const h = parseFloat(getComputedStyle(m).paddingTop) || 0; m.remove(); return h; };
+  let sh = 0, roue = null, vue = null, y0 = null, x0 = 0, dy = 0, tire = false, enCours = false, dernier = Date.now();
+  const R = () => { if (!roue || !roue.isConnected) { roue = document.createElement("div"); roue.className = "roue"; roue.innerHTML = TRAITS; E.appendChild(roue); } return roue; };
+  /* la page descend de « d » pixels ; la roue reste au milieu de la bande rose qui apparaît */
+  const pose = (d, anime) => {
+    if (!vue) return; vue.classList.add("tire-x"); vue.classList.toggle("tire-r", !!anime); vue.style.setProperty("--tire", d + "px");
+    const r = R(), haut = vue.getBoundingClientRect().top - E.getBoundingClientRect().top;
+    r.style.transition = anime ? "top .42s cubic-bezier(.2,.9,.25,1),opacity .25s" : "none";
+    r.style.top = (haut + Math.max(sh - 14, (sh + d) / 2 - 14)) + "px";
+  };
+  const traits = p => { const r = R(), n = Math.round(p * N); r.style.opacity = p > .08 ? 1 : 0;
+    [...r.children].forEach((t, i) => { t.style.opacity = i < n ? .8 : 0; }); };
+  const relache = () => { const v = vue; pose(0, true); R().style.opacity = 0;
+    setTimeout(() => { if (v && !tire) { v.classList.remove("tire-r", "tire-x"); v.style.removeProperty("--tire"); } R().classList.remove("tourne"); }, 450); };
   const enHaut = t => { for (let n = t; n && n !== E; n = n.parentElement) if (n.scrollTop > 0) return false; return true; };
   const libre = () => S.user && PAGES.includes(S.onglet) && !E.classList.contains("fe") && !E.querySelector(".feuille.on,.voile.on,.pont") && E.querySelector(".vue.on");
 
-  /* recharge les rendez-vous, les clientes et leurs visites, puis redessine en gardant la place */
+  /* recharge, puis redessine en gardant la place */
   async function actualise(silence) {
     if (enCours || !S.user) return; enCours = true;
     try {
-      const [cl] = await Promise.all([sb.from("clientes").select("*").order("prenom"), chargeSemaine()]);
-      if (cl && !cl.error && cl.data) S.clientes = cl.data;
-      await chargeVisites(); dernier = Date.now();
-      /* on ne redessine pas sous ses doigts : ni feuille ouverte, ni recherche en cours */
-      const a = document.activeElement;
-      if (libre() && !(a && a.matches && a.matches("input,textarea,select"))) { const vu = E.querySelector(".vue.on"), y = vu ? vu.scrollTop : 0; rendu(); const v2 = E.querySelector(".vue.on"); if (v2) v2.scrollTop = y; }
+      if (S.onglet === "si" || S.onglet === "re") await chargeTout();   /* Mon site / Réglages : le site et le profil aussi */
+      else { const [cl] = await Promise.all([sb.from("clientes").select("*").order("prenom"), chargeSemaine()]); if (cl && !cl.error && cl.data) S.clientes = cl.data; await chargeVisites(); }
+      dernier = Date.now();
+      const a = document.activeElement;   /* on ne redessine pas sous ses doigts : ni feuille ouverte, ni recherche en cours */
+      if (libre() && !(a && a.matches && a.matches("input,textarea,select"))) { const v = E.querySelector(".vue.on"), y = v ? v.scrollTop : 0; rendu(); const v2 = E.querySelector(".vue.on"); if (v2) v2.scrollTop = y; }
     } catch (e) { if (!silence) dit("Pas de connexion, réessaie dans un instant"); }
     enCours = false;
   }
@@ -43,23 +51,25 @@
 
   E.addEventListener("touchstart", ev => {
     y0 = null; dy = 0; if (enCours || ev.touches.length > 1 || !libre()) return;
-    if (ev.target.closest("input,textarea,select,.idx,.tris,.calm") || !enHaut(ev.target)) return;
-    y0 = ev.touches[0].clientY; x0 = ev.touches[0].clientX; R().classList.remove("lache");
+    if (ev.target.closest("input,textarea,select,.idx,.tris,.calm,iframe") || !enHaut(ev.target)) return;
+    y0 = ev.touches[0].clientY; x0 = ev.touches[0].clientX; vue = E.querySelector(".vue.on"); sh = HAUT();
   }, { passive: true });
   E.addEventListener("touchmove", ev => {
     if (y0 == null) return; const d = ev.touches[0].clientY - y0, dx = Math.abs(ev.touches[0].clientX - x0);
-    if (d <= 0 || (dy === 0 && dx > d) || !enHaut(ev.target)) { if (dy) cache(); y0 = null; dy = 0; return; }
-    /* le rond suit le doigt, de moins en moins vite (comme un élastique) */
-    dy = d < SEUIL ? d : SEUIL + (d - SEUIL) * .4; place(dy);
+    if (!tire && (d <= 2 || dx > d)) { if (d < -2 || dx > 8) y0 = null; return; }
+    if (!tire && !enHaut(ev.target)) { y0 = null; return; }
+    tire = true; if (ev.cancelable) ev.preventDefault();   /* c'est nous qui faisons descendre la page (pas de rebond de l'iPhone en plus) */
+    /* comme un élastique : la page suit le doigt, de moins en moins vite */
+    dy = Math.max(0, d) < 1 ? 0 : 140 * (1 - Math.exp(-Math.max(0, d) / 170));
+    pose(dy, false); traits(Math.min(1, dy / SEUIL));
     if (dy >= SEUIL && !R().dataset.vib) { R().dataset.vib = 1; navigator.vibrate?.(8); } else if (dy < SEUIL) delete R().dataset.vib;
-  }, { passive: true });
+  }, { passive: false });
   const fin = async () => {
-    if (y0 == null) return; y0 = null; const r = R(); delete r.dataset.vib; r.classList.add("lache");
-    if (dy < SEUIL) { dy = 0; return cache(); }
-    dy = 0; r.classList.add("tourne"); r.style.opacity = 1; r.style.transform = "translateY(38px) scale(1)"; r.querySelector("circle").style.strokeDashoffset = "";
+    if (y0 == null && !tire) return; y0 = null; const etait = tire; tire = false; delete R().dataset.vib; if (!etait) return;
+    if (dy < SEUIL) { dy = 0; return relache(); }
+    dy = 0; pose(TENU, true); traits(1); R().classList.add("tourne");   /* la page reste un peu descendue pendant que ça charge */
     const t0 = Date.now(); await actualise(false);
-    /* on laisse le rond tourner au moins 0,6 s : sinon on ne voit pas que ça a chargé */
-    setTimeout(cache, Math.max(0, 600 - (Date.now() - t0)));
+    setTimeout(() => { vue = E.querySelector(".vue.on") || vue; relache(); }, Math.max(0, 700 - (Date.now() - t0)));   /* au moins 0,7 s : on voit que ça a chargé */
   };
   E.addEventListener("touchend", fin, { passive: true });
   E.addEventListener("touchcancel", fin, { passive: true });
@@ -68,6 +78,5 @@
   const retour = () => { if (!document.hidden && S.user && Date.now() - dernier > 20000) actualise(true); };
   document.addEventListener("visibilitychange", retour);
   window.addEventListener("focus", retour);
-  /* sur l'iPhone (Capacitor), l'appli prévient aussi quand elle revient au premier plan */
   try { window.Capacitor?.Plugins?.App?.addListener?.("appStateChange", s => { if (s && s.isActive) retour(); }); } catch (e) {}
 }
