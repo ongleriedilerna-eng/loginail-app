@@ -11,7 +11,7 @@
 .cs-h{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px 10px;padding:11px 14px;border-bottom:1px solid rgba(30,28,27,.07)}.cs-h:last-child{border-bottom:0}
 .cs-h b{font-weight:400;font-size:14px}.cs-h .cs-hr{grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--gris)}
 .cs-h .cs-hr input{flex:1;min-width:0;border:0;border-radius:10px;background:#F4F0EB;padding:8px 9px;font:inherit;font-size:14px;color:var(--noir)}
-.cs-h.ferme .cs-hr{display:none}.cs-h .cs-f{font-size:12px;color:var(--gris)}
+.cs-h.ferme .cs-hr{display:none}.cs-p{background:#fff;border-radius:16px;margin-top:12px;padding:12px 14px;text-align:left}.cs-p .r{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px}.cs-p .r span{display:block;font-size:12px;color:var(--gris);margin-top:2px}.cs-p .cs-hr{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--gris);margin-top:10px}.cs-p .cs-hr input{flex:1;min-width:0;border:0;border-radius:10px;background:#F4F0EB;padding:8px 9px;font:inherit;font-size:14px;color:var(--noir)}.cs-p:not(.on) .cs-hr{display:none}.cs-h .cs-f{font-size:12px;color:var(--gris)}
 .cs-sup{display:block;width:100%;margin-top:9px;border:0;background:none;color:#A04A4A;font:inherit;font-size:13px;text-decoration:underline;cursor:pointer}`;
   document.head.appendChild(st);
   /* --- Prestations et prix --- */
@@ -26,7 +26,8 @@
     <button class="btn" data-cs-ok="presta" data-i="${i}" style="width:100%;margin-top:10px">Enregistrer</button>
     ${i>=0?`<button class="cs-sup" data-cs-sup="${i}">Supprimer cette prestation</button>`:""}`};
   /* --- Horaires --- */
-  MSF["ms-horaires"]=()=>{const h=lit().horaires||Array(7).fill(null);return croix+`<h3>Horaires</h3><div class="sous">Ils s’affichent sur votre site</div>
+  MSF["ms-horaires"]=()=>{const h=lit().horaires||Array(7).fill(null),hp=h.find(x=>x&&x.pd&&x.pf);/* 21/11 (Marie) : « Je ferme le midi », une pause pour tous les jours ouverts */return croix+`<h3>Horaires</h3><div class="sous">Ils s’affichent sur votre site</div>
+    <div class="cs-p${hp?" on":""}" data-cs-midi><div class="r"><div>Je ferme le midi<span>Pas de réservation pendant la pause</span></div><button class="sw${hp?" on":""}" data-cs-psw aria-label="Je ferme le midi"></button></div><div class="cs-hr">Pause de<input type="time" data-cs-pd value="${hp?hp.pd:"12:00"}">à<input type="time" data-cs-pf value="${hp?hp.pf:"14:00"}"></div></div>
     <div class="liste" style="margin-top:12px;padding:0">${JOURS.map((j,i)=>{const x=h[i];return `<div class="cs-h${x?"":" ferme"}" data-cs-j="${i}"><b>${j}</b><span style="display:flex;align-items:center;gap:8px">${x?"":'<span class="cs-f">Fermé</span>'}<button class="sw${x?" on":""}" data-cs-sw></button></span>
       <div class="cs-hr">De<input type="time" data-cs-de value="${x?x.d:"09:00"}">à<input type="time" data-cs-a value="${x?x.f:"18:00"}"></div></div>`}).join("")}</div>
     <button class="btn" data-cs-ok="horaires" style="width:100%;margin-top:14px">Enregistrer</button>`};
@@ -52,6 +53,7 @@
   document.addEventListener("click",ev=>{const t=ev.target;const fc=t.closest(".fc"),e=t.closest(".ecran");
     const op=t.closest("[data-cs-p]");if(op&&fc){ev.stopPropagation();fc.innerHTML=pedit(+op.dataset.csP);return}
     const d=t.closest("[data-cs-d]");if(d){ev.stopPropagation();d.parentElement.querySelectorAll("[data-cs-d]").forEach(x=>x.classList.toggle("on",x===d&&!x.classList.contains("on")));return}
+    const psw=t.closest("[data-cs-psw]");if(psw){ev.stopPropagation();const on=!psw.classList.contains("on");psw.classList.toggle("on",on);psw.closest(".cs-p").classList.toggle("on",on);return}
     const sw=t.closest("[data-cs-sw]");if(sw){ev.stopPropagation();const r=sw.closest(".cs-h");const on=!sw.classList.contains("on");sw.classList.toggle("on",on);r.classList.toggle("ferme",!on);
       const f=r.querySelector(".cs-f");if(on&&f)f.remove();if(!on&&!f)sw.insertAdjacentHTML("beforebegin",'<span class="cs-f">Fermé</span>');return}
     const ca=t.closest("[data-cs-cache]");if(ca){ev.stopPropagation();ca.classList.toggle("on");return}
@@ -61,7 +63,8 @@
       const px=fc.querySelector("[data-cs-prix]").value.replace(",",".").replace(/[^\d.]/g,"");const dd=fc.querySelector("[data-cs-d].on");const i=+ok.dataset.i;
       b.prestations=b.prestations||[];const p=i>=0?b.prestations[i]||{}:{};Object.assign(p,{nom,prix:px===""?null:+px,duree:dd?+dd.dataset.csD:null});if(i<0)b.prestations.push(p);else b.prestations[i]=p;
       if(!ecrit(b))return;apres(null,"");fc.innerHTML=MSF["ms-presta"]();toast(e,"Prestation enregistrée ✓ · votre site est à jour");return}
-    if(k==="horaires"){b.horaires=[...fc.querySelectorAll("[data-cs-j]")].map(r=>r.querySelector("[data-cs-sw]").classList.contains("on")?{d:r.querySelector("[data-cs-de]").value||"09:00",f:r.querySelector("[data-cs-a]").value||"18:00"}:null)}
+    if(k==="horaires"){const P=fc.querySelector("[data-cs-midi]"),pOn=P&&P.classList.contains("on"),pd=pOn&&fc.querySelector("[data-cs-pd]").value,pf=pOn&&fc.querySelector("[data-cs-pf]").value,pause=pd&&pf&&pd<pf;
+      b.horaires=[...fc.querySelectorAll("[data-cs-j]")].map(r=>{if(!r.querySelector("[data-cs-sw]").classList.contains("on"))return null;const x={d:r.querySelector("[data-cs-de]").value||"09:00",f:r.querySelector("[data-cs-a]").value||"18:00"};if(pause&&pd>x.d&&pf<x.f){x.pd=pd;x.pf=pf}return x})}
     if(k==="adresse"){fc.querySelectorAll("[data-cs-k]").forEach(i=>b[i.dataset.csK]=i.value.trim());b.acces=b.acces||{};fc.querySelectorAll("[data-cs-a]").forEach(i=>{const v=i.value.trim();if(v)b.acces[i.dataset.csA]=v;else delete b.acces[i.dataset.csA]});
       b.adresseCachee=fc.querySelector("[data-cs-cache]").classList.contains("on")}
     if(k==="apropos")b.presentation=fc.querySelector("[data-cs-txt]").value.trim();
