@@ -469,7 +469,7 @@ E.addEventListener("click", async ev => {
     else if (k === "tri-menu") { S.triOuvert = !S.triOuvert; rendu(); }
     else if (k === "tri") { S.tri = a.dataset.t; S.triOuvert = false; try { localStorage.setItem("loginail-tri", S.tri); } catch (x) {} rendu(); }
     else if (k === "sms-info") ouvre(`<h3>Rappel la veille</h3><div class="sous">La veille au soir, chaque cliente qui a rendez-vous le lendemain reçoit un SMS. Tu n’as rien à faire.</div>
-      <div class="lab2">Le message</div><div class="blanche" style="font-size:13.5px;line-height:1.5;padding:12px 14px;text-align:left">Bonjour Jade ! RDV demain 9h00, ${esc([S.profil.adresse, S.profil.ville].filter(Boolean).join(" ") || "l’adresse de votre salon")}.${S.profil.telephone ? " Tél " + esc(S.profil.telephone) + "." : ""}</div>
+      <div class="lab2">Le message</div><div class="blanche" style="font-size:13.5px;line-height:1.5;padding:12px 14px;text-align:left">Bonjour Jade ! RDV demain 9h00, ${esc([S.profil.adresse, S.profil.ville].filter(Boolean).join(" ") || "l’adresse de ton salon")}.${S.profil.telephone ? " Tél " + esc(S.profil.telephone) + "." : ""}</div>
       <div class="sous" style="margin-top:10px;font-size:12px">Il faut le numéro de portable de la cliente dans sa fiche.</div>
       <button class="btn" data-a="sms-test" style="margin-top:16px">Recevoir un essai sur mon téléphone</button>
       <div class="sous" style="margin-top:8px;font-size:12px">L’essai arrive sur le numéro de ton salon${S.profil.telephone ? " (" + esc(S.profil.telephone) + ")" : ""}. 3 essais par jour au plus.</div>`);
