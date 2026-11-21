@@ -11,7 +11,7 @@
   const lit = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } };
   const ecrit = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
   const mn = t => +String(t).slice(0, 2) * 60 + +String(t).slice(3, 5);
-  const hTxt = m => String(Math.floor(m / 60)).padStart(2, "0") + "H" + (m % 60 ? String(m % 60).padStart(2, "0") : "");   /* 09H, 14H30 (21/11 nuit, Marie : H majuscule et TOUJOURS un 0 devant, version C choisie) */
+  const hTxt = m => String(Math.floor(m / 60)).padStart(2, "0") + "H" + String(m % 60).padStart(2, "0");   /* 09H00, 14H30 (21/11 nuit, Marie : H majuscule, toujours 2 chiffres de chaque côté : tout fait la même largeur) */
   /* 21/11 nuit (Marie) : « elles réservent par Insta ou en ligne ? » → le bas de l'image change ; et l'écriture des heures (A Jost, B Cormorant, C Italiana) */
   const RESA = () => lit("loginail-dispos-resa", "ligne") === "insta" ? "insta" : "ligne";
   const POLICE_H = () => "500 {f}px Jost, sans-serif";   /* 21/11 nuit : Jost choisie par Marie (« plus doux » que Fredoka) */
@@ -176,7 +176,7 @@
   const etoileSur = (cx, x, y, sz) => { cx.save(); cx.font = `${sz}px 'Cormorant Garamond', serif`; cx.fillStyle = "#fff"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.shadowColor = "rgba(0,0,0,.3)"; cx.shadowBlur = 12; cx.fillText("✦", x, y); cx.restore(); };
   async function dessineMois(cx, c, s, per, col) {
     /* 21/11 nuit (Marie : « 2 heures ça suffit pas », « on agrandit le calendrier ») : carte plus large et plus haute, jusqu'à 5 heures par jour */
-    const { t, a, carte, pil } = col, TOP = 220, CB_MAX = 1440, X = 14 * K, CW = W - 2 * X, PX = 10 * K;
+    const { t, a, carte, pil } = col, CB_MAX = 1457; let TOP = 220; const X = 14 * K, CW = W - 2 * X, PX = 10 * K;
     const nomM = MOIS[per.mois], dec = (new Date(per.an, per.mois, 1).getDay() + 6) % 7, rangs = Math.ceil((dec + per.jours.length) / 7);
     const total = per.jours.reduce((n, j) => n + j.libres.length, 0);
     const astuce = !total ? "tout est déjà pris ce mois-ci ♡" : per.mois === 11 ? "les fêtes partent vite ♡" : "réserve vite ta place ♡";
@@ -185,10 +185,11 @@
       if (cx.measureText(s.nom).width <= max) return { l: [s.nom], fs };
       const m = s.nom.split(" "); let best = [s.nom], e = 1e9; for (let i = 1; i < m.length; i++) { const x = [m.slice(0, i).join(" "), m.slice(i).join(" ")], d = Math.max(...x.map(y => cx.measureText(y).width)); if (d < e) { e = d; best = x; } }
       while (Math.max(...best.map(y => cx.measureText(y).width)) > max && fs > 14 * K * k) { fs -= 2; cx.font = police(fs); } return { l: best, fs }; };
-    const chDe = n => 19 + n * 11 + 5;   /* hauteur d'une case (sans × K) pour n lignes d'heures */
+    const chDe = n => 19 + n * 13 + 6;   /* 21/11 nuit (Marie : « ça fait pâté ») : plus d'air entre les heures */   /* hauteur d'une case (sans × K) pour n lignes d'heures */
     const haut = (k, n) => { const N = nom(k); return { N, CH: 18 * K * k + N.l.length * N.fs * 1.05 + (6 + 32 + 14 + 14) * K * k + rangs * (chDe(n) + 4) * K * k + (12 + 13 + 8 + 18 + 14) * K * k }; };
-    let LIG = 3; while (LIG > 3 && TOP + haut(1, LIG).CH > CB_MAX) LIG--;
+    let LIG = 4; while (LIG > 4 && TOP + haut(1, LIG).CH > CB_MAX) LIG--;
     let k = 1, L = haut(1, LIG); for (let n = 0; n < 12 && TOP + L.CH > CB_MAX && k > .6; n++) { k = Math.max(.6, k * (CB_MAX - TOP) / L.CH - .005); L = haut(k, LIG); }
+    TOP = Math.max(200, 250 + (1330 - (L.CH + 41 * K)) / 2);   /* 21/11 nuit (Marie : « un grand fond avec rien ») : carte + « réserve ici » centrées dans la zone visible d'Instagram */
     const CH = L.CH, CB = TOP + CH;
     cx.save(); cx.shadowColor = "rgba(30,20,22,.28)"; cx.shadowBlur = 40; cx.shadowOffsetY = 18; cx.fillStyle = carte; rond(cx, X, TOP, CW, CH, 26 * K); cx.fill(); cx.restore();
     cx.textAlign = "center"; cx.textBaseline = "alphabetic"; let y = TOP + 18 * K * k; cx.font = police(L.N.fs); cx.fillStyle = a;
@@ -202,7 +203,7 @@
     const gx = 3 * K * k, cw = (CW - 2 * PX - 6 * gx) / 7, ch = chDe(LIG) * K * k, xc = i => X + PX + i * (cw + gx);
     cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillStyle = t; cx.globalAlpha = .55; cx.font = `500 ${10.5 * K * k}px Jost, sans-serif`;
     ["L", "M", "M", "J", "V", "S", "D"].forEach((l, i) => cx.fillText(l, xc(i) + cw / 2, y + 6 * K * k)); cx.globalAlpha = 1; y += 14 * K * k;
-    const MAXH = () => Math.max(largeurFixe(cx, "10H").w, ...per.jours.flatMap(j => j.libres.slice(0, 6).map(m => largeurFixe(cx, hMois(m)).w)));
+    const MAXH = () => Math.max(largeurFixe(cx, "10H00").w, ...per.jours.flatMap(j => j.libres.slice(0, 4).map(m => largeurFixe(cx, hMois(m)).w)));
     per.jours.forEach((j, n) => { const p = dec + n, cl = p % 7, rg = Math.floor(p / 7), x = xc(cl), yy = y + rg * (ch + 4 * K * k), mx = x + cw / 2, nb = j.libres.length;
       if (j.ferme) { cx.globalAlpha = .18; cx.fillStyle = t; cx.font = `400 ${15 * K * k}px Jost, sans-serif`; cx.fillText(String(j.d.getDate()), mx, yy + 11 * K * k); cx.globalAlpha = 1; return; }
       if (!nb) { cx.globalAlpha = .35; cx.fillStyle = t; cx.font = `400 ${15 * K * k}px Jost, sans-serif`; cx.fillText(String(j.d.getDate()), mx, yy + 11 * K * k);
@@ -212,10 +213,11 @@
       /* 21/11 soir (Marie : « afficher le nombre de places, c'est débile ») : les HEURES libres, comme les grands plannings : 10h, 14h30 +2 */
       /* 21/11 nuit (Marie : « j'aime quand c'est carré ») : 6 heures au plus, en 2 colonnes ; chaque heure calée à droite de sa colonne,
          les H tombent pile l'un sous l'autre ; même largeur de colonne pour tout le mois */
-      const hs = j.libres.map(hMois).slice(0, 6), mg = 4.5 * K * k, ecart = 4 * K * k, pol = f => POLICE_H().replace("{f}", f);
-      cx.fillStyle = a; let fh = 10 * K * k; cx.font = pol(fh); let wc = MAXH(); while (fh > 6 * K * k && 2 * wc + ecart > cw - 2 * mg) { fh -= .5 * K; cx.font = pol(fh); wc = MAXH(); }
-      const x1 = x + (cw - 2 * wc - ecart) / 2, x2 = x1 + wc + ecart;
-      hs.forEach((h, i) => ecritFixe(cx, h, i % 2 ? x2 : x1, yy + (24.5 + Math.floor(i / 2) * 11) * K * k, "left")); cx.textAlign = "center"; });
+      const hs = j.libres.map(hMois).slice(0, LIG), mg = 4.5 * K * k, ecart = 4 * K * k, pol = f => POLICE_H().replace("{f}", f);
+      cx.fillStyle = a; let fh = 10 * K * k; cx.font = pol(fh); let wc = MAXH(); while (fh > 6 * K * k && wc > cw - 2 * mg) { fh -= .5 * K; cx.font = pol(fh); wc = MAXH(); }
+      /* 21/11 nuit : avec « 09H00 », une seule colonne (2 côte à côte devenaient minuscules), 4 heures au plus */
+      const x1 = x + (cw - wc) / 2;
+      hs.forEach((h, i) => ecritFixe(cx, h, x1, yy + (25.5 + i * 13) * K * k, "left")); cx.textAlign = "center"; });
     y += rangs * (ch + 4 * K * k) - 4 * K * k + 12 * K * k;
     /* la légende et la petite phrase */
     cx.fillStyle = t; cx.globalAlpha = .7; cx.font = `400 ${11 * K * k}px Jost, sans-serif`; cx.fillText("en couleur = les heures encore libres   ·   pâle = complet", W / 2, y + 7 * K * k); cx.globalAlpha = 1; y += (13 + 8) * K * k;
@@ -243,7 +245,7 @@
     if (sem.mois != null) return dessineMois(cx, c, s, sem, { t, a, carte, pil });
     /* la mise en page (en px de l'image 1080 × 1920) : rien d'important dans les 250 px du haut ni les 340 px du bas (barres d'Instagram)
        carte de 270 à 1250 au plus · « réserve ici ↓ » à 1272 · place vide pour l'autocollant « Lien » · signature qui finit à 1575 */
-    const TOP = 270, CB_MAX = 1250, Y_ICI = 1272, Y_SIG = 1575 - 27 * K;
+    let TOP = 220; const CB_MAX = 1457, Y_ICI = 1272, Y_SIG = 1575 - 27 * K;
     const X = 26 * K, CW = W - 2 * X, PADX = 22 * K;
     const police = (k, fs) => `400 ${fs}px ${s.pol[0]}, 'Great Vibes', cursive`;
     /* le nom : il rétrécit, puis passe sur 2 lignes s'il est très long */
@@ -256,13 +258,21 @@
       return { l: best, fs }; };
     /* chaque jour tient sur UNE ligne : les premiers horaires, puis « + N autres » (jamais plus de 6 pastilles) */
     const pw = (txt, k) => { cx.font = /^\d/.test(txt) ? POLICE_H().replace("{f}", 13 * K * k) : `500 ${13 * K * k}px Jost, sans-serif`; return (/^\d/.test(txt) ? largeurFixe(cx, txt).w : cx.measureText(txt).width) + 20 * K * k; };
-    const ligneJour = (j, k) => { const l = j.libres.map(hTxt), zone = CW - 2 * PADX - 66 * K * k - 8 * K * k, gap = 5 * K * k, larg = a => a.reduce((s2, t2) => s2 + pw(t2, k) + gap, -gap);
-      if (l.length <= MAX && larg(l) <= zone) return l;
-      for (let m = Math.min(l.length, MAX) - 1; m >= 1; m--) { const a = l.slice(0, m).concat("+ " + (l.length - m) + " autre" + (l.length - m > 1 ? "s" : "")); if (larg(a) <= zone) return a; }
-      return [l[0], "+ " + (l.length - 1)]; };
-    const mise = k => { const N = nomLignes(k), rangs = sem.jours.map(j => ({ lab: JC[j.i] + " " + j.d.getDate(), h: ligneJour(j, k) }));
-      const tete = 26 * K * k + N.l.length * N.fs * 1.05 + (8 + 40 + 8 + 14 + 14) * K * k, corps = Math.max(1, rangs.length) * 44 * K * k + 12 * K * k + 26 * K * k; return { N, rangs, tete, CH: tete + corps }; };
+    /* 21/11 nuit (Marie : « pas de + 2 autres ») : comme le mois — 6 heures au plus, en pastilles TOUTES de la même largeur,
+       rangées en colonnes (2e ligne si besoin), jamais de « + N autres » */
+    const STY = "B",   /* 21/11 nuit : Marie choisit B (colonnes) ; A, C, D gardés ici au cas où */ JL = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+    const ligneJour = j => j.libres.slice(0, 6).map(hTxt), gapP = k => 5 * K * k, zoneP = k => CW - 2 * PADX - 66 * K * k - 8 * K * k;
+    const pwF = k => Math.max(pw("10H00", k), ...sem.jours.flatMap(j => ligneJour(j).map(t2 => pw(t2, k))));
+    const parLigne = k => Math.max(1, Math.min(3, Math.floor((zoneP(k) + gapP(k)) / (pwF(k) + gapP(k)))));   /* 3 par ligne : 2 lignes de 3, bien carré */
+    const hautRang = (li, k) => (44 + (Math.max(1, Math.ceil(li.h.length / parLigne(k))) - 1) * 32) * K * k;
+    const mise = k => { const N = nomLignes(k), rangs = sem.jours.map(j => ({ lab: JC[j.i] + " " + j.d.getDate(), h: ligneJour(j) }));
+      const tete = 26 * K * k + N.l.length * N.fs * 1.05 + (8 + 40 + 8 + 14 + 14) * K * k;
+      /* 21/11 nuit : d'autres mises en page à comparer (« loginail-dispos-style » : A lignes, B colonnes, C cartes, D liste chic) */
+      const nj = rangs.length, nl = li => Math.max(1, Math.ceil(li.h.length / 3));
+      const c0 = !nj ? 44 * K * k : STY === "B" ? (30 + 38 + 6 * 28 + 14) * K * k : STY === "C" ? Math.ceil(nj / 2) * (30 + 2 * 21 + 12 + 8) * K * k : STY === "D" ? rangs.reduce((s2, li) => s2 + (16 + nl(li) * 21 + 8) * K * k, 0) : rangs.reduce((s2, li) => s2 + hautRang(li, k), 0);
+      const corps = c0 + 12 * K * k + 26 * K * k; return { N, rangs, tete, CH: tete + corps }; };
     let k = 1, M = mise(1); for (let n = 0; n < 12 && TOP + M.CH > CB_MAX && k > .6; n++) { k = Math.max(.6, k * (CB_MAX - TOP) / M.CH - .005); M = mise(k); }
+    TOP = Math.max(200, 250 + (1330 - (M.CH + 41 * K)) / 2);   /* 21/11 nuit (Marie : « un grand fond avec rien ») : carte + « réserve ici » centrées dans la zone visible d'Instagram */
     const CH = M.CH, CB = TOP + CH;
     /* les 2 charms de son site, posés de travers comme sur la maquette (en haut à gauche, en bas à droite) */
     const charm = async (n, x, y, w, r) => { try { const im = await img(base() + "charms/" + n + ".png").catch(() => img(SITE + "charms/" + n + ".webp")).catch(() => img(SITE + "charms/" + n + ".png")), h = w * im.naturalHeight / im.naturalWidth; cx.save(); cx.translate(x + w / 2, y + h / 2); cx.rotate(r * Math.PI / 180);
@@ -273,17 +283,46 @@
     cx.textAlign = "center"; cx.textBaseline = "alphabetic";
     let y = TOP + 26 * K * k; cx.font = police(k, M.N.fs); cx.fillStyle = a;
     M.N.l.forEach(l => { y += M.N.fs * 1.05; cx.fillText(l, W / 2, y - M.N.fs * .18); });
-    y += 8 * K * k; cx.fillStyle = t; cx.font = `500 ${40 * K * k}px 'Cormorant Garamond', Georgia, serif`; cx.fillText("Mes dispos", W / 2, y + 32 * K * k); y += (40 + 8) * K * k;
+    /* 21/11 nuit (Marie) : « Mes dispos de la semaine », « la semaine » en italique dans la couleur du site (comme « décembre » sur le mois) */
+    y += 8 * K * k; { let fs = 34 * K * k; const p1 = "Mes dispos de ", p2 = "la semaine", f1 = z => `500 ${z}px 'Cormorant Garamond', Georgia, serif`, f2 = z => `italic 500 ${z}px 'Cormorant Garamond', Georgia, serif`;
+      const larg = z => { cx.font = f1(z); const w1 = cx.measureText(p1).width; cx.font = f2(z); return [w1, cx.measureText(p2).width]; };
+      while (fs > 22 * K * k && larg(fs)[0] + larg(fs)[1] > CW - 2 * PADX) fs -= 2;
+      const [w1, w2] = larg(fs), x0 = W / 2 - (w1 + w2) / 2; cx.textAlign = "left"; cx.font = f1(fs); cx.fillStyle = t; cx.fillText(p1, x0, y + 32 * K * k); cx.font = f2(fs); cx.fillStyle = a; cx.fillText(p2, x0 + w1, y + 32 * K * k); cx.textAlign = "center"; cx.fillStyle = t; }
+    y += (40 + 8) * K * k;
     const j0 = sem.jours[0], j1 = sem.jours[sem.jours.length - 1], quand = !j0 ? "" : j0.d.getMonth() === j1.d.getMonth() ? (j0 === j1 ? `le ${j0.d.getDate()} ${MOIS[j0.d.getMonth()]}` : `du ${j0.d.getDate()} au ${j1.d.getDate()} ${MOIS[j1.d.getMonth()]}`) : `du ${j0.d.getDate()} ${MOIS[j0.d.getMonth()]} au ${j1.d.getDate()} ${MOIS[j1.d.getMonth()]}`;
     cx.globalAlpha = .65; cx.font = `400 ${12 * K * k}px Jost, sans-serif`; if ("letterSpacing" in cx) cx.letterSpacing = `${.08 * 12 * K * k}px`; cx.fillText(quand.toUpperCase(), W / 2, y + 11 * K * k); if ("letterSpacing" in cx) cx.letterSpacing = "0px"; cx.globalAlpha = 1; y += 28 * K * k;
     if (!M.rangs.length) { cx.font = `italic 500 ${18 * K * k}px 'Cormorant Garamond', serif`; cx.globalAlpha = .6; cx.textBaseline = "middle"; cx.fillText("pas de dispo cette semaine ♡", W / 2, y + 22 * K * k); cx.globalAlpha = 1; }
-    M.rangs.forEach(li => { cx.fillStyle = trait; cx.fillRect(X + PADX, y, CW - 2 * PADX, 3); const mil = y + 22 * K * k;
+    const fontH = z => POLICE_H().replace("{f}", z), jr = li => sem.jours[M.rangs.indexOf(li)];
+    if (STY === "B" && M.rangs.length) {   /* B · colonnes : un jour = une colonne, les heures les unes sous les autres */
+      const n = M.rangs.length, g = 6 * K * k, cwB = (CW - 2 * PADX - (n - 1) * g) / n, hB = (30 + 38 + 6 * 28 + 6) * K * k;
+      let fh = 14 * K * k; cx.font = fontH(fh); while (fh > 7 * K && Math.max(...M.rangs.flatMap(li => li.h.map(h => largeurFixe(cx, h).w))) > cwB - 8 * K * k) { fh -= .5 * K; cx.font = fontH(fh); }
+      M.rangs.forEach((li, c) => { const x = X + PADX + c * (cwB + g), mx = x + cwB / 2, j = jr(li); cx.fillStyle = pil; rond(cx, x, y, cwB, hB, 14 * K * k); cx.fill();
+        cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillStyle = t; cx.globalAlpha = .6; cx.font = `500 ${10 * K * k}px Jost, sans-serif`; cx.fillText(JC[j.i].replace(".", "").toUpperCase(), mx, y + 16 * K * k); cx.globalAlpha = 1;
+        cx.fillStyle = a; cx.font = `500 ${24 * K * k}px 'Cormorant Garamond', Georgia, serif`; cx.fillText(String(j.d.getDate()), mx, y + 43 * K * k);
+        cx.fillStyle = t; cx.font = fontH(fh); if (!li.h.length) { cx.globalAlpha = .5; cx.font = `italic 500 ${13 * K * k}px 'Cormorant Garamond', serif`; cx.fillText("complet", mx, y + 82 * K * k); cx.globalAlpha = 1; }
+        li.h.forEach((h, i) => ecritFixe(cx, h, mx, y + (82 + i * 28) * K * k, "center")); });
+      y += hB; }
+    else if (STY === "C" && M.rangs.length) {   /* C · cartes : 2 jours par rangée, chaque jour sa petite carte, heures en 3 colonnes */
+      const g = 8 * K * k, cwC = (CW - 2 * PADX - g) / 2, hC = (30 + 2 * 21 + 12) * K * k;
+      M.rangs.forEach((li, i) => { const x = X + PADX + (i % 2) * (cwC + g), yy = y + Math.floor(i / 2) * (hC + g), j = jr(li); cx.fillStyle = pil; rond(cx, x, yy, cwC, hC, 16 * K * k); cx.fill();
+        cx.textAlign = "left"; cx.textBaseline = "middle"; cx.fillStyle = a; cx.font = `italic 500 ${17 * K * k}px 'Cormorant Garamond', Georgia, serif`; cx.fillText(JL[j.i] + " " + j.d.getDate(), x + 12 * K * k, yy + 17 * K * k);
+        cx.fillStyle = t; let fh = 12.5 * K * k; cx.font = fontH(fh); const col = (cwC - 24 * K * k) / 3; while (fh > 7 * K && Math.max(0, ...li.h.map(h => largeurFixe(cx, h).w)) > col - 4 * K * k) { fh -= .5 * K; cx.font = fontH(fh); }
+        if (!li.h.length) { cx.globalAlpha = .5; cx.font = `italic 500 ${14 * K * k}px 'Cormorant Garamond', serif`; cx.fillText("complet ♡", x + 12 * K * k, yy + 48 * K * k); cx.globalAlpha = 1; }
+        li.h.forEach((h, q) => ecritFixe(cx, h, x + 12 * K * k + (q % 3) * col, yy + (44 + Math.floor(q / 3) * 21) * K * k, "left")); });
+      y += Math.ceil(M.rangs.length / 2) * (hC + g); }
+    else if (STY === "D" && M.rangs.length) {   /* D · liste chic : le jour en italique à gauche, les heures en texte (sans pastille), 3 par ligne, bien en colonnes */
+      M.rangs.forEach(li => { const j = jr(li), n = Math.max(1, Math.ceil(li.h.length / 3)), hD = (16 + n * 21 + 8) * K * k; cx.fillStyle = trait; cx.fillRect(X + PADX, y, CW - 2 * PADX, 3);
+        cx.textAlign = "left"; cx.textBaseline = "middle"; cx.fillStyle = a; cx.font = `italic 500 ${19 * K * k}px 'Cormorant Garamond', Georgia, serif`; cx.fillText(JL[j.i] + " " + j.d.getDate(), X + PADX, y + 26 * K * k);
+        const x0 = X + PADX + 110 * K * k, col = (CW - 2 * PADX - 110 * K * k) / 3; cx.fillStyle = t; cx.font = fontH(14 * K * k);
+        if (!li.h.length) { cx.globalAlpha = .5; cx.font = `italic 500 ${16 * K * k}px 'Cormorant Garamond', serif`; cx.fillText("complet ♡", x0, y + 26 * K * k); cx.globalAlpha = 1; }
+        li.h.forEach((h, q) => ecritFixe(cx, h, x0 + (q % 3) * col, y + (26 + Math.floor(q / 3) * 21) * K * k, "left")); y += hD; }); }
+    else M.rangs.forEach(li => { cx.fillStyle = trait; cx.fillRect(X + PADX, y, CW - 2 * PADX, 3); const mil = y + 22 * K * k;
       cx.textAlign = "left"; cx.textBaseline = "middle"; cx.fillStyle = t; cx.font = `500 ${13.5 * K * k}px Jost, sans-serif`; cx.fillText(li.lab, X + PADX, mil);
-      let x = X + PADX + 66 * K * k + 8 * K * k;
-      if (!li.h.length) { cx.globalAlpha = .5; cx.font = `italic 500 ${16 * K * k}px 'Cormorant Garamond', serif`; cx.fillText("complet ♡", x, mil); cx.globalAlpha = 1; }
-      li.h.forEach(txt => { const w = pw(txt, k), ph = 26 * K * k; cx.fillStyle = pil; rond(cx, x, mil - ph / 2, w, ph, ph / 2); cx.fill();
-        cx.fillStyle = t; cx.textAlign = "center"; cx.font = /^\d/.test(txt) ? POLICE_H().replace("{f}", 13 * K * k) : `500 ${13 * K * k}px Jost, sans-serif`; if (/^\d/.test(txt)) ecritFixe(cx, txt, x + w / 2, mil + 1, "center"); else cx.fillText(txt, x + w / 2, mil + 1); x += w + 5 * K * k; });
-      y += 44 * K * k; });
+      const x0 = X + PADX + 66 * K * k + 8 * K * k, w = pwF(k), n = parLigne(k);
+      if (!li.h.length) { cx.globalAlpha = .5; cx.font = `italic 500 ${16 * K * k}px 'Cormorant Garamond', serif`; cx.fillText("complet ♡", x0, mil); cx.globalAlpha = 1; }
+      li.h.forEach((txt, i) => { const x = x0 + (i % n) * (w + gapP(k)), my = mil + Math.floor(i / n) * 32 * K * k, ph = 26 * K * k; cx.fillStyle = pil; rond(cx, x, my - ph / 2, w, ph, ph / 2); cx.fill();
+        cx.fillStyle = t; cx.textAlign = "center"; cx.font = /^\d/.test(txt) ? POLICE_H().replace("{f}", 13 * K * k) : `500 ${13 * K * k}px Jost, sans-serif`; ecritFixe(cx, txt, x + w / 2, my + 1, "center"); });
+      y += hautRang(li, k); });
     /* sans charm sur son site : de petites étoiles ✦ à la place */
     const c1 = s.charms[0] && await charm(s.charms[0], 12 * K, TOP - 30 * K, 62 * K, -14), c2 = s.charms[1] && await charm(s.charms[1], W - 12 * K - 56 * K, CB - 22 * K, 56 * K, 12);
     if (!c1) { etoile(X + 4 * K, TOP - 4 * K, 30 * K); etoile(X + 22 * K, TOP - 22 * K, 14 * K); } if (!c2) { etoile(W - X - 4 * K, CB + 2 * K, 24 * K); etoile(W - X + 12 * K, CB + 22 * K, 12 * K); }
