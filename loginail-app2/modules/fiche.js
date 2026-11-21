@@ -19,15 +19,78 @@
 .fi-barre{height:10px;border-radius:5px;background:#EDE7E0;overflow:hidden}.fi-barre i{display:block;height:100%;border-radius:5px;background:#1E1C1B}.fi-fid p{margin:10px 0 0;font-size:12.5px;line-height:1.4;color:#6B625C}
 .fi-aide{margin:8px 0 0;border-radius:14px;background:#EDE7E0;padding:11px 13px;font-size:12px;line-height:1.5;color:#6B625C;text-align:left}
 .fi-pas{display:flex;align-items:center;gap:10px}.fi-pas button{width:30px;height:30px;border-radius:50%;border:0;background:#EDE7E0;font-size:16px;padding:0;color:#1E1C1B}.fi-pas b{font-size:15px;font-weight:500;min-width:22px;text-align:center}
-.fi-puces{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}.fi-puces button{border:0;border-radius:999px;background:#fff;padding:9px 13px;font:inherit;font-size:12.5px;color:#1E1C1B}.fi-puces button.on{background:#1E1C1B;color:#fff}`;
+.fi-puces{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}.fi-puces button{border:0;border-radius:999px;background:#fff;padding:9px 13px;font:inherit;font-size:12.5px;color:#1E1C1B}.fi-puces button.on{background:#1E1C1B;color:#fff}
+/* 21/11 (D72) : les questions d'un doigt (Notes) et les petits carrés (Fiche) */
+.fi-n .fi-lg{padding:4px 0;flex-wrap:wrap}.fi-n .fi-qq{line-height:1.25}.fi-n .fi-k{margin:14px 0 7px}
+.fi-ic2{flex:none;width:32px;height:32px;border-radius:10px;background:var(--v-rose,#EDE7E0);display:grid;place-items:center;color:var(--v-fonce,#1E1C1B)}
+.fi-ic2 svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.fi-lg>.fi-qq{flex:1;min-width:0}.fi-qq span{display:block;font-size:12px;color:#8A847E;margin-top:2px}
+.fi-on{flex:none;display:flex;gap:3px;background:#F3EEE9;border-radius:999px;padding:2px}
+.fi-on button,.fi-ch button{border:0;background:none;border-radius:999px;padding:5px 12px;line-height:1.2;font:inherit;font-size:12.5px;font-weight:500;color:#6B625C;transition:background .18s,color .18s,transform .12s}
+.fi-on button:active,.fi-ch button:active{transform:scale(.94)}
+.fi-on button.oui,.fi-ch button.oui{background:var(--v-fonce,#1E1C1B);color:#fff}.fi-on button.non{background:#fff;color:#1E1C1B;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.fi-lg>.fi-ch{flex:0 0 100%;display:flex;gap:5px;flex-wrap:wrap;padding:2px 0 4px 42px;animation:fi-deplie .22s cubic-bezier(.2,.8,.2,1) both}.fi-ch button{background:#F3EEE9;padding:7px 10px;font-size:12px}
+@keyframes fi-deplie{from{opacity:0;transform:translateY(-6px)}}
+.fi-li{flex:none;border:0;background:none;font:inherit;font-size:12.5px;font-weight:500;padding:6px 0 6px 8px;color:#1E1C1B;text-decoration:underline;text-underline-offset:3px}
+.fi-sais{display:flex;align-items:center;justify-content:space-between}
+.fi-ranger{border:0;background:#fff;border-radius:999px;padding:5px 12px;font:inherit;font-size:11.5px;font-weight:600;color:#1E1C1B;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.fi-cc{background:#fff;border-radius:20px;padding:14px 8px 10px;text-align:left}.fi-carres{display:grid;grid-template-columns:repeat(5,1fr);gap:12px 4px}
+.fi-ca{min-width:0;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;animation:fi-pop .26s cubic-bezier(.2,.9,.3,1.3) both}
+.fi-ca b{font-size:10px;font-weight:500;line-height:1.15;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.fi-ca.non .fi-ic2{background:none;border:1px dashed rgba(30,28,27,.25)}.fi-ca.non svg{opacity:.35}.fi-ca.non b{color:#8A847E;font-weight:400}
+.fi-carres.range .fi-ca{touch-action:none;cursor:grab}.fi-carres.range .fi-ca .fi-ic2{box-shadow:0 2px 6px rgba(30,28,27,.12);background:#fff;outline:1px solid rgba(30,28,27,.1)}
+.fi-carres.range .fi-ca.tenu{opacity:.35}.fi-carres.range .fi-ca.tenu .fi-ic2{box-shadow:none;background:none;outline:1px dashed rgba(30,28,27,.35)}.fi-carres.range .fi-ca.tenu svg{opacity:0}
+.fi-fant{position:fixed;z-index:9999;pointer-events:none;margin:0;animation:none;transform-origin:50% 40%}.fi-fant .fi-ic2{background:#fff;box-shadow:0 12px 26px rgba(30,28,27,.28)}.fi-fant b{background:rgba(246,242,238,.9);border-radius:6px;padding:0 3px}
+.fi-bas{display:flex;justify-content:flex-end;margin-top:6px}.fi-rplus{width:26px;height:26px;border-radius:50%;border:0;background:var(--v-rose,#EDE7E0);font:inherit;font-size:16px;line-height:1;color:#1E1C1B;padding:0}
+.fi-astuce{font-size:11.5px;color:#8A847E;margin:8px 2px 0;line-height:1.4;text-align:left}
+@keyframes fi-pop{from{transform:scale(.6);opacity:0}}`;
   document.head.appendChild(st);
 
   const IC = { tel: '<svg viewBox="0 0 24 24"><path d="M6 3h3l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 4 5a2 2 0 0 1 2-2z" fill="none" stroke="#1E1C1B" stroke-width="1.6" stroke-linejoin="round"/></svg>',
     msg: '<svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="#1E1C1B" stroke-width="1.6" stroke-linejoin="round"/></svg>',
     insta: '<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5" fill="none" stroke="#1E1C1B" stroke-width="1.6"/><circle cx="12" cy="12" r="4" fill="none" stroke="#1E1C1B" stroke-width="1.6"/><circle cx="17.2" cy="6.8" r="1.1" fill="#1E1C1B"/></svg>',
     crayon: '<svg viewBox="0 0 24 24"><path d="M4 20l1-4L16 5l3 3L8 19z" fill="none" stroke="#1E1C1B" stroke-width="1.6" stroke-linejoin="round"/></svg>' };
-  const QUESTIONS = [["couple", "Elle est en couple ?", "♡"], ["enfants", "Elle a des enfants ?", "☺"], ["animal", "Elle a un animal ?", "❀"], ["travail", "Elle travaille dans quoi ?", "✎"], ["vacances", "Elle part en vacances ?", "✈"], ["papote", "Elle aime papoter ?", "☕"]];
-  const PARLER = { vacances: "Parle-lui de ses vacances.", enfants: "Demande-lui des nouvelles de ses enfants.", animal: "Demande-lui des nouvelles de son animal.", travail: "Demande-lui comment ça se passe au travail." };
+  /* 21/11 (Marie, D72) : les questions de « Ce que je sais », pictos « traits fins » (série A), maquette site/idees/fiche-questions.html */
+  const PI = {
+    couple: '<path d="M12 20s-7-4.3-7-9.5A3.8 3.8 0 0 1 12 8a3.8 3.8 0 0 1 7 2.5C19 15.7 12 20 12 20z"/>',
+    enfants: '<circle cx="12" cy="7.5" r="3"/><path d="M6.5 20c0-3.6 2.5-6.5 5.5-6.5s5.5 2.9 5.5 6.5"/><path d="M10.6 6.2c.7-.9 2.1-.9 2.8 0"/>',
+    animal: '<path d="M8 17.5c0-2.6 1.8-4.8 4-4.8s4 2.2 4 4.8c0 1.5-1.2 2.3-2.4 2-1-.3-2.2-.3-3.2 0-1.2.3-2.4-.5-2.4-2z"/><ellipse cx="5.6" cy="11.2" rx="1.7" ry="2.1"/><ellipse cx="9.4" cy="6.9" rx="1.8" ry="2.3"/><ellipse cx="14.6" cy="6.9" rx="1.8" ry="2.3"/><ellipse cx="18.4" cy="11.2" rx="1.7" ry="2.1"/>',
+    travail: '<rect x="4" y="8" width="16" height="11" rx="2.5"/><path d="M9 8V6.5A1.5 1.5 0 0 1 10.5 5h3A1.5 1.5 0 0 1 15 6.5V8M4 13h16"/>',
+    vacances: '<circle cx="12" cy="12" r="3.6"/><path d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2M6 6l1.4 1.4M16.6 16.6 18 18M6 18l1.4-1.4M16.6 7.4 18 6"/>',
+    papote: '<path d="M4.5 6.5h10a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H9l-3.5 3v-3h-1a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z"/><path d="M16.5 10h2a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2h-.5v2.5l-3-2.5h-3"/>',
+    autre: '<path d="M12 4l1.8 5.2L19 11l-5.2 1.8L12 18l-1.8-5.2L5 11l5.2-1.8z"/>',
+    forme: '<path d="M8 20V10.5C8 6.5 10 3.5 12 3.5s4 3 4 7V20z"/><path d="M10.5 9.5c.3-1.8 1-3 1.5-3"/>',
+    longueur: '<path d="M12 3v18M8.5 6.5 12 3l3.5 3.5M8.5 17.5 12 21l3.5-3.5"/>',
+    couleur: '<path d="M12 3.5s6 6.4 6 10.5a6 6 0 0 1-12 0c0-4.1 6-10.5 6-10.5z"/>',
+    nailart: '<path d="M16.5 4.5l3 3L9 18l-4 1 1-4z"/><path d="M14.5 6.5l3 3"/>',
+    paillettes: '<path d="M9 4l1.2 3.6L14 9l-3.8 1.4L9 14l-1.2-3.6L4 9l3.8-1.4z"/><path d="M17 13l.7 2.1 2.3.9-2.3.8L17 19l-.7-2.2-2.3-.8 2.3-.9z"/>',
+    retard: '<circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/>',
+    photo: '<rect x="3.5" y="7" width="17" height="12" rx="3"/><circle cx="12" cy="13" r="3.2"/><path d="M9 7l1.2-2h3.6L15 7"/>',
+    boisson: '<path d="M5 9h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z"/><path d="M16 11h1.5a2.5 2.5 0 0 1 0 5H16M9 3.5c-.6 1 .6 1.8 0 3M12.5 3.5c-.6 1 .6 1.8 0 3"/>',
+    creneau: '<path d="M18.5 14.5A7 7 0 0 1 9.5 5.5a7 7 0 1 0 9 9z"/>',
+    fete: '<rect x="4" y="10" width="16" height="10" rx="2"/><path d="M12 10v10M3.5 10h17M12 10c-1.5-3.5-5.5-4-5.5-1.8S10 10 12 10c1.5-3.5 5.5-4 5.5-1.8S14 10 12 10"/>',
+    sport: '<path d="M6.5 8v8M17.5 8v8M4 10v4M20 10v4M6.5 12h11"/>',
+    connue: '<circle cx="11" cy="11" r="6"/><path d="M15.5 15.5 20 20"/>',
+    passion: '<path d="M12 20.5c-3.6 0-6.2-2.4-6.2-5.7 0-3.6 3-5.3 3.6-8.6 2 1.3 3.1 3.1 3.1 4.7 1-.6 1.7-1.7 1.9-2.9 2.1 1.7 3.8 4.1 3.8 6.8 0 3.3-2.6 5.7-6.2 5.7z"/>',
+    signe: '<path d="M12 3.5l2.4 5.2 5.6.6-4.2 3.8 1.2 5.6L12 15.9l-5 2.8 1.2-5.6L4 9.3l5.6-.6z"/>',
+    paiement: '<rect x="3.5" y="6" width="17" height="12" rx="2.5"/><path d="M3.5 10h17M7 14.5h3"/>' };
+  const pic = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${PI[k] || PI.autre}</svg>`;
+  /* [clé, question, type (on = Oui/Non, ch = choix, txt = écrit), réponses : pour « on » le mot du carré (oui, non)] */
+  const GROUPES = [["Sa vie", [["travail", "Son métier ?", "txt"], ["couple", "En couple ?", "on", ["En couple", "Célibataire"]], ["enfants", "Des enfants ?", "on", ["Enfants", "Pas d’enfants"]],
+      ["animal", "Un animal ?", "on", ["Animal", "Pas d’animal"]], ["sport", "Fait du sport ?", "on", ["Sportive", "Pas sportive"]], ["vacances", "Vacances bientôt ?", "on", ["Vacances", "Pas de vacances"]],
+      ["fete", "Un grand jour bientôt ?", "ch", ["Mariage", "Anniversaire", "Soirée", "Voyage"]], ["papote", "Aime papoter ?", "on", ["Papote", "Aime le calme"]],
+      ["passion", "Sa passion ?", "ch", ["Voyage", "Mode", "Cuisine", "Musique", "Séries", "Lecture"]],
+      ["signe", "Son signe ?", "ch", ["Bélier", "Taureau", "Gémeaux", "Cancer", "Lion", "Vierge", "Balance", "Scorpion", "Sagittaire", "Capricorne", "Verseau", "Poissons"]]]],
+    ["Son rendez-vous", [["boisson", "Elle boit quoi ?", "ch", ["Café", "Thé", "Eau", "Rien"]], ["retard", "Souvent en retard ?", "on", ["En retard", "À l’heure"]], ["paiement", "Elle paie comment ?", "ch", ["Carte", "Espèces", "Virement"]],
+      ["photo", "D’accord pour les photos ?", "on", ["Photos OK", "Pas de photos"]], ["creneau", "Son moment préféré", "ch", ["Matin", "Midi", "Soir", "Samedi"]], ["connue", "Elle t’a connue comment ?", "ch", ["Instagram", "TikTok", "Google", "Une amie"]]]],
+    ["Ses ongles", [["forme", "Sa forme préférée", "ch", ["Amande", "Carrée", "Ronde", "Ballerine", "Stiletto"]], ["longueur", "Sa longueur", "ch", ["Courts", "Moyens", "Longs"]], ["couleur", "Ses couleurs", "ch", ["Nude", "Rouge", "Pastel", "Foncé", "Flashy"]],
+      ["nailart", "Aime le nail art ?", "on", ["Nail art", "Sobre"]], ["paillettes", "Aime les paillettes ?", "on", ["Paillettes", "Sans paillettes"]]]]];
+  const QS = GROUPES.flatMap(g => g[1]), Qde = k => QS.find(q => q[0] === k), nbsp = t => esc(t).replace(/ \?/g, "&nbsp;?");
+  const valide = (q, r) => q && r && (q[2] === "txt" || (q[2] === "on" ? r === "oui" || r === "non" : q[3].includes(r)));
+  const motCarre = (q, r) => q[2] === "on" ? q[3][r === "oui" ? 0 : 1] : r;
+  /* une idée pour lancer la conversation (gardée pour plus tard : window.__fiParler(cliente)) */
+  const PARLER = { vacances: "Parle-lui de ses vacances.", enfants: "Demande-lui des nouvelles de ses enfants.", animal: "Demande-lui des nouvelles de son animal.", travail: "Demande-lui comment ça se passe au travail.",
+    fete: "Demande-lui comment se prépare son grand jour.", sport: "Demande-lui où elle en est dans son sport.", passion: "Parle-lui de sa passion.", papote: "Demande-lui ce qu’elle a fait de beau ces derniers temps." };
   const JOURS3 = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
   const tel = t => String(t || "").replace(/[^\d+]/g, "");
 
@@ -41,12 +104,28 @@
   window.__fid = { on: () => litFid().on, etat: c => etatFid((((S.vis || {})[c.id] || {}).n || 0) + litNotes(c).fp),
     plus: async c => { const o = litNotes(c); o.fp = (o.fp || 0) + 1; await ecritNotes(c.id, o); } };
   /* ---------- les notes ---------- */
-  const litNotes = c => { const t = c.notes || ""; if (t[0] === "{") try { const o = JSON.parse(t); if (o && o.v) return { t: o.t || "", s: o.s || [], fp: +o.fp || 0 }; } catch (e) {} return { t, s: [], fp: 0 }; };
+  /* s = [{q, r}] : r = "oui" / "non" (Oui/Non), le choix, ou le texte (métier) ; {r} sans q = écrit à la main (ligne ✦).
+     Les anciennes réponses écrites à la main sous une question (avant le 21/11 : « Oui, mariée ») deviennent des lignes ✦. */
+  const litNotes = c => { const t = c.notes || ""; let o = null; if (t[0] === "{") try { o = JSON.parse(t); } catch (e) {} if (!o || !o.v) return { t, s: [], fp: 0 };
+    const s = []; (o.s || []).forEach(x => { if (!x || !x.r) return; const q = x.q && Qde(x.q); if (q && valide(q, x.r)) { if (!s.some(y => y.q === x.q)) s.push({ q: x.q, r: x.r }); } else s.push({ r: String(x.r) }); });
+    return { t: o.t || "", s, fp: +o.fp || 0 }; };
+  window.__fiParler = c => { const s = litNotes(c).s, x = s.find(x => PARLER[x.q] && x.r !== "non"); return x ? PARLER[x.q] : "Demande-lui ce qu’elle a fait de beau ces derniers temps."; };
+
+  /* ---------- l'ordre des carrés : rangé par elle, gardé dans son COMPTE (user_metadata.fiche_ordre), vaut pour toutes ses clientes ---------- */
+  const ordCle = () => "loginail-fiche-ordre-" + ((S.user && S.user.id) || "");
+  const litOrdre = () => { const m = S.user && S.user.user_metadata && S.user.user_metadata.fiche_ordre; if (Array.isArray(m)) return m; try { const l = JSON.parse(localStorage.getItem(ordCle()) || "null"); if (Array.isArray(l)) return l; } catch (e) {} return null; };
+  const ecritOrdre = ord => { ord = ord.filter(k => Qde(k)).slice(0, 40); try { localStorage.setItem(ordCle(), JSON.stringify(ord)); } catch (e) {}
+    if (S.user) { S.user.user_metadata = Object.assign({}, S.user.user_metadata, { fiche_ordre: ord });
+      try { if (sb.auth && sb.auth.updateUser) sb.auth.updateUser({ data: { fiche_ordre: ord } }).then(r => { if (r && r.error) dit("Ordre pas enregistré, réessaie"); }).catch(() => {}); } catch (e) {} } };
+  /* les carrés d'une cliente, dans son ordre (les « écrits à la main » à la suite) */
+  const carres = c => { const s = litNotes(c).s, ord = litOrdre() || QS.map(q => q[0]), pos = k => { const i = ord.indexOf(k); return i < 0 ? 900 + QS.findIndex(q => q[0] === k) : i; };
+    const a = s.filter(x => x.q).sort((x, y) => pos(x.q) - pos(y.q)).map(x => { const q = Qde(x.q); return { id: x.q, ic: x.q, non: q[2] === "on" && x.r === "non", t: motCarre(q, x.r), v: x.r }; });
+    s.forEach((x, i) => { if (!x.q) a.push({ id: "L" + i, ic: "autre", t: x.r, v: x.r, libre: true }); }); return a; };
   async function ecritNotes(id, o) { const c0 = S.clientes.find(x => x.id === id), fp = o.fp != null ? o.fp : (c0 ? litNotes(c0).fp : 0); const notes = (o.s.length || fp) ? JSON.stringify({ v: 1, t: o.t, s: o.s, fp }) : (o.t || null); const c = S.clientes.find(x => x.id === id); if (c) c.notes = notes;
     const { error } = await sb.from("clientes").update({ notes }).eq("id", id); if (error) dit("Pas enregistré, réessaie"); }
 
   /* ---------- la fiche ---------- */
-  let ID = null, ONG = "fiche", RDV = null, TOUT = false, AIDE = false, SAISIE = null;
+  let ID = null, ONG = "fiche", RDV = null, TOUT = false, SAISIE = null, OUV = null, RANGE = false, TOUS = false, DRAG = null, ORD = null, VUS = new Set();
   const tete = c => `<div class="fi-haut"><div style="flex:1;min-width:0"><h3>${esc(nomCli(c))}</h3><small>${esc(c.telephone || "Pas de numéro")}${c.instagram && String(c.prenom || "")[0] !== "@" ? " · @" + esc(c.instagram) : ""}</small></div>
     ${c.telephone ? `<button class="fi-rond" data-href="tel:${tel(c.telephone)}" aria-label="Appeler">${IC.tel}</button><button class="fi-rond" data-href="sms:${tel(c.telephone)}" aria-label="Envoyer un message">${IC.msg}</button>` : ""}
     ${c.instagram ? `<button class="fi-rond" data-href="https://www.instagram.com/${encodeURIComponent(c.instagram)}/" data-neuf aria-label="Son Instagram">${IC.insta}</button>` : ""}
@@ -69,16 +148,33 @@
     h += `<div class="fi-k">Historique</div>`;
     h += hist.length ? `<div class="fi-carte">${(TOUT ? hist : hist.slice(0, 4)).map(r => `<div class="fi-lg" data-rdv="${r.id}"><div>${d(r.debut).getDate()} ${MOISC[d(r.debut).getMonth()]} ${d(r.debut).getFullYear()}<span>${esc((r.prestations && r.prestations.nom) || r.titre || "Rendez-vous")}${r.statut === "absente" ? " · absente" : ""}</span></div><em>${r.statut === "absente" ? "" : euros(r.prix)}</em></div>`).join("")}</div>${hist.length > 4 && !TOUT ? `<button class="fi-lien" data-fi="tout">Voir tout (${hist.length})</button>` : ""}`
       : `<div class="fi-carte"><div class="fi-lg"><div>Rien pour l’instant<span>Ses rendez-vous passés s’afficheront ici.</span></div></div></div>`;
-    return h; }
-  function pageNotes(c) { const o = litNotes(c), su = k => o.s.find(x => x.q === k), parle = (o.s.map(x => PARLER[x.q]).filter(Boolean)[0]) || "Demande-lui ce qu’elle a fait de beau ces derniers temps.";
-    const reste = QUESTIONS.filter(q => !su(q[0]));
-    const champ = (k, ph) => `<input class="fi-in" id="fi-rep" placeholder="${ph}" maxlength="80" autocomplete="off"><button class="fi-b" data-fi="ok" data-q="${k}">OK</button>`;
-    let h = `<div class="fi-k" style="margin-top:4px">Ce que je sais <button class="fi-q" data-fi="aide" aria-label="À propos de ces notes" style="background:none;width:20px;height:20px;font-size:10px;padding:0">?</button></div>`;
-    if (AIDE) h += `<div class="fi-aide">Ces notes ne sont vues que par toi. Note seulement ce qui t’aide à bien la recevoir, jamais rien sur sa santé. Si elle le demande, tu dois pouvoir lui montrer ou effacer ce qui est écrit sur elle.</div>`;
-    h += o.s.length ? `<div class="fi-carte">${o.s.map((x, i) => `<div class="fi-lg"><span class="fi-ic">${(QUESTIONS.find(q => q[0] === x.q) || [0, 0, "✦"])[2]}</span><div>${esc(x.r)}</div><button class="fi-x" data-fi="oter" data-i="${i}" aria-label="Enlever">×</button></div>`).join("")}</div>` : `<div class="sous" style="text-align:left;margin:0 2px">Rien pour l’instant. Réponds aux questions du dessous quand tu le sais.</div>`;
-    if (reste.length) h += `<div class="fi-k">Pas encore</div><div class="fi-carte">${reste.map(q => `<div class="fi-lg"><span class="fi-q">?</span>${SAISIE === q[0] ? champ(q[0], "Ta réponse") : `<div>${q[1]}</div><button class="fi-b" data-fi="sais" data-q="${q[0]}">Je sais</button>`}</div>`).join("")}</div>`;
-    h += SAISIE === "+" ? `<div class="fi-carte" style="margin-top:10px"><div class="fi-lg">${champ("+", "Par exemple : aime les formes amande")}</div></div>` : `<button class="fi-plus" data-fi="sais" data-q="+">+ Autre chose que je sais</button>`;
-    h += `<div class="fi-k">Mes notes libres</div><textarea class="msg" id="fi-libre" placeholder="Tout ce que tu veux garder en tête">${esc(o.t)}</textarea>`;
+    return h + `<div id="fi-sais">${blocSais(c)}</div>`; }
+  /* « Ce que je sais » en petits carrés : 2 lignes de 5 (10 au plus, dans son ordre), « + » pour le reste ; Ranger = glisser */
+  function blocSais(c) { let tout = carres(c); if (ORD) { const p = k => { const i = ORD.indexOf(k); return i < 0 ? 999 : i; }; tout = tout.slice().sort((x, y) => (x.libre ? 1000 : p(x.id)) - (y.libre ? 1000 : p(y.id))); }
+    const vus = tout.slice(0, RANGE || TOUS ? tout.length : 10);
+    const ca = vus.map(it => { const neuf = !VUS.has(it.id + "|" + it.v); VUS.add(it.id + "|" + it.v);
+      return `<div class="fi-ca${it.non ? " non" : ""}${DRAG === it.id ? " tenu" : ""}" data-ca="${esc(it.id)}"${it.libre ? " data-libre" : ""} style="${neuf && !RANGE ? "" : "animation:none"}"><span class="fi-ic2">${pic(it.ic)}</span><b>${esc(it.t)}</b></div>`; }).join("");
+    const titre = `<div class="fi-k fi-sais">Ce que je sais${ca && tout.some(x => !x.libre) ? `<button class="fi-ranger" data-fi="ranger">${RANGE ? "OK" : "Ranger"}</button>` : ""}</div>`;
+    if (!ca) return titre + `<div class="fi-cc" style="font-size:12.5px;color:#8A847E;padding:14px">Rien pour l’instant : réponds dans Notes.</div>`;
+    const rond = tout.length > 10 && !RANGE ? `<div class="fi-bas"><button class="fi-rplus" data-fi="tous" aria-label="${TOUS ? "Voir moins" : "Voir le reste"}">${TOUS ? "−" : "+"}</button></div>` : "";
+    return titre + `<div class="fi-cc"><div class="fi-carres${RANGE ? " range" : ""}">${ca}</div>${rond}</div>${RANGE ? `<div class="fi-astuce">Fais glisser les carrés où tu veux. Ton ordre vaut pour toutes tes clientes.</div>` : ""}`; }
+  /* redessine seulement les carrés (pendant qu'elle range : la feuille ne bouge pas) */
+  const redessineSais = () => { const z = $("#fi-sais", E), c = S.clientes.find(x => x.id === ID); if (z && c) z.innerHTML = blocSais(c); };
+  /* l'onglet Notes : seulement les questions, d'un doigt (D72) */
+  function pageNotes(c) { const o = litNotes(c), v = k => (o.s.find(x => x.q === k) || {}).r;
+    const champ = (k, ph, val, max) => `<input class="fi-in" id="fi-rep" placeholder="${ph}" maxlength="${max}" autocomplete="off" value="${esc(val || "")}"><button class="fi-b" data-fi="ok" data-q="${k}">OK</button>`;
+    const ligne = q => { const [k, t, ty, rs] = q, r = v(k), ic = `<span class="fi-ic2">${pic(k)}</span>`;
+      if (ty === "on") return `<div class="fi-lg">${ic}<div class="fi-qq">${nbsp(t)}</div><span class="fi-on"><button data-fi="rep" data-q="${k}" data-r="oui" class="${r === "oui" ? "oui" : ""}">Oui</button><button data-fi="rep" data-q="${k}" data-r="non" class="${r === "non" ? "non" : ""}">Non</button></span></div>`;
+      if (ty === "txt") return SAISIE === k ? `<div class="fi-lg">${ic}${champ(k, "Par exemple : infirmière", r, 40)}</div>`
+        : `<div class="fi-lg">${ic}<div class="fi-qq">${nbsp(t)}${r ? `<span>${esc(r)}</span>` : ""}</div><button class="fi-li" data-fi="sais" data-q="${k}">${r ? "Changer" : "Écrire"}</button></div>`;
+      if (OUV !== k) return `<div class="fi-lg">${ic}<div class="fi-qq">${nbsp(t)}${r ? `<span>${esc(r)}</span>` : ""}</div><button class="fi-li" data-fi="ouv" data-q="${k}">${r ? "Changer" : "Choisir"}</button></div>`;
+      return `<div class="fi-lg">${ic}<div class="fi-qq" data-fi="ouv" data-q="${k}">${nbsp(t)}</div><div class="fi-ch">${rs.map(x => `<button data-fi="rep" data-q="${k}" data-r="${esc(x)}" class="${r === x ? "oui" : ""}">${esc(x)}</button>`).join("")}</div></div>`; };
+    let h = `<div class="fi-n">`;
+    GROUPES.forEach(([t, qs], i) => { h += `<div class="fi-k"${i ? "" : ' style="margin-top:4px"'}>${t}</div><div class="fi-carte">${qs.map(ligne).join("")}</div>`; });
+    const li = o.s.map((x, i) => [x, i]).filter(([x]) => !x.q);
+    h += `<div class="fi-k">Autre chose</div>` + (li.length ? `<div class="fi-carte">${li.map(([x, i]) => `<div class="fi-lg"><span class="fi-ic2">${pic("autre")}</span><div class="fi-qq">${esc(x.r)}</div><button class="fi-x" data-fi="oter" data-i="${i}" aria-label="Enlever">×</button></div>`).join("")}</div>` : "");
+    h += SAISIE === "+" ? `<div class="fi-carte" style="margin-top:10px"><div class="fi-lg">${champ("+", "Par exemple : aime les paillettes dorées", "", 40)}</div></div>` : `<button class="fi-plus" data-fi="sais" data-q="+">✎ Écrire autre chose à la main</button>`;
+    h += `<div class="fi-k">Mes notes libres</div><textarea class="msg" id="fi-libre" placeholder="Tout ce que tu veux garder en tête">${esc(o.t)}</textarea></div>`;
     return h; }
   /* 21/11 (Marie) : le crayon puis « × » ramène à la fiche (Fiche / Notes), il ne ferme plus tout */
   let MODIF = false;
@@ -91,21 +187,65 @@
   document.addEventListener("click", e => { const a = e.target.closest && e.target.closest(".fc [data-rdv], .fc [data-a='decaler']"); if (!a || !RDV) return; const id = a.dataset.rdv || a.dataset.id; if (S.rdv.some(x => x.id === id)) return;
     const r = RDV.find(x => x.id === id), c = S.clientes.find(x => x.id === ID); if (r) S.rdv.push(Object.assign({}, r, { clientes: c ? { id: c.id, prenom: c.prenom, nom: c.nom, telephone: c.telephone } : null })); }, true);
   const formulaire = feuilleCliente;   /* le formulaire d'origine (nom, téléphone, anniversaire) */
-  feuilleCliente = function (id) { if (!id) return formulaire(id); ID = id; ONG = "fiche"; RDV = null; TOUT = false; AIDE = false; SAISIE = null; montre(); chargeRdv(); };
+  feuilleCliente = function (id) { if (!id) return formulaire(id); ID = id; ONG = "fiche"; RDV = null; TOUT = false; SAISIE = null; OUV = null; RANGE = false; TOUS = false; DRAG = null; ORD = null; VUS = new Set(); montre(); chargeRdv(); };
 
   document.addEventListener("click", async e => { const a = e.target.closest && e.target.closest("[data-fi]"); if (!a) return; e.stopPropagation(); const k = a.dataset.fi, c = S.clientes.find(x => x.id === ID);
-    if (k === "ong") { ONG = a.dataset.o; SAISIE = null; montre(); }
+    if (k === "ong") { if (RANGE) finRange(); ONG = a.dataset.o; SAISIE = null; OUV = null; montre(); }
     else if (k === "tout") { TOUT = true; montre(true); }
-    else if (k === "aide") { AIDE = !AIDE; montre(true); }
+    else if (k === "ouv") { OUV = OUV === a.dataset.q ? null : a.dataset.q; SAISIE = null; montre(true); }
+    /* Oui / Non / un choix ; retoucher la réponse déjà choisie l'efface (= « je ne sais pas ») */
+    else if (k === "rep" && c) { const q = a.dataset.q, r = a.dataset.r, o = litNotes(c), x = o.s.find(y => y.q === q);
+      if (x && x.r === r) { o.s = o.s.filter(y => y !== x); dit("Réponse effacée : tu ne sais pas"); } else if (x) x.r = r; else o.s.push({ q, r });
+      if ((Qde(q) || [])[2] === "ch") OUV = null; ecritNotes(ID, o); montre(true); }
+    else if (k === "tous") { TOUS = !TOUS; redessineSais(); }
+    else if (k === "ranger") { if (RANGE) finRange(); else { RANGE = true; redessineSais(); } }
     else if (k === "modifier") { formulaire(ID); MODIF = true; const t = $("#c-no", E); if (t) { t.value = (c && c.notes) || ""; t.style.display = "none"; const l = t.previousElementSibling; if (l && l.classList.contains("lab2")) l.style.display = "none"; } }
-    else if (k === "sais") { SAISIE = a.dataset.q; montre(true); }
-    else if (k === "ok" && c) { const v = ($("#fi-rep", E).value || "").trim(); if (!v) return dit("Écris ta réponse"); const o = litNotes(c); o.s = o.s.filter(x => a.dataset.q === "+" || x.q !== a.dataset.q); o.s.push(a.dataset.q === "+" ? { r: v } : { q: a.dataset.q, r: v }); SAISIE = null; await ecritNotes(ID, o); montre(true); }
+    else if (k === "sais") { SAISIE = a.dataset.q; OUV = null; montre(true); }
+    else if (k === "ok" && c) { const v = ($("#fi-rep", E).value || "").trim(), q = a.dataset.q, o = litNotes(c);
+      if (q === "+") { if (!v) { SAISIE = null; return montre(true); } o.s.push({ r: v }); }
+      else { const x = o.s.find(y => y.q === q); if (!v) { if (x) { o.s = o.s.filter(y => y !== x); dit("Réponse effacée : tu ne sais pas"); } } else if (x) x.r = v; else o.s.push({ q, r: v }); }
+      SAISIE = null; ecritNotes(ID, o); montre(true); }
     else if (k === "oter" && c) { const o = litNotes(c); o.s.splice(+a.dataset.i, 1); await ecritNotes(ID, o); montre(true); }
     /* la fidélité, dans les Réglages */
     else if (k === "fid-on") { const f = litFid(); f.on = !f.on; ecritFid(f); rendu(); }
     else if (k === "fid-n") { const f = litFid(); f.n = Math.max(3, Math.min(20, f.n + +a.dataset.d)); ecritFid(f); rendu(); }
     else if (k === "fid-c") { const f = litFid(); f.cadeau = a.dataset.c; ecritFid(f); rendu(); }
   }, true);
+  /* ---------- Ranger : appui long (ou bouton Ranger), on prend le carré, il suit le doigt, les autres glissent, il se pose ---------- */
+  const lesCa = () => [...E.querySelectorAll("#fi-sais .fi-ca")], caDe = id => lesCa().find(x => x.dataset.ca === id);
+  const idsVus = () => lesCa().map(x => x.dataset.ca);
+  function finRange() { RANGE = false; if (ORD) { const vus = ORD.filter(k => Qde(k)), reste = QS.map(q => q[0]).filter(k => !vus.includes(k)), anc = litOrdre() || QS.map(q => q[0]);
+      /* les questions sans réponse chez cette cliente gardent leur place d'avant, à la suite */
+      ecritOrdre(vus.concat(anc.filter(k => reste.includes(k))).concat(reste.filter(k => !anc.includes(k)))); dit("C’est rangé ✓"); } ORD = null; redessineSais(); }
+  function flip(fn) { const a = {}; lesCa().forEach(x => a[x.dataset.ca] = x.getBoundingClientRect()); fn();
+    lesCa().forEach(x => { const o = a[x.dataset.ca]; if (!o || x.dataset.ca === DRAG) return; const n = x.getBoundingClientRect(), dx = o.left - n.left, dy = o.top - n.top; if (!dx && !dy) return;
+      x.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: "none" }], { duration: 240, easing: "cubic-bezier(.2,.8,.2,1)" }); }); }
+  let FANT = null, R0 = null, OX = 0, OY = 0, TX = 0, TY = 0, APPUI = null, PX = 0, PY = 0;
+  function prend(id, x, y) { const ca = caDe(id); if (!ca) return; R0 = ca.getBoundingClientRect(); TX = 0; TY = 0; OX = x - R0.left; OY = y - R0.top; DRAG = id;
+    FANT = ca.cloneNode(true); FANT.className = "fi-ca fi-fant" + (ca.classList.contains("non") ? " non" : ""); FANT.style.cssText = `left:${R0.left}px;top:${R0.top}px;width:${R0.width}px`; document.body.appendChild(FANT);
+    FANT.animate([{ transform: "scale(1)" }, { transform: "scale(1.18) rotate(-3deg)" }], { duration: 160, easing: "cubic-bezier(.2,.8,.2,1.3)", fill: "forwards" });
+    try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {} redessineSais(); }
+  function bouge(x, y) { if (!FANT) return; FANT.getAnimations().forEach(a => a.cancel()); TX = x - OX - R0.left; TY = y - OY - R0.top; FANT.style.transform = `translate(${TX}px,${TY}px) scale(1.18) rotate(-3deg)`;
+    const el = document.elementFromPoint(x, y), ca = el && el.closest && el.closest("#fi-sais .fi-ca"); if (!ca || ca.dataset.ca === DRAG || ca.hasAttribute("data-libre")) return;
+    flip(() => { const ids = idsVus().filter(k => !k.startsWith("L")), i = ids.indexOf(ca.dataset.ca); ORD = ids.filter(k => k !== DRAG); ORD.splice(i, 0, DRAG); redessineSais(); }); }
+  function pose() { const f = FANT, id = DRAG; FANT = null; if (!f) { DRAG = null; return; } const cible = caDe(id), r = cible ? cible.getBoundingClientRect() : R0;
+    f.getAnimations().forEach(x => x.cancel()); f.style.transform = "none"; f.style.left = r.left + "px"; f.style.top = r.top + "px"; const dx = R0.left + TX - r.left, dy = R0.top + TY - r.top;
+    f.animate([{ transform: `translate(${dx}px,${dy}px) scale(1.18) rotate(-3deg)` }, { transform: "none" }], { duration: 220, easing: "cubic-bezier(.2,.8,.2,1)" });
+    setTimeout(() => { f.remove(); if (!FANT) { DRAG = null; redessineSais(); } }, 240); }
+  const surCa = e => e.target.closest && e.target.closest("#fi-sais .fi-ca:not([data-libre])");
+  /* les carrés ne doivent ni fermer la feuille (glisser vers le bas) ni lancer « tirer pour actualiser » */
+  document.addEventListener("touchstart", e => { if (surCa(e) && (RANGE || ONG === "fiche")) e.stopPropagation(); }, { capture: true, passive: true });
+  document.addEventListener("pointerdown", e => { const ca = surCa(e); if (!ca) return; PX = e.clientX; PY = e.clientY;
+    if (!RANGE) { const id = ca.dataset.ca; clearTimeout(APPUI); APPUI = setTimeout(() => { APPUI = null; RANGE = true; redessineSais(); prend(id, PX, PY); }, 450); return; }
+    e.preventDefault(); prend(ca.dataset.ca, e.clientX, e.clientY); });
+  const bougeDoigt = (x, y, e) => { if (APPUI && Math.hypot(x - PX, y - PY) > 8) { clearTimeout(APPUI); APPUI = null; } if (FANT) { if (e.cancelable) e.preventDefault(); bouge(x, y); } };
+  document.addEventListener("pointermove", e => bougeDoigt(e.clientX, e.clientY, e), { passive: false });
+  document.addEventListener("touchmove", e => { const t = e.touches[0]; if (t) bougeDoigt(t.clientX, t.clientY, e); }, { passive: false });
+  const lache = () => { clearTimeout(APPUI); APPUI = null; pose(); };
+  document.addEventListener("pointerup", lache); document.addEventListener("touchend", lache); document.addEventListener("touchcancel", lache);
+  /* si le navigateur « vole » le geste pendant qu'on tient un carré, on continue avec le doigt (touchmove) */
+  document.addEventListener("pointercancel", e => { if (e.pointerType !== "touch") lache(); else { clearTimeout(APPUI); APPUI = null; } });
+  document.addEventListener("contextmenu", e => { if (surCa(e)) e.preventDefault(); });
   document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.id === "fi-rep") { const b = e.target.parentElement.querySelector('[data-fi="ok"]'); if (b) b.click(); } });
   document.addEventListener("focusout", async e => { if (e.target.id !== "fi-libre") return; const c = S.clientes.find(x => x.id === ID); if (!c) return; const o = litNotes(c), v = e.target.value.trim(); if (v !== o.t) { o.t = v; await ecritNotes(ID, o); dit("C’est enregistré ✓"); } });
   document.addEventListener("change", e => { if (e.target.id !== "fi-cad") return; const f = litFid(), v = e.target.value.trim(); if (v) { f.cadeau = v.slice(0, 40); ecritFid(f); rendu(); } });
