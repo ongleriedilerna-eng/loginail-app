@@ -200,7 +200,11 @@
     f.querySelectorAll(".cli[data-cli]").forEach(r => { const c = S.clientes.find(x => x.id === r.dataset.cli), em = r.querySelector(":scope>em");
       if (em) { em.className = "fl"; em.removeAttribute("style"); em.textContent = "›"; }
       if (c && (S.tri === "az" || S.tri === "partie")) { const sp = r.querySelector(".t span"); if (sp) sp.textContent = info(c); }
+      if (c && c.instagram && String(c.prenom || "")[0] !== "@") { const b = r.querySelector(".t b"); if (b && !b.querySelector(".v-ig")) b.insertAdjacentHTML("beforeend", ` <span class="v-ig">(@${esc(c.instagram)})</span>`); }
       if (c && S.tri === "anniv") { const sp = r.querySelector(".t span"), d = new Date(String(c.anniversaire).slice(0, 10) + "T12:00"); if (sp && !isNaN(d)) sp.textContent = "Anniversaire le " + d.getDate() + " " + MOIS[d.getMonth()]; } });
+    /* 21/11 (Marie) : tout en bas, combien de clientes en tout, et combien ne sont pas revenues depuis plus de 2 mois */
+    if (tous.length && !S.cherche.trim()) { const p = tous.filter(GARDE.partie).length, z = document.createElement("div"); z.className = "v-total";
+      z.textContent = `Tu as ${tous.length} cliente${tous.length > 1 ? "s" : ""} au total` + (p ? `, dont ${p} pas venue${p > 1 ? "s" : ""} depuis plus de 2 mois.` : "."); f.appendChild(z); }
     enHaut(f, "cl", [te, row, f.querySelector(".v-filtres")]);
     return enTexte(f); };
   document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-v-f]"); if (!b) return; e.stopPropagation();
@@ -209,7 +213,7 @@
   let IXV = null;
   /* 18/11 (Marie) : les lettres A-Z sont là dans TOUS les tris (A à Z, Vues récemment, Prochain rendez-vous…), toujours au milieu de l'écran.
      En A à Z, une lettre amène à son groupe ; dans les autres tris, à la 1re cliente de la liste dont le prénom commence par cette lettre. */
-  const initiale = s => { const l = String(s || "#").trim().normalize("NFD").replace(/[̀-ͯ]/g, "").charAt(0).toUpperCase(); return /[A-Z]/.test(l) ? l : "#"; };
+  const initiale = s => { const l = (String(s || "").trim().replace(/^@+/, "") || "#").normalize("NFD").replace(/[̀-ͯ]/g, "").charAt(0).toUpperCase(); return /[A-Z]/.test(l) ? l : "#"; };
   const cibles = () => { const v = E.querySelector('.vue.on[data-p="cl"]'); if (!v) return [];
     const gs = [...v.querySelectorAll(".v-groupe")]; if (gs.length) return gs.map(g => ({ el: g, l: g.id.slice(2) === "0" ? "#" : g.id.slice(2) }));
     return [...v.querySelectorAll(".cli[data-cli]")].map(el => { const c = S.clientes.find(x => x.id === el.dataset.cli); return { el, l: initiale(c ? c.prenom || c.nom : (el.querySelector(".t b") || el).textContent) }; }); };
@@ -542,6 +546,8 @@
 #E .v-cherche .v-rondb{width:46px;height:46px}
 #E .v-filtres{display:flex;gap:8px;margin:14px -22px 0;padding:0 22px;overflow-x:auto;scrollbar-width:none}
 #E .v-filtres::-webkit-scrollbar{display:none}
+#E .v-ig{font-weight:400;font-size:.86em;color:var(--v-gris,#8A847E)}
+#E .v-total{margin:22px 26px 8px 6px;text-align:center;font-size:13px;line-height:1.45;color:#8A847E}
 /* 17/11 (Marie) : le calendrier du mois et le menu de tri passaient SOUS la bande des jours, les rendez-vous et les filtres (ils étaient enfermés au niveau 1) ; le mois n'est plus transparent */
 #E .v-haut>.tete,#E .v-haut>.v-cherche{z-index:40!important}#E .calm{background:#fff!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;box-shadow:0 24px 60px -18px rgba(30,28,27,.45)!important}
 #E .v-filtres button{flex:none;height:34px;padding:0 14px;border-radius:99px;background:rgba(255,255,255,.75);border:1px solid var(--v-trait);font:inherit;font-size:13px;color:inherit;cursor:pointer;transition:background .2s,color .2s}

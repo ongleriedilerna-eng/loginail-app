@@ -13,6 +13,8 @@ const plusJours = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n);
 const lundiDe = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - (x.getDay() + 6) % 7); return x; };
 const memeJour = (a, b) => a.toDateString() === b.toDateString();
 const nomCli = c => c ? [c.prenom, c.nom].filter(Boolean).join(" ") : "";
+/* 21/11 (Marie) : l'Instagram de la cliente, gardé sans le @ ni l'adresse (« @lea.nails », « instagram.com/lea.nails/ » → « lea.nails ») */
+const igPropre = v => String(v || "").trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/^@+/, "").replace(/[/?#].*$/, "").replace(/\s+/g, "").toLowerCase();
 const I = {
   acc: '<svg viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5V20H4z"/></svg>',
   ag: '<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
@@ -206,7 +208,7 @@ function vueAgenda() {
 }
 function vueClientes() {
   const q = S.cherche.trim().toLowerCase(), V = S.vis || {}, v = c => V[c.id] || { n: 0, der: "", proch: "" };
-  let L = S.clientes.filter(c => !q || nomCli(c).toLowerCase().includes(q) || (c.telephone || "").replace(/\s/g, "").includes(q.replace(/\s/g, "")));
+  let L = S.clientes.filter(c => !q || nomCli(c).toLowerCase().includes(q) || (c.instagram || "").includes(q.replace(/^@/, "")) || (c.telephone || "").replace(/\s/g, "").includes(q.replace(/\s/g, "")));
   if (S.tri === "vues") L = L.slice().sort((x, y) => (v(y).der || "").localeCompare(v(x).der || ""));
   else if (S.tri === "proch") L = L.slice().sort((x, y) => (v(x).proch || "9").localeCompare(v(y).proch || "9"));
   else if (S.tri === "neuves") L = L.slice().sort((x, y) => (y.cree_le || "").localeCompare(x.cree_le || ""));
@@ -216,11 +218,11 @@ function vueClientes() {
       <button data-a="tri-menu" aria-label="Trier mes clientes" style="flex:none;width:50px;height:50px;border-radius:50%;border:0;background:${S.tri === "az" ? "#fff" : "var(--noir,#1E1C1B)"};color:${S.tri === "az" ? "inherit" : "#fff"};display:grid;place-items:center;padding:0"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 7h16M7 12h10M10 17h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
       ${S.triOuvert ? `<div class="tris" style="position:absolute;right:0;top:58px;z-index:20;background:#fff;border-radius:18px;padding:6px;box-shadow:0 18px 40px -16px rgba(0,0,0,.45);min-width:230px">${TRIS.map(t => `<button data-a="tri" data-t="${t[0]}" style="display:flex;justify-content:space-between;align-items:center;width:100%;border:0;background:${S.tri === t[0] ? "rgba(30,28,27,.06)" : "none"};border-radius:12px;padding:12px 14px;font:inherit;font-size:14.5px;text-align:left">${t[1]}<span>${S.tri === t[0] ? "✓" : ""}</span></button>`).join("")}</div>` : ""}</div>`
     + `<button class="btn" data-a="cli-nouv" style="width:100%;margin-top:10px">Ajouter une cliente</button>`
-    + ((() => { const ligne = c => `<div class="cli" data-cli="${c.id}"><div class="av">${esc((c.prenom || "?")[0])}${esc((c.nom || "")[0] || "")}</div><div class="t"><b>${esc(nomCli(c))}</b><span>${esc(sous(c))}</span></div><em style="font-style:normal;font-size:12px;opacity:.6;white-space:nowrap">${v(c).n ? v(c).n + " visite" + (v(c).n > 1 ? "s" : "") + " ›" : "›"}</em></div>`;
+    + ((() => { const ligne = c => `<div class="cli" data-cli="${c.id}"><div class="av">${esc((String(c.prenom || "").replace(/^@+/, "") || "?")[0].toUpperCase())}${esc((c.nom || "")[0] || "")}</div><div class="t"><b>${esc(nomCli(c))}</b><span>${esc(sous(c))}</span></div><em style="font-style:normal;font-size:12px;opacity:.6;white-space:nowrap">${v(c).n ? v(c).n + " visite" + (v(c).n > 1 ? "s" : "") + " ›" : "›"}</em></div>`;
       if (!L.length) return null;
       if (S.tri !== "az" || q) return `<div class="k">${q ? "Résultats" : (TRIS.find(t => t[0] === S.tri) || TRIS[0])[1]}</div><div class="carte">${L.map(ligne).join("")}</div>`;
       /* A à Z : une lettre par groupe, et les lettres sur le côté (comme les contacts de l'iPhone) */
-      const init = c => { const l = String(c.prenom || "#").normalize("NFD").replace(/[\u0300-\u036f]/g, "")[0].toUpperCase(); return /[A-Z]/.test(l) ? l : "#"; }, G = {}; L.forEach(c => (G[init(c)] = G[init(c)] || []).push(c));
+      const init = c => { const l = (String(c.prenom || "").replace(/^@+/, "") || "#").normalize("NFD").replace(/[\u0300-\u036f]/g, "")[0].toUpperCase(); return /[A-Z]/.test(l) ? l : "#"; }, G = {}; L.forEach(c => (G[init(c)] = G[init(c)] || []).push(c));
       const lettres = Object.keys(G).sort((x, y) => x === "#" ? 1 : y === "#" ? -1 : x.localeCompare(y));
       return `<div class="k">Toutes mes clientes</div><div class="carte" style="margin-right:16px">${lettres.map(l => G[l].map((c, i) => i ? ligne(c) : ligne(c).replace('<div class="cli"', `<div class="cli" id="L-${l === "#" ? "0" : l}"`)).join("")).join("")}</div>`
         + ""; })()
@@ -310,7 +312,7 @@ function feuilleCliente(id) {
   const w = id && (S.vis || {})[id];
   ouvre(`<h3>${id ? esc(nomCli(c)) : "Nouvelle cliente"}</h3>${w && (w.n || w.proch) ? `<div class="sous" style="text-align:left;margin:4px 0 0">${w.n ? w.n + " visite" + (w.n > 1 ? "s" : "") + (w.der ? " · dernière le " + jourCourt(w.der) : "") : "Pas encore venue"}${w.proch ? " · prochain rendez-vous le " + jourCourt(w.proch) : ""}</div>` : ""}<div class="form" style="margin-top:12px">
     <label>Prénom<input id="c-p" value="${esc(c.prenom)}" autocomplete="off" autocapitalize="words"></label><label>Nom<input id="c-n" value="${esc(c.nom)}" autocomplete="off" autocapitalize="words"></label>
-    <label>Téléphone<input id="c-t" value="${esc(c.telephone)}" inputmode="tel"></label><label>E-mail<input id="c-e" value="${esc(c.email)}" inputmode="email"></label>
+    <label>Téléphone<input id="c-t" value="${esc(c.telephone)}" inputmode="tel"></label><label>Instagram<input id="c-ig" value="${c.instagram ? "@" + esc(c.instagram) : ""}" placeholder="@son.compte" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="off"></label><label>E-mail<input id="c-e" value="${esc(c.email)}" inputmode="email"></label>
     <label>Anniversaire <small>facultatif</small><input id="c-a" type="date" value="${esc(c.anniversaire || "")}"></label></div>
     <label style="display:flex;align-items:center;gap:10px;margin:12px 2px 0;font-size:13.5px;text-align:left"><input id="c-oka" type="checkbox" ${c.ok_sms_anniv ? "checked" : ""} style="width:20px;height:20px;flex:none">Lui envoyer un SMS pour son anniversaire (elle est d’accord)</label>
     <div class="lab2">Notes</div><textarea class="msg" id="c-no" placeholder="Par exemple : aime les formes amande">${esc(c.notes)}</textarea>
@@ -497,8 +499,9 @@ E.addEventListener("click", async ev => {
       const { error } = await sb.from("rendez_vous").update({ debut: deb.toISOString(), fin: fin.toISOString() }).eq("id", r.id); if (error) { a.disabled = false; return oups(error); }
       await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit("Rendez-vous décalé ✓"); }
     else if (k === "cli-nouv") feuilleCliente(null);
-    else if (k === "cli-ok") { const v = { prenom: majMots($("#c-p", E).value.trim()), nom: majMots($("#c-n", E).value.trim()) || null, telephone: $("#c-t", E).value.trim() || null, email: $("#c-e", E).value.trim() || null, anniversaire: $("#c-a", E).value || null, notes: $("#c-no", E).value.trim() || null, ok_sms_anniv: !!($("#c-oka", E) && $("#c-oka", E).checked) };
-      if (!v.prenom) return dit("Écris au moins le prénom"); const id = a.dataset.id;
+    else if (k === "cli-ok") { const v = { prenom: majMots($("#c-p", E).value.trim()), nom: majMots($("#c-n", E).value.trim()) || null, telephone: $("#c-t", E).value.trim() || null, email: $("#c-e", E).value.trim() || null, anniversaire: $("#c-a", E).value || null, notes: $("#c-no", E).value.trim() || null, ok_sms_anniv: !!($("#c-oka", E) && $("#c-oka", E).checked), instagram: igPropre($("#c-ig", E) && $("#c-ig", E).value) || null };
+      if (!v.prenom && v.instagram) v.prenom = "@" + v.instagram;   /* 21/11 : une cliente venue par Insta, sans prénom connu */
+      if (!v.prenom) return dit("Écris au moins son prénom ou son Instagram"); const id = a.dataset.id;
       const { error } = id ? await sb.from("clientes").update(v).eq("id", id) : await sb.from("clientes").insert(v); if (error) return oups(error);
       const { data } = await sb.from("clientes").select("*").order("prenom"); S.clientes = data || []; rendu(); if (id) feuilleCliente(id); else ferme(); dit("C’est enregistré ✓"); }
     else if (k === "site") feuilleSite();

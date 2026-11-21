@@ -24,6 +24,7 @@
 
   const IC = { tel: '<svg viewBox="0 0 24 24"><path d="M6 3h3l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 4 5a2 2 0 0 1 2-2z" fill="none" stroke="#1E1C1B" stroke-width="1.6" stroke-linejoin="round"/></svg>',
     msg: '<svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="#1E1C1B" stroke-width="1.6" stroke-linejoin="round"/></svg>',
+    insta: '<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5" fill="none" stroke="#1E1C1B" stroke-width="1.6"/><circle cx="12" cy="12" r="4" fill="none" stroke="#1E1C1B" stroke-width="1.6"/><circle cx="17.2" cy="6.8" r="1.1" fill="#1E1C1B"/></svg>',
     crayon: '<svg viewBox="0 0 24 24"><path d="M4 20l1-4L16 5l3 3L8 19z" fill="none" stroke="#1E1C1B" stroke-width="1.6" stroke-linejoin="round"/></svg>' };
   const QUESTIONS = [["couple", "Elle est en couple ?", "♡"], ["enfants", "Elle a des enfants ?", "☺"], ["animal", "Elle a un animal ?", "❀"], ["travail", "Elle travaille dans quoi ?", "✎"], ["vacances", "Elle part en vacances ?", "✈"], ["papote", "Elle aime papoter ?", "☕"]];
   const PARLER = { vacances: "Parle-lui de ses vacances.", enfants: "Demande-lui des nouvelles de ses enfants.", animal: "Demande-lui des nouvelles de son animal.", travail: "Demande-lui comment ça se passe au travail." };
@@ -46,8 +47,9 @@
 
   /* ---------- la fiche ---------- */
   let ID = null, ONG = "fiche", RDV = null, TOUT = false, AIDE = false, SAISIE = null;
-  const tete = c => `<div class="fi-haut"><div style="flex:1;min-width:0"><h3>${esc(nomCli(c))}</h3><small>${esc(c.telephone || "Pas de numéro")}</small></div>
+  const tete = c => `<div class="fi-haut"><div style="flex:1;min-width:0"><h3>${esc(nomCli(c))}</h3><small>${esc(c.telephone || "Pas de numéro")}${c.instagram && String(c.prenom || "")[0] !== "@" ? " · @" + esc(c.instagram) : ""}</small></div>
     ${c.telephone ? `<button class="fi-rond" data-href="tel:${tel(c.telephone)}" aria-label="Appeler">${IC.tel}</button><button class="fi-rond" data-href="sms:${tel(c.telephone)}" aria-label="Envoyer un message">${IC.msg}</button>` : ""}
+    ${c.instagram ? `<button class="fi-rond" data-href="https://www.instagram.com/${encodeURIComponent(c.instagram)}/" data-neuf aria-label="Son Instagram">${IC.insta}</button>` : ""}
     <button class="fi-rond" data-fi="modifier" aria-label="Modifier la fiche">${IC.crayon}</button></div>
     <div class="fi-sw"><button data-fi="ong" data-o="fiche" class="${ONG === "fiche" ? "on" : ""}">Fiche</button><button data-fi="ong" data-o="notes" class="${ONG === "notes" ? "on" : ""}">Notes</button></div>`;
   function pageFiche(c) { if (!RDV) return `<div class="sous" style="padding:30px 0">Un instant…</div>`;
@@ -78,7 +80,11 @@
     h += SAISIE === "+" ? `<div class="fi-carte" style="margin-top:10px"><div class="fi-lg">${champ("+", "Par exemple : aime les formes amande")}</div></div>` : `<button class="fi-plus" data-fi="sais" data-q="+">+ Autre chose que je sais</button>`;
     h += `<div class="fi-k">Mes notes libres</div><textarea class="msg" id="fi-libre" placeholder="Tout ce que tu veux garder en tête">${esc(o.t)}</textarea>`;
     return h; }
-  function montre(garde) { const c = S.clientes.find(x => x.id === ID); if (!c) return ferme(); const z = $(".feuille", E), y = garde && z ? z.scrollTop : 0;
+  /* 21/11 (Marie) : le crayon puis « × » ramène à la fiche (Fiche / Notes), il ne ferme plus tout */
+  let MODIF = false;
+  document.addEventListener("click", e => { if (!MODIF || !E.classList.contains("fe")) return; const x = e.target.closest && e.target.closest('[data-a="fermer"], .voile'); if (!x) return;
+    if (!$("#c-p", E)) { MODIF = false; return; } e.stopPropagation(); e.preventDefault(); const a = document.activeElement; if (a && a.blur) a.blur(); montre(); }, true);
+  function montre(garde) { MODIF = false; const c = S.clientes.find(x => x.id === ID); if (!c) return ferme(); const z = $(".feuille", E), y = garde && z ? z.scrollTop : 0;
     ouvre(tete(c) + (ONG === "fiche" ? pageFiche(c) : pageNotes(c))); if (z && garde) z.scrollTop = y; const r = $("#fi-rep", E); if (r) r.focus(); }
   async function chargeRdv() { const id = ID; const { data } = await sb.from("rendez_vous").select("*, prestations(id,nom)").eq("cliente_id", id).order("debut", { ascending: false }); if (ID !== id) return; RDV = data || []; if (ONG === "fiche" && E.classList.contains("fe") && $(".fi-sw", E)) montre(true); }
 
@@ -91,7 +97,7 @@
     if (k === "ong") { ONG = a.dataset.o; SAISIE = null; montre(); }
     else if (k === "tout") { TOUT = true; montre(true); }
     else if (k === "aide") { AIDE = !AIDE; montre(true); }
-    else if (k === "modifier") { formulaire(ID); const t = $("#c-no", E); if (t) { t.value = (c && c.notes) || ""; t.style.display = "none"; const l = t.previousElementSibling; if (l && l.classList.contains("lab2")) l.style.display = "none"; } }
+    else if (k === "modifier") { formulaire(ID); MODIF = true; const t = $("#c-no", E); if (t) { t.value = (c && c.notes) || ""; t.style.display = "none"; const l = t.previousElementSibling; if (l && l.classList.contains("lab2")) l.style.display = "none"; } }
     else if (k === "sais") { SAISIE = a.dataset.q; montre(true); }
     else if (k === "ok" && c) { const v = ($("#fi-rep", E).value || "").trim(); if (!v) return dit("Écris ta réponse"); const o = litNotes(c); o.s = o.s.filter(x => a.dataset.q === "+" || x.q !== a.dataset.q); o.s.push(a.dataset.q === "+" ? { r: v } : { q: a.dataset.q, r: v }); SAISIE = null; await ecritNotes(ID, o); montre(true); }
     else if (k === "oter" && c) { const o = litNotes(c); o.s.splice(+a.dataset.i, 1); await ecritNotes(ID, o); montre(true); }
