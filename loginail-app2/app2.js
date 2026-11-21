@@ -543,6 +543,30 @@ const BLOCAGE_ABONNEMENT = false;
 async function compteBloque() { if (!BLOCAGE_ABONNEMENT || window.SB_DEMO) return false; try { const { data, error } = await sb.rpc("compte_actif"); return !error && data === false; } catch (e) { return false; } }
 const ecranInactif = () => { E.innerHTML = `<div class="vue on"><div class="cx"><div class="marque">LOGINAIL</div><h1>Votre compte n’est pas actif.</h1><p>Votre abonnement est arrêté ou n’a pas encore commencé.</p>
   <button class="btn" data-a="reessayer">Réessayer</button><button class="lien-t" data-a="deco">Se déconnecter</button></div><div class="toast"></div></div>`; };
+/* 21/11 : filet de sécurité. Si la page d'après l'e-mail (loginail-creer/fin.html) n'a pas rangé son brouillon
+   (bug du vrai compte de Marie : le lien l'avait renvoyée sur l'accueil de l'appli), l'appli le range à la connexion.
+   Même logique que range() de fin.html ; seulement s'il n'y a pas encore de site. */
+async function rangeBrouillonOublie(user) {
+  const b = user.user_metadata?.brouillon; if (!b || typeof b !== "object" || window.SB_DEMO) return;
+  const { data: deja, error: e0 } = await sb.from("sites").select("slug").maybeSingle(); if (e0 || deja) return;
+  const pf = await sb.from("profils").select("nom_salon").eq("id", user.id).maybeSingle();
+  if (!pf.data?.nom_salon) { const { error } = await sb.from("profils").update({
+    prenom: b.prenom || null, nom_salon: b.nom || null, telephone: b.telephone || null,
+    adresse: b.rue || null, code_postal: b.cp || null, ville: b.ville || null,
+    place_id: b.placeId || null, latitude: b.position?.latitude ?? null, longitude: b.position?.longitude ?? null,
+    site_style: b.style || 1, site_couleur: b.couleur || "noir", site_mode: b.mode || "jour", presentation: b.presentation || null }).eq("id", user.id); if (error) throw error; }
+  const { count } = await sb.from("prestations").select("id", { count: "exact", head: true });
+  if (!count && b.prestations?.length) { const { error } = await sb.from("prestations").insert(b.prestations.map((p, i) => ({ nom: String(p.nom || "Prestation"), prix: (p.prix === "" || p.prix == null || isNaN(+p.prix)) ? null : +p.prix, duree_min: parseInt(p.duree) || 60, ordre: i }))); if (error) throw error; }
+  const { count: nh } = await sb.from("horaires").select("jour", { count: "exact", head: true });
+  if (!nh && Array.isArray(b.horaires)) { const { error } = await sb.from("horaires").upsert(b.horaires.map((h, j) => ({
+    pro_id: user.id, jour: j, ouvert: !!h, debut: h?.d || "09:00", fin: h?.f || "18:00", pause_debut: h?.pd || null, pause_fin: h?.pf || null }))); if (error) throw error; }
+  const d = { ...b }; delete d.univers; delete d.exempleFictif; delete d._charmsU;
+  const base = String(b.nom || b.prenom || "mon-salon").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 34) || "mon-salon";
+  for (let n = 1; n <= 30; n++) { const slug = (n === 1 ? base : base + "-" + n).padEnd(3, "0");
+    const { error } = await sb.from("sites").insert({ pro_id: user.id, slug, donnees: d, en_ligne: true }); if (!error) break;
+    if (!/duplicate|unique/i.test(error.message)) throw error; }
+  await sb.auth.updateUser({ data: { brouillon: null } });
+}
 async function demarre(session) {
   if (!session) { S.user = null; ecranConnexion(); return; }
   document.documentElement.classList.remove("cx-ordi", "cx-direct"); /* 19/11 : on sort de la page de connexion ordinateur */
@@ -551,7 +575,7 @@ async function demarre(session) {
   S.demarre = session.user.id; setTimeout(() => { if (S.demarre === session.user.id && !S.pret) S.demarre = null; }, 20000);
   S.user = session.user; S.pret = false; S.onglet = "acc"; /* 17/11 (Marie) : après une connexion, toujours l'Accueil */ E.innerHTML = '<div class="charge">LOGINAIL</div>';
   /* 18/11 : « pret » = tout est chargé et affiché ; la notification attend ce moment pour ouvrir son rendez-vous */
-  try { if (await compteBloque()) { S.demarre = null; return ecranInactif(); } await chargeTout(); squelette(); rendu(); S.pret = true; S.demarre = null; document.dispatchEvent(new Event("loginail-pret")); } catch (e) { S.demarre = null; console.error(e); E.innerHTML = '<div class="charge" style="flex-direction:column;gap:14px">Connexion impossible<span style="font-size:13px;letter-spacing:0;opacity:.7;text-transform:none">Vérifiez votre connexion internet.</span><button class="btn" data-a="reessayer" style="width:auto;padding:12px 26px">Réessayer</button><button class="lien-t" data-a="deco">Se déconnecter</button></div>'; }
+  try { if (await compteBloque()) { S.demarre = null; return ecranInactif(); } try { await rangeBrouillonOublie(session.user); } catch (e) { console.error(e); } await chargeTout(); squelette(); rendu(); S.pret = true; S.demarre = null; document.dispatchEvent(new Event("loginail-pret")); } catch (e) { S.demarre = null; console.error(e); E.innerHTML = '<div class="charge" style="flex-direction:column;gap:14px">Connexion impossible<span style="font-size:13px;letter-spacing:0;opacity:.7;text-transform:none">Vérifiez votre connexion internet.</span><button class="btn" data-a="reessayer" style="width:auto;padding:12px 26px">Réessayer</button><button class="lien-t" data-a="deco">Se déconnecter</button></div>'; }
 }
 sb.auth.onAuthStateChange((_e, s) => setTimeout(() => demarre(s), 0));
 sb.auth.getSession().then(({ data }) => demarre(data.session));

@@ -87,7 +87,8 @@ async function range(user) {
   // les prestations : seulement si l'espace n'en a pas encore (on ne double rien)
   const { count } = await coffre.from("prestations").select("id", { count: "exact", head: true });
   if (!count && b.prestations?.length) {
-    const { error: e2 } = await coffre.from("prestations").insert(b.prestations.map((p, i) => ({ nom: p.nom, prix: p.prix ?? null, duree_min: p.duree, ordre: i })));
+    /* 21/11 : une prestation sans prix (« Nail art » de Marie) arrivait en "" → refusée par le serveur, rien n'était rangé */
+    const { error: e2 } = await coffre.from("prestations").insert(b.prestations.map((p, i) => ({ nom: String(p.nom || "Prestation"), prix: (p.prix === "" || p.prix == null || isNaN(+p.prix)) ? null : +p.prix, duree_min: parseInt(p.duree) || 60, ordre: i })));
     if (e2) throw e2;
   }
   if (b.horaires) {
