@@ -189,6 +189,18 @@
   const re1 = VUES.re; VUES.re = () => dessin(re1());
   const st = document.createElement("style");
   st.textContent = `.s5-ic{flex:none;width:34px;height:34px;border-radius:11px;background:#EDE7E0;display:grid;place-items:center;margin-right:12px;color:#1E1C1B}.vue[data-p="re"] .ligne{display:flex;align-items:center}.vue[data-p="re"] .ligne>.t{flex:1;min-width:0}
+.s5-ou{margin:18px 0 8px;font-size:13px;color:#8A817A;text-align:center}
+.s5-srcs{display:flex;justify-content:center;flex-wrap:wrap;gap:7px}
+.s5-srcs button{display:flex;align-items:center;gap:7px;height:38px;padding:0 13px;border-radius:999px;background:#fff;border:1px solid rgba(30,28,27,.12);font:inherit;font-size:13.5px;color:#1E1C1B;transition:transform .12s,border-color .2s,background .2s,color .2s}
+.s5-srcs button:active{transform:scale(.96)}.s5-srcs button.on{background:#1E1C1B;border-color:#1E1C1B;color:#fff}
+.s5-srcs i{width:8px;height:8px;border-radius:50%;flex:none}.s5-srcs button.on i{background:#fff!important}.s5-srcs svg{width:13px;height:13px;flex:none}
+.s5-aide.on{margin-top:12px;padding:6px;border-radius:18px;background:#F6F3EF}
+.s5-gestes{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:2px;text-align:left}
+.s5-gestes li{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-radius:14px;font-size:14px;line-height:1.4;color:#1E1C1B;animation:s5In .28s cubic-bezier(.2,.8,.2,1) both}
+.s5-gestes li b{font-weight:500}.s5-gestes li i{flex:none;width:22px;height:22px;border-radius:50%;background:#1E1C1B;color:#fff;display:grid;place-items:center;font-size:11px;font-weight:500;font-style:normal}
+.s5-ecrire{display:block;width:calc(100% - 12px);margin:4px 6px 6px;height:42px;border-radius:999px;border:1px solid #1E1C1B;background:#fff;font:inherit;font-size:14px;color:#1E1C1B}
+@keyframes s5In{from{opacity:0;transform:translateY(6px)}}
+@media (prefers-reduced-motion:reduce){.s5-gestes li{animation:none}}
 .s5-plus{display:block;width:100%;border:0;background:none;margin-top:8px;padding:6px;font:inherit;font-size:13px;color:#6B625C;text-decoration:underline;text-underline-offset:3px}`;
   document.head.appendChild(st);
   /* les lignes ajoutées après coup (SMS d'anniversaire) */
@@ -223,18 +235,35 @@
   /* 21/11 (Marie) : ce qu'elle a écrit dans « Importer » est gardé (fenêtre fermée, appli quittée pour Insta…) jusqu'à « Ajouter » */
   const BR = "loginail-import-brouillon", brLit = () => { try { return localStorage.getItem(BR) || ""; } catch (e) { return ""; } }, brEcrit = v => { try { v ? localStorage.setItem(BR, v) : localStorage.removeItem(BR); } catch (e) {} };
   const feuillePlusieurs = () => { pl0(); const z = E.querySelector("#s5-liste"); if (z && brLit()) { z.value = brLit(); z.dispatchEvent(new Event("input", { bubbles: true })); } };
+  /* 21/11 (Marie) : comme sur loginail.fr « Créer mon site » : une pastille par appli, « Touche la tienne », et les étapes VRAIES de chaque appli
+     (vérifiées le 21/11 dans leurs pages d'aide : Planity et Booksy n'ont pas de bouton pour la pro, il faut leur écrire ; Treatwell et Fresha, oui) */
+  const IMP = {
+    planity: { n: "Planity", c: "#1E1C1B", mail: "contact@planity.com", t: ["Écris à <b>contact@planity.com</b> depuis l’adresse mail de ton compte Planity (pas par téléphone : Planity refuse, par sécurité).", "Demande ton <b>fichier clients</b>. Planity te l’envoie par mail, ou active pour toi le bouton <b>Clients › Fichier client › Gestion › Exporter</b>.", "Enregistre le fichier, reviens ici et touche <b>Choisir un fichier</b>."] },
+    booksy: { n: "Booksy", c: "#2E7D74", mail: "info.fr@booksy.com", t: ["Écris à Booksy France : <b>info.fr@booksy.com</b>. Kiute, c’est maintenant Booksy : c’est pareil.", "Demande <b>la liste de tes clients en fichier CSV</b>. Booksy te l’envoie par mail.", "Enregistre le fichier, reviens ici et touche <b>Choisir un fichier</b>."] },
+    treatwell: { n: "Treatwell", c: "#E5674A", t: ["Sur un <b>ordinateur</b>, connecte-toi à Treatwell Connect avec le compte <b>propriétaire</b>.", "Onglet <b>Clients</b> en haut, puis <b>Exporter</b> en bas à droite : le fichier se télécharge.", "Sur cet ordinateur, ouvre <b>app.loginail.fr</b>, puis Clientes › Importer › <b>Choisir un fichier</b>."] },
+    fresha: { n: "Fresha", c: "#6B5CE7", t: ["Dans l’appli Fresha, touche <b>Clients</b> en bas.", "Touche les <b>3 points</b> en haut à droite, puis <b>CSV</b>.", "Enregistre-le dans Fichiers, reviens ici et touche <b>Choisir un fichier</b>."] },
+    contacts: { n: "Mes contacts", ic: '<circle cx="8" cy="5.6" r="2.6"/><path d="M3 13.6c.6-2.6 2.6-3.9 5-3.9s4.4 1.3 5 3.9"/>', t: ["Ouvre <b>Contacts</b> sur ton iPhone et touche <b>Listes</b> en haut à gauche.", "Reste appuyée sur une liste (« Tous les contacts », ou une liste « Clientes »), puis touche <b>Exporter</b>.", "<b>Enregistrer dans Fichiers</b>, reviens ici et touche <b>Choisir un fichier</b>."] },
+    autre: { n: "Autre appli", ic: '<path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.8 2.8 0 0 1 4 4L11 8.5M9 11.5l-1.2 1.2a2.8 2.8 0 0 1-4-4L5 7.5"/>', t: ["Écris au <b>service client</b> de ton appli de réservation.", "Demande <b>l’export de ton fichier clients</b> (Excel ou CSV). Ce sont tes données : la loi (RGPD) l’oblige à te les donner.", "Enregistre le fichier, reviens ici et touche <b>Choisir un fichier</b>."] } };
+  const MAILIMP = "Bonjour,%0A%0AJe souhaite récupérer mon fichier clients (prénoms, noms, téléphones) en fichier Excel ou CSV.%0A%0AMerci !";
+  const impAide = k => { const A = IMP[k]; return `<ol class="s5-gestes">${A.t.map((x, i) => `<li style="animation-delay:${i * 60}ms"><i>${i + 1}</i><span>${x}</span></li>`).join("")}</ol>`
+    + (A.mail ? `<button class="s5-ecrire" data-href="mailto:${A.mail}?subject=${encodeURIComponent("Mon fichier clients")}&body=${MAILIMP}">Écrire à ${A.n}</button>` : ""); };
   const pl0 = () => ouvre(`<h3>Importer mes clientes</h3><div class="sous">Pour ne pas tout retaper quand tu commences.</div>
-      <label class="btn" style="display:block;margin-top:16px;text-align:center;cursor:pointer">Choisir un fichier<input type="file" id="s5-fic" accept=".vcf,.csv,.txt,text/vcard,text/csv,text/plain" hidden></label>
-      <details style="margin-top:10px;font-size:13px;line-height:1.5;color:#6B625C"><summary style="cursor:pointer;font-weight:500;color:#1E1C1B">Comment récupérer mes clientes ?</summary>
-        <p style="margin:8px 0 0"><b>Depuis les contacts de mon iPhone :</b> ouvre Contacts, touche une liste (ou crées-en une « Clientes »), reste appuyée dessus, puis « Exporter » et « Enregistrer dans Fichiers ». Reviens ici et choisis ce fichier.</p>
-        <p style="margin:8px 0 0"><b>Depuis une photo ou une capture d’écran</b> (tes abonnées Insta, ton carnet…) : ouvre-la dans Photos, reste appuyée sur un mot, touche « Tout sélectionner » puis « Copier ». Reviens ici, reste appuyée dans la case du dessous et touche « Coller ». Loginail range les prénoms et les pseudos tout seul. Tu n’auras plus qu’à ajouter les numéros.</p>
-        <p style="margin:8px 0 0"><b>Depuis une autre appli de réservation :</b> écris à son service client et demande « l’export de mon fichier clientes ». Ce sont tes données : elle doit te les rendre. Tu reçois en général un fichier Excel : ouvre-le, « Enregistrer sous » en CSV, puis choisis-le ici.</p></details>
-      <div class="lab2" style="margin-top:16px">Ou écris-les : une par ligne</div><div class="sous" style="text-align:left;margin:-2px 0 8px;font-size:12.5px">D’abord le prénom, puis le nom, puis le numéro. Le nom et le numéro ne sont pas obligatoires.</div>
+      <p class="s5-ou">Touche la tienne pour voir où trouver le fichier :</p>
+      <div class="s5-srcs">${Object.keys(IMP).map(k => `<button type="button" data-s5i="${k}">${IMP[k].ic ? `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3">${IMP[k].ic}</svg>` : `<i style="background:${IMP[k].c}"></i>`}${IMP[k].n}</button>`).join("")}</div>
+      <div class="s5-aide" id="s5-aide"></div>
+      <label class="btn" style="display:block;margin-top:14px;text-align:center;cursor:pointer">Choisir un fichier<input type="file" id="s5-fic" accept=".vcf,.csv,.txt,.xlsx,.xls,text/vcard,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" hidden></label>
+      <div class="lab2" style="margin-top:18px">Ou écris-les : une par ligne</div><div class="sous" style="text-align:left;margin:-2px 0 8px;font-size:12.5px">D’abord le prénom, puis le nom, puis le numéro. Le nom et le numéro ne sont pas obligatoires. Astuce : sur une capture d’écran, dans Photos, reste appuyée sur un mot, « Tout sélectionner », « Copier », puis colle ici.</div>
       <textarea class="msg" id="s5-liste" autocapitalize="words" style="height:150px" placeholder="Prénom Nom Téléphone&#10;&#10;Par exemple :&#10;Jade Martin 06 12 34 56 78&#10;Inès Moreau&#10;Sarah"></textarea>
       <button class="btn" data-s5="pl-ok" style="margin-top:12px" disabled>Ajouter</button>`);
-  document.addEventListener("change", e => { if (e.target.id !== "s5-fic") return; const f = e.target.files && e.target.files[0]; if (!f) return; const r = new FileReader();
-    r.onload = () => { const t = String(r.result || ""), l = /BEGIN:VCARD/i.test(t) ? deVcf(t) : deCsv(t), z = E.querySelector("#s5-liste"); if (!l) return dit("Aucune cliente trouvée dans ce fichier"); z.value = (z.value.trim() ? z.value.trim() + "\n" : "") + l; z.dispatchEvent(new Event("input", { bubbles: true })); dit("Vérifie la liste, puis touche « Ajouter »"); };
-    r.readAsText(f); });
+  document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-s5i]"); if (!b) return; e.stopPropagation();
+    const z = E.querySelector("#s5-aide"), on = !b.classList.contains("on"); E.querySelectorAll("[data-s5i]").forEach(x => x.classList.toggle("on", on && x === b));
+    z.innerHTML = on ? impAide(b.dataset.s5i) : ""; z.classList.toggle("on", on); }, true);
+  /* 21/11 : Planity et Treatwell donnent souvent un fichier Excel : on le lit aussi (le lecteur ne se charge que ce jour-là) */
+  let XLP = null; const xlsx = () => XLP || (XLP = new Promise((ok, ko) => { if (window.XLSX) return ok(window.XLSX); const sc = document.createElement("script"); sc.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"; sc.onload = () => ok(window.XLSX); sc.onerror = () => { XLP = null; ko(); }; document.head.appendChild(sc); }));
+  document.addEventListener("change", async e => { if (e.target.id !== "s5-fic") return; const f = e.target.files && e.target.files[0]; if (!f) return; e.target.value = "";
+    const met = t => { const l = /BEGIN:VCARD/i.test(t) ? deVcf(t) : deCsv(t), z = E.querySelector("#s5-liste"); if (!l || !z) return dit("Aucune cliente trouvée dans ce fichier"); z.value = (z.value.trim() ? z.value.trim() + "\n" : "") + l; z.dispatchEvent(new Event("input", { bubbles: true })); dit("Vérifie la liste, puis touche « Ajouter »"); };
+    if (/\.xlsx?$/i.test(f.name) || /sheet|excel/i.test(f.type)) { try { const X = await xlsx(), w = X.read(await f.arrayBuffer(), { type: "array" }); met(X.utils.sheet_to_csv(w.Sheets[w.SheetNames[0]], { FS: ";", blankrows: false })); } catch (x) { dit("Ce fichier Excel ne s’ouvre pas. Réessaie avec Internet."); } return; }
+    const r = new FileReader(); r.onload = () => met(String(r.result || "")); r.readAsText(f); });
   const cl1 = VUES.cl; VUES.cl = () => { const h = cl1(), rep = "Ajouter une cliente</button>"; return h.includes(rep) && S.clientes.length < 10 && !S.cherche.trim() ? h.replace(rep, rep + `<button class="s5-plus" data-s5="plusieurs">J’ai déjà des clientes : les importer</button>`) : h; };
   const re2 = VUES.re; VUES.re = () => { const h = re2(), rep = '<div class="k">Mes données</div><div class="liste">'; return h.includes(rep) ? h.replace(rep, rep + `<div class="ligne" data-s5="plusieurs">${sv('<path d="M12 20V9M7 13l5-5 5 5M5 4h14"/>')}<div class="t">Importer mes clientes<span>Depuis mes contacts, un fichier ou une photo</span></div><span class="fl">›</span></div>`) : h; };
   document.addEventListener("paste", e => { if (e.target.id !== "s5-liste") return; const t = e.clipboardData && e.clipboardData.getData("text/plain"); if (!t || !/\n/.test(t)) return; e.preventDefault();

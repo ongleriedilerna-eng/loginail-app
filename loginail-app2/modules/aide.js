@@ -85,7 +85,7 @@ label.btn{display:flex!important;align-items:center;justify-content:center}
 .idx2-b{position:absolute;left:50%;top:44%;z-index:13;width:64px;height:64px;margin:-32px;border-radius:18px;background:rgba(30,28,27,.75);color:#fff;display:grid;place-items:center;font:500 28px Jost,sans-serif;pointer-events:none;opacity:0;transition:opacity .15s}.idx2-b.on{opacity:1}`;
   document.head.appendChild(st);
   let IX = null, BU = null, der = "";
-  const lettre = c => { const l = String(c.prenom || "#").normalize("NFD").replace(/[\u0300-\u036f]/g, "")[0].toUpperCase(); return /[A-Z]/.test(l) ? l : "#"; };
+  const lettre = c => { const l = (String(c.prenom || "").replace(/^@+/, "") || "#").normalize("NFD").replace(/[\u0300-\u036f]/g, "")[0].toUpperCase(); return /[A-Z]/.test(l) ? l : "#"; };
   const pose = () => { if (!E.querySelector(".ong")) return; if (!IX || !IX.isConnected) { IX = document.createElement("div"); IX.className = "idx2"; IX.innerHTML = L.map(l => `<span data-l="${l}">${l}</span>`).join(""); E.appendChild(IX); BU = document.createElement("div"); BU.className = "idx2-b"; E.appendChild(BU); branche(); }
     const on = S.onglet === "cl" && S.tri === "az" && !S.cherche.trim() && S.clientes.length > 8; IX.hidden = !on; if (!on) return;
     const pres = new Set(S.clientes.map(lettre)); IX.querySelectorAll("span").forEach(x => x.classList.toggle("a", pres.has(x.dataset.l))); };

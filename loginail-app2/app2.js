@@ -211,7 +211,10 @@ function vueAgenda() {
 }
 function vueClientes() {
   const q = S.cherche.trim().toLowerCase(), V = S.vis || {}, v = c => V[c.id] || { n: 0, der: "", proch: "" };
-  let L = S.clientes.filter(c => !q || nomCli(c).toLowerCase().includes(q) || (c.instagram || "").includes(q.replace(/^@/, "")) || (c.telephone || "").replace(/\s/g, "").includes(q.replace(/\s/g, "")));
+  /* 21/11 (Marie) : « manon » trouve aussi « Manön », « @manon.nails » et « manon_nails » (sans majuscules, sans accents, sans points) */
+  const plat = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(), serre = s => plat(s).replace(/[^a-z0-9]/g, "");
+  const qp = plat(q).replace(/^@+/, ""), qs = serre(q), qt = q.replace(/[\s.\-]/g, "");
+  let L = S.clientes.filter(c => !q || plat(nomCli(c)).includes(qp) || (qs && (serre(nomCli(c)).includes(qs) || serre(c.instagram).includes(qs))) || (/\d/.test(qt) && (c.telephone || "").replace(/[\s.\-]/g, "").includes(qt)));
   if (S.tri === "vues") L = L.slice().sort((x, y) => (v(y).der || "").localeCompare(v(x).der || ""));
   else if (S.tri === "proch") L = L.slice().sort((x, y) => (v(x).proch || "9").localeCompare(v(y).proch || "9"));
   else if (S.tri === "neuves") L = L.slice().sort((x, y) => (y.cree_le || "").localeCompare(x.cree_le || ""));
@@ -270,9 +273,21 @@ function feuilleSuppr() {
 }
 const VUES = { acc: vueAccueil, ag: vueAgenda, cl: vueClientes, si: vueSite, re: vueReglages };
 function rendu() {
-  E.querySelectorAll(".vue").forEach(v => { const on = v.dataset.p === S.onglet; v.classList.toggle("on", on); if (on) v.innerHTML = VUES[v.dataset.p](); else if (v.firstChild) v.innerHTML = ""; /* 13/11 (iPhone) : les pages cachées sont vidées, sinon l'iPhone envoyait parfois le toucher sur la page d'avant */ });
+  E.querySelectorAll(".vue").forEach(v => { const on = v.dataset.p === S.onglet; v.classList.toggle("on", on); if (on) { const h = VUES[v.dataset.p](); if (!garde(v, h)) v.innerHTML = h; } else if (v.firstChild) v.innerHTML = ""; /* 13/11 (iPhone) : les pages cachées sont vidées, sinon l'iPhone envoyait parfois le toucher sur la page d'avant */ });
   E.querySelectorAll("[data-go]").forEach(b => b.classList.toggle("on", b.dataset.go === S.onglet && !!b.closest(".ong")));
   try { msFond(); } catch (e) { console.warn(e); }
+}
+/* 21/11 (Marie, iPhone : « quand je tape un nom, ça accroche ») : avant, chaque lettre refaisait TOUTE la page, case de recherche comprise ;
+   l'iPhone perdait la case, le clavier sautait et les suggestions du clavier se cassaient. Maintenant, pendant qu'elle écrit, la case
+   (et ce qui l'entoure) reste la même : on ne change que ce qui est autour (la liste). */
+function garde(v, h) {
+  const vive = document.activeElement; if (!vive || vive.id !== "cherche" || !v.contains(vive)) return false;
+  const t = document.createElement("div"); t.innerHTML = h; let n = t.querySelector("#cherche"); if (!n) return false;
+  const chemin = []; for (let a = vive, b = n; ; a = a.parentNode, b = b.parentNode) { if (!a || !b) return false; chemin.push([a, b]); if (b.parentNode === t) { if (a.parentNode !== v) return false; break; } }
+  for (const [a, b] of chemin) { const pa = a.parentNode, pb = b.parentNode, ap = [...pb.childNodes], i = ap.indexOf(b);
+    if (pa !== v) { [...pa.attributes].forEach(x => pb.hasAttribute(x.name) || pa.removeAttribute(x.name)); [...pb.attributes].forEach(x => pa.getAttribute(x.name) !== x.value && pa.setAttribute(x.name, x.value)); }
+    [...pa.childNodes].forEach(x => x !== a && x.remove()); ap.slice(0, i).forEach(x => pa.insertBefore(x, a)); ap.slice(i + 1).forEach(x => pa.appendChild(x)); }
+  return true;
 }
 /* 09/11 (Marie) : « Mon site » a le même fond que son site (le fond choisi dans le nuancier) */
 let F100P = null;
@@ -430,7 +445,8 @@ E.addEventListener("change", ev => { if (ev.target.id !== "ph-in") return; const
 { let fy = null, fx = 0;
   E.addEventListener("touchstart", ev => { const f = ev.target.closest(".feuille"); fy = f && E.classList.contains("fe") && f.scrollTop <= 0 && !ev.target.closest("input,textarea,select,.idx") ? ev.touches[0].clientY : null; fx = ev.touches[0].clientX; }, { passive: true });
   E.addEventListener("touchmove", ev => { if (fy == null) return; const dy = ev.touches[0].clientY - fy, dx = Math.abs(ev.touches[0].clientX - fx); if (dy > 90 && dy > dx * 1.5) { fy = null; ferme(); } else if (dy < -10) fy = null; }, { passive: true }); }
-E.addEventListener("input", ev => { if (ev.target.id === "cherche") { S.cherche = ev.target.value; const pos = ev.target.selectionStart; rendu(); const i = $("#cherche", E); if (i) { i.focus(); i.setSelectionRange(pos, pos); } } });
+/* 21/11 : une seule mise à jour par image, même si elle tape vite ; la case n'est plus refaite (voir garde) */
+let _rc = 0; E.addEventListener("input", ev => { if (ev.target.id === "cherche") { S.cherche = ev.target.value; if (_rc) return; _rc = requestAnimationFrame(() => { _rc = 0; rendu(); const i = $("#cherche", E); if (i && document.activeElement !== i) { const pos = i.value.length; i.focus(); i.setSelectionRange(pos, pos); } }); } });
 E.addEventListener("click", async ev => {
   const t = ev.target;
   const hr = t.closest("[data-href]"); if (hr) { if (hr.hasAttribute("data-neuf")) window.open(hr.dataset.href, "_blank", "noopener"); else location.href = hr.dataset.href; return; }

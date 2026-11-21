@@ -200,7 +200,8 @@
     f.querySelectorAll(".cli[data-cli]").forEach(r => { const c = S.clientes.find(x => x.id === r.dataset.cli), em = r.querySelector(":scope>em");
       if (em) { em.className = "fl"; em.removeAttribute("style"); em.textContent = "›"; }
       if (c && (S.tri === "az" || S.tri === "partie")) { const sp = r.querySelector(".t span"); if (sp) sp.textContent = info(c); }
-      if (c && c.instagram && String(c.prenom || "")[0] !== "@") { const b = r.querySelector(".t b"); if (b && !b.querySelector(".v-ig")) b.insertAdjacentHTML("beforeend", ` <span class="v-ig">(@${esc(c.instagram)})</span>`); }
+      if (c && c.instagram) { const b = r.querySelector(".t b"); if (b && !b.querySelector(".v-ig")) { if (String(c.prenom || "")[0] === "@" && !c.nom) b.innerHTML = ""; /* 21/11 (Marie) : une cliente qui n'a que son Insta : pas de nom, juste « (@manon.nails) », comme les autres */
+        b.insertAdjacentHTML("beforeend", `${b.innerHTML ? " " : ""}<span class="v-ig">(@${esc(c.instagram)})</span>`); } }
       if (c && S.tri === "anniv") { const sp = r.querySelector(".t span"), d = new Date(String(c.anniversaire).slice(0, 10) + "T12:00"); if (sp && !isNaN(d)) sp.textContent = "Anniversaire le " + d.getDate() + " " + MOIS[d.getMonth()]; } });
     /* 21/11 (Marie) : tout en bas, combien de clientes en tout, et combien ne sont pas revenues depuis plus de 2 mois */
     if (tous.length && !S.cherche.trim()) { const p = tous.filter(GARDE.partie).length, z = document.createElement("div"); z.className = "v-total";
