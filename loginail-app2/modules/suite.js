@@ -197,8 +197,22 @@
   /* 4 · ajouter plusieurs clientes d'un coup */
   /* 21/11 (Marie) : une majuscule au début de chaque mot, même si on l'a oubliée */
   const maj = s => String(s || "").replace(/(^|[\s'’-])(\p{Ll})/gu, (x, a, b) => a + b.toUpperCase());
-  const lis = t => t.split(/\n+/).map(l => l.trim()).filter(Boolean).map(l => { const m = l.match(/(\+?\d[\d .\-]{7,}\d)\s*$/), tel = m ? m[1].replace(/[.\-]/g, " ").replace(/\s+/g, " ").trim() : null, nom = (m ? l.slice(0, m.index) : l).replace(/[;,\t]+/g, " ").trim().split(/\s+/).filter(Boolean);
-    return nom.length ? { prenom: maj(nom[0]), nom: maj(nom.slice(1).join(" ")) || null, telephone: tel } : null; }).filter(Boolean);
+  /* 21/11 (Marie) : « @lea.nails » sur une ligne = son Instagram ; une cliente avec seulement son Insta s'appelle « @lea.nails » (comme dans la fiche) */
+  const lis = t => t.split(/\n+/).map(l => l.trim()).filter(Boolean).map(l => { let ig = null; l = l.replace(/(^|\s)@([\w.]{2,30})(?=\s|$)/, (x, a, p) => { ig = p.toLowerCase().replace(/\.+$/, ""); return " "; }).trim();
+    const m = l.match(/(\+?\d[\d .\-]{7,}\d)\s*$/), tel = m ? m[1].replace(/[.\-]/g, " ").replace(/\s+/g, " ").trim() : null, nom = (m ? l.slice(0, m.index) : l).replace(/[;,\t]+/g, " ").trim().split(/\s+/).filter(Boolean);
+    const c = nom.length ? { prenom: maj(nom[0]), nom: maj(nom.slice(1).join(" ")) || null, telephone: tel } : ig ? { prenom: "@" + ig, nom: null, telephone: tel } : null; if (c && ig) c.instagram = ig; return c; }).filter(Boolean);
+  /* 21/11 (Marie) : texte copié depuis une capture d'écran (iPhone : Photos › reste appuyée sur le texte › Copier).
+     On enlève ce qui n'est pas une cliente (boutons d'Insta, heure, nombre d'abonnées…) et on met chaque pseudo avec le prénom écrit juste en dessous. */
+  const BOUTONS = /^(suivre( en retour)?|suivi(\(e\)|e)?|abonn[ée]+(\(e\))?s?|abonnements?|supprimer|retirer|message|[ée]crire|rechercher|voir tout|tout voir|suggestions?( pour (vous|toi))?|cat[ée]gories|follow( back)?|following|followers|remove|search|partager|ajouter|modifier|annuler|ok)$/i;
+  const deColle = t => { const L = String(t || "").split(/\r?\n/).map(l => l.replace(/[\p{Extended_Pictographic}‍️•·✓✔|]+/gu, " ")
+        .replace(/\s+(suivre( en retour)?|suivi\(e\)|suivie?|abonn[ée]+(\(e\))?|supprimer|retirer|message)\s*$/i, "").replace(/\s+/g, " ").trim())
+      .filter(l => l && /\p{L}/u.test(l) && !BOUTONS.test(l) && !/^\d{1,2}[:h]\d{2}\b/.test(l) && !/^[\d\s.,]+\s*(k|m|mille)?\s*(abonn|publication|follow|post)/i.test(l) && !/^[<>‹›←…\s]+$/.test(l));
+    const pseudo = l => /^@?[a-z0-9._]{2,30}$/.test(l) && (/^@/.test(l) || /[._\d]/.test(l)), sortie = [];
+    for (let i = 0; i < L.length; i++) { const l = L[i];
+      if (pseudo(l)) { const p = "@" + l.replace(/^@/, ""), s = L[i + 1]; if (s && !pseudo(s)) { sortie.push(s + " " + p); i++; } else sortie.push(p); }
+      else sortie.push(l); }
+    const avecNom = new Set(sortie.filter(l => !/^@/.test(l)).map(l => (l.match(/@[\w.]+$/) || [""])[0]).filter(Boolean));
+    return sortie.filter((l, i) => !(/^@[\w.]+$/.test(l) && avecNom.has(l)) && sortie.indexOf(l) === i).join("\n"); };
   /* les fichiers : une fiche contact de l'iPhone (.vcf) ou un tableau (.csv, Excel « enregistrer en CSV ») */
   const deVcf = t => t.replace(/\r?\n[ \t]/g, "").split(/BEGIN:VCARD/i).slice(1).map(c => { const v = k => { const m = c.match(new RegExp("^" + k + "(?:;[^:\\n]*)?:(.*)$", "im")); return m ? m[1].trim() : ""; };
       const n = v("N").split(";"), fn = v("FN"), tel = v("TEL"); let prenom = (n[1] || "").trim(), nom = (n[0] || "").trim(); if (!prenom && fn) { const w = fn.split(/\s+/); prenom = w.shift(); nom = w.join(" "); }
@@ -213,6 +227,7 @@
       <label class="btn" style="display:block;margin-top:16px;text-align:center;cursor:pointer">Choisir un fichier<input type="file" id="s5-fic" accept=".vcf,.csv,.txt,text/vcard,text/csv,text/plain" hidden></label>
       <details style="margin-top:10px;font-size:13px;line-height:1.5;color:#6B625C"><summary style="cursor:pointer;font-weight:500;color:#1E1C1B">Comment récupérer mes clientes ?</summary>
         <p style="margin:8px 0 0"><b>Depuis les contacts de mon iPhone :</b> ouvre Contacts, touche une liste (ou crées-en une « Clientes »), reste appuyée dessus, puis « Exporter » et « Enregistrer dans Fichiers ». Reviens ici et choisis ce fichier.</p>
+        <p style="margin:8px 0 0"><b>Depuis une photo ou une capture d’écran</b> (tes abonnées Insta, ton carnet…) : ouvre-la dans Photos, reste appuyée sur un mot, touche « Tout sélectionner » puis « Copier ». Reviens ici, reste appuyée dans la case du dessous et touche « Coller ». Loginail range les prénoms et les pseudos tout seul. Tu n’auras plus qu’à ajouter les numéros.</p>
         <p style="margin:8px 0 0"><b>Depuis une autre appli de réservation :</b> écris à son service client et demande « l’export de mon fichier clientes ». Ce sont tes données : elle doit te les rendre. Tu reçois en général un fichier Excel : ouvre-le, « Enregistrer sous » en CSV, puis choisis-le ici.</p></details>
       <div class="lab2" style="margin-top:16px">Ou écris-les : une par ligne</div><div class="sous" style="text-align:left;margin:-2px 0 8px;font-size:12.5px">D’abord le prénom, puis le nom, puis le numéro. Le nom et le numéro ne sont pas obligatoires.</div>
       <textarea class="msg" id="s5-liste" autocapitalize="words" style="height:150px" placeholder="Prénom Nom Téléphone&#10;&#10;Par exemple :&#10;Jade Martin 06 12 34 56 78&#10;Inès Moreau&#10;Sarah"></textarea>
@@ -221,7 +236,9 @@
     r.onload = () => { const t = String(r.result || ""), l = /BEGIN:VCARD/i.test(t) ? deVcf(t) : deCsv(t), z = E.querySelector("#s5-liste"); if (!l) return dit("Aucune cliente trouvée dans ce fichier"); z.value = (z.value.trim() ? z.value.trim() + "\n" : "") + l; z.dispatchEvent(new Event("input", { bubbles: true })); dit("Vérifie la liste, puis touche « Ajouter »"); };
     r.readAsText(f); });
   const cl1 = VUES.cl; VUES.cl = () => { const h = cl1(), rep = "Ajouter une cliente</button>"; return h.includes(rep) && S.clientes.length < 10 && !S.cherche.trim() ? h.replace(rep, rep + `<button class="s5-plus" data-s5="plusieurs">J’ai déjà des clientes : les importer</button>`) : h; };
-  const re2 = VUES.re; VUES.re = () => { const h = re2(), rep = '<div class="k">Mes données</div><div class="liste">'; return h.includes(rep) ? h.replace(rep, rep + `<div class="ligne" data-s5="plusieurs">${sv('<path d="M12 20V9M7 13l5-5 5 5M5 4h14"/>')}<div class="t">Importer mes clientes<span>Depuis les contacts de mon téléphone ou un fichier</span></div><span class="fl">›</span></div>`) : h; };
+  const re2 = VUES.re; VUES.re = () => { const h = re2(), rep = '<div class="k">Mes données</div><div class="liste">'; return h.includes(rep) ? h.replace(rep, rep + `<div class="ligne" data-s5="plusieurs">${sv('<path d="M12 20V9M7 13l5-5 5 5M5 4h14"/>')}<div class="t">Importer mes clientes<span>Depuis mes contacts, un fichier ou une photo</span></div><span class="fl">›</span></div>`) : h; };
+  document.addEventListener("paste", e => { if (e.target.id !== "s5-liste") return; const t = e.clipboardData && e.clipboardData.getData("text/plain"); if (!t || !/\n/.test(t)) return; e.preventDefault();
+    const z = e.target, propre = deColle(t), a = z.selectionStart, b = z.selectionEnd; z.value = z.value.slice(0, a) + propre + z.value.slice(b); z.selectionStart = z.selectionEnd = a + propre.length; z.dispatchEvent(new Event("input", { bubbles: true })); if (propre) dit("Vérifie la liste, puis touche « Ajouter »"); });
   document.addEventListener("input", e => { if (e.target.id !== "s5-liste") return; brEcrit(e.target.value); const n = lis(e.target.value).length, b = E.querySelector('[data-s5="pl-ok"]'); if (b) { b.disabled = !n; b.textContent = n ? `Ajouter ${n} cliente${n > 1 ? "s" : ""}` : "Ajouter"; } });
 
   document.addEventListener("click", async e => { const t = e.target; if (!t.closest) return;
@@ -238,7 +255,7 @@
       a.disabled = true; const { error } = await sb.from("rendez_vous").insert({ cliente_id: null, prestation_id: null, titre: note || "Bloqué", debut: deb.toISOString(), fin: fin.toISOString(), prix: null });
       if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessaie."); } await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit("Créneau bloqué ✓"); }
     else if (k === "plusieurs") feuillePlusieurs();
-    else if (k === "pl-ok") { const deja = new Set(S.clientes.map(c => nomCli(c).toLowerCase())), l = lis(E.querySelector("#s5-liste").value).filter((c, i, t) => !deja.has(nomCli(c).toLowerCase()) && t.findIndex(x => nomCli(x).toLowerCase() === nomCli(c).toLowerCase()) === i); if (!l.length) return dit("Ces clientes sont déjà dans ta liste"); a.disabled = true; a.textContent = "Un instant…";
+    else if (k === "pl-ok") { const deja = new Set(S.clientes.map(c => nomCli(c).toLowerCase())), igDeja = new Set(S.clientes.map(c => c.instagram).filter(Boolean)), l = lis(E.querySelector("#s5-liste").value).filter((c, i, t) => !deja.has(nomCli(c).toLowerCase()) && !(c.instagram && igDeja.has(c.instagram)) && t.findIndex(x => nomCli(x).toLowerCase() === nomCli(c).toLowerCase()) === i); if (!l.length) return dit("Ces clientes sont déjà dans ta liste"); a.disabled = true; a.textContent = "Un instant…";
       const { error } = await sb.from("clientes").insert(l); if (error) { a.disabled = false; a.textContent = "Ajouter"; return dit("Oups, ça n’a pas marché. Réessaie."); }
       const { data } = await sb.from("clientes").select("*").order("prenom"); S.clientes = data || []; brEcrit(""); ferme(); rendu(); dit(l.length > 1 ? l.length + " clientes ajoutées ✓" : "Cliente ajoutée ✓"); }
   }, true);
