@@ -53,7 +53,11 @@ let dit = t => { const z = $(".toast", E); if (!z) return; z.textContent = t; z.
 /* 18/11 (Marie, D4 + D5) : l'adresse qu'on partage. Son .fr dès qu'il est en service (après le 1er paiement) ; sinon, pendant le mois offert, loginail.fr/nom-du-salon */
 const lienDuSite = st => { if (!st || !st.slug) return ""; const d = String((st.donnees && st.donnees.domaine) || "").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, ""); return /^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(d) ? "https://" + d : "https://loginail.fr/" + st.slug; };
 const ouvre = h => { $(".feuille .fc", E).innerHTML = '<button class="fe-x" data-a="fermer" aria-label="Fermer">×</button>' + h; E.classList.add("fe"); $(".feuille", E).scrollTop = 0; };
-const ferme = () => E.classList.remove("fe");
+/* 21/11 (Marie, iPhone : « j'ai ajouté une cliente, je ne peux plus aller sur Clientes ») : sur iPhone, toucher « Ajouter » ne quitte pas la case
+   où on écrivait ; la fenêtre partait avec la case encore active (clavier, écran décalé, touchers à côté). On quitte la case et on remet l'écran en place. */
+const ecranEnPlace = () => setTimeout(() => { const a = document.activeElement; if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return; if (window.scrollX || window.scrollY) window.scrollTo(0, 0); }, 120);
+const ferme = () => { const a = document.activeElement; if (a && a.closest && a.closest(".feuille") && a.blur) a.blur(); E.classList.remove("fe"); ecranEnPlace(); };
+if (matchMedia("(pointer:coarse)").matches) document.addEventListener("focusout", ecranEnPlace);
 const oups = e => { console.error(e); dit("Oups, ça n’a pas marché. Réessaie."); };
 const tete = (t, s, d) => `<div class="tete"><div><small>${s || ""}</small><h1>${t}</h1></div>${d || ""}</div>`;
 
