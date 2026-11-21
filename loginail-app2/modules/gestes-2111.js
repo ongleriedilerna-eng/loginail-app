@@ -188,3 +188,47 @@
         return `<button data-a="mois-j" data-d="${d}" class="cm-j${sel ? " sel" : ""}" style="${s2.replace("justify-content:center;line-height:1", "justify-content:flex-start;padding-top:9px;line-height:1")}">${n}<span class="cm-pts" aria-hidden="true">${Array.from({ length: tot }, (_, i) => `<i class="cm-p${i < on ? " on" : ""}"></i>`).join("")}</span></button>`; });
       return out.replace(/<\/div><\/div>\s*$/, `</div><div class="cm-leg"><span><i class="cm-p on"></i>pris</span><span><i class="cm-p"></i>libre</span></div></div>`); }; }
 })();
+
+/* ===== 22/11 (Marie, iPhone, fiche cliente) =====
+   6 · les numéros toujours écrits « 06 12 34 56 78 » (à l'écran ; et la case Téléphone se range toute seule quand on la quitte)
+   7 · Notes : écriture un peu plus grande, lignes plus aérées ; « Sa vie » : 6 questions puis « Voir les autres questions »
+   8 · Oui / Non : une petite animation quand on choisit */
+(function () {
+  const joli = t => { const s = String(t).trim(), d = s.replace(/[\s.\-]/g, "");
+    if (/^0\d{9}$/.test(d)) return d.replace(/(\d\d)(?=\d)/g, "$1 ");
+    if (/^\+33\d{9}$/.test(d)) return "+33 " + d.slice(3, 4) + " " + d.slice(4).replace(/(\d\d)(?=\d)/g, "$1 ");
+    return null; };
+  const range = racine => { const w = document.createTreeWalker(racine, NodeFilter.SHOW_TEXT); let n;
+    while ((n = w.nextNode())) { const v = n.nodeValue; if (v.length < 10 || v.length > 20 || !/\d{4}/.test(v)) continue; const j = joli(v); if (j && j !== v.trim()) n.nodeValue = v.replace(v.trim(), j); } };
+  let rf = 0; new MutationObserver(() => { if (rf) return; rf = requestAnimationFrame(() => { rf = 0; range(E); }); }).observe(E, { childList: true, subtree: true, characterData: false });
+  document.addEventListener("blur", e => { const i = e.target; if (i && i.tagName === "INPUT" && (i.type === "tel" || i.inputMode === "tel")) { const j = joli(i.value); if (j) i.value = j; } }, true);
+
+  const st = document.createElement("style");
+  st.textContent = `#E .fi-n .fi-lg{padding:9px 0;min-height:44px}
+#E .fi-n .fi-qq{font-size:15.5px}#E .fi-n .fi-qq span{font-size:13px}
+#E .fi-n .fi-k{font-size:13px;margin:20px 0 8px}
+#E .fi-on button{font-size:13.5px;padding:7px 14px}
+#E .fi-on button.fi-pop,#E .fi-ch button.fi-pop{animation:fiPop .34s cubic-bezier(.34,1.56,.64,1)}
+#E .fi-lg.fi-pop .fi-ic2{animation:fiIc .4s ease}
+@keyframes fiPop{0%{transform:scale(.78);opacity:.55}100%{transform:none;opacity:1}}
+@keyframes fiIc{0%{transform:none}40%{transform:scale(1.18) rotate(-6deg)}100%{transform:none}}
+#E .fi-plus{display:block;width:100%;border:0;background:none;padding:12px 0 4px;font:inherit;font-size:13.5px;color:#6B625C;text-decoration:underline;text-underline-offset:3px}
+#E .fi-cache{display:none!important}
+@media (prefers-reduced-motion:reduce){#E .fi-pop,#E .fi-pop .fi-ic2{animation:none!important}}`;
+  document.head.appendChild(st);
+  let DER = null, TOUT = false;
+  document.addEventListener("click", e => { const b = e.target.closest && e.target.closest('[data-fi="rep"]'); if (b) { DER = { q: b.dataset.q, r: b.dataset.r, t: Date.now() };
+      /* la fiche change la case sur place OU redessine tout : on cherche le bouton choisi pendant un court instant */
+      const d = DER; let n = 0; const cherche = () => { const x = document.querySelector(`[data-fi="rep"][data-q="${CSS.escape(d.q)}"][data-r="${CSS.escape(d.r)}"]`);
+        /* la fiche peut se redessiner 2 fois de suite : chaque nouveau bouton choisi reçoit l'animation (une seule fois) */
+        if (x && !x.dataset.pop && (x.classList.contains("oui") || x.classList.contains("non"))) { x.dataset.pop = "1"; x.classList.add("fi-pop"); const lg = x.closest(".fi-lg"); if (lg) lg.classList.add("fi-pop"); }
+        if (++n < 45) requestAnimationFrame(cherche); else DER = null; }; requestAnimationFrame(cherche); }
+    const pl = e.target.closest && e.target.closest(".fi-plus"); if (pl) { e.stopPropagation(); e.preventDefault(); TOUT = true; pl.closest(".fi-carte").querySelectorAll(".fi-cache").forEach(x => x.classList.remove("fi-cache")); pl.remove(); } }, true);
+  new MutationObserver(() => { const n = E.querySelector(".fc .fi-n"); if (!n || n.dataset.g2211) return; n.dataset.g2211 = "1";
+    /* « Sa vie » : 6 questions, les autres derrière un lien (une question déjà répondue reste toujours visible) */
+    const k = [...n.querySelectorAll(".fi-k")].find(x => /Sa vie/.test(x.textContent)), c = k && k.nextElementSibling;
+    if (c && !TOUT) { const l = [...c.querySelectorAll(":scope>.fi-lg")], rep = x => !!x.querySelector(".oui,.non,.fi-qq span"), cach = l.slice(6).filter(x => !rep(x));
+      if (cach.length) { cach.forEach(x => x.classList.add("fi-cache")); c.insertAdjacentHTML("beforeend", `<button class="fi-plus">Voir ${cach.length > 1 ? "les " + cach.length + " autres questions" : "l’autre question"}</button>`); } }
+    if (DER && Date.now() - DER.t < 2000) { const b = n.querySelector(`[data-fi="rep"][data-q="${CSS.escape(DER.q)}"][data-r="${CSS.escape(DER.r)}"]`); if (b && (b.classList.contains("oui") || b.classList.contains("non"))) { b.classList.add("fi-pop"); const lg = b.closest(".fi-lg"); if (lg) lg.classList.add("fi-pop"); } DER = null; }
+  }).observe(E, { childList: true, subtree: true });
+})();

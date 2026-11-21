@@ -489,11 +489,17 @@ h3 .lap{font-size:11px;vertical-align:4px}
 .ph-rang button{flex:none;width:76px;height:76px;border:0;padding:0;border-radius:14px;overflow:hidden;background:#EFE9E2}
 .ph-rang img{width:100%;height:100%;object-fit:cover;display:block}
 .ph-rang .att{display:grid;place-items:center;font-size:11px;opacity:.6}
-.ph-vue{position:absolute;inset:0;z-index:300;background:#0F0E0D;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top) + 60px) 16px calc(env(safe-area-inset-bottom) + 24px);box-sizing:border-box}
-.ph-vue img{max-width:100%;max-height:100%;border-radius:16px;object-fit:contain;flex:1;min-height:0}
+.ph-vue{position:absolute;inset:0;z-index:300;background:rgb(15,14,13);overflow:hidden;touch-action:none;animation:pvIn .24s ease both}
+@keyframes pvIn{from{opacity:0}to{opacity:1}}
+.ph-vue .pv-piste{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top) + 64px);bottom:calc(env(safe-area-inset-bottom) + 132px);display:flex;will-change:transform}
+.ph-vue .pv-p{flex:none;width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:0 16px;box-sizing:border-box;overflow:hidden}
+.ph-vue .pv-p img{display:block;width:auto;height:auto;max-width:100%;max-height:100%;min-height:0;border-radius:16px;object-fit:contain;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.ph-vue .pv-bas{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 18px);display:flex;flex-direction:column;align-items:center;gap:6px;transition:opacity .2s}
+.ph-vue .pv-enr{display:flex;align-items:center;gap:8px;border:0;background:#fff;color:#1E1C1B;border-radius:99px;padding:12px 20px;font:inherit;font-size:14px;margin-top:6px;transition:transform .12s}.ph-vue .pv-enr:active{transform:scale(.96)}
+.ph-vue .pv-pts{display:flex;gap:6px;justify-content:center;height:6px}.ph-vue .pv-pts i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35);transition:background .2s,transform .2s}.ph-vue .pv-pts i.on{background:#fff;transform:scale(1.15)}
 .ph-vue .x{position:absolute;top:calc(env(safe-area-inset-top) + 12px);right:14px;width:40px;height:40px;border-radius:50%;border:0;background:#fff;color:#1E1C1B;font-size:24px;line-height:40px;padding:0}
-.ph-vue .d{margin-top:14px;font-size:12.5px;color:rgba(255,255,255,.7)}.ph-vue .n{position:absolute;top:calc(env(safe-area-inset-top) + 22px);left:50%;transform:translateX(-50%);color:#fff;font-size:13px;letter-spacing:.08em}
-.ph-vue .sup{margin-top:12px;border:0;background:none;color:#F2A8A2;font:inherit;font-size:13.5px;text-decoration:underline;text-underline-offset:3px}`;
+.ph-vue .d{font-size:12.5px;color:rgba(255,255,255,.7)}.ph-vue .n{position:absolute;top:calc(env(safe-area-inset-top) + 22px);left:50%;transform:translateX(-50%);color:#fff;font-size:13px;letter-spacing:.08em}
+.ph-vue .sup{margin-top:2px;border:0;background:none;color:#F2A8A2;font:inherit;font-size:13.5px;text-decoration:underline;text-underline-offset:3px}`;
   document.head.appendChild(st);
   const ICO = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
   const BUCKET = "photos-clientes";
@@ -528,17 +534,46 @@ h3 .lap{font-size:11px;vertical-align:4px}
       hist.insertAdjacentHTML("beforebegin", bloc("Ses poses en photo", c.id)); const z = E.querySelector(".fc .ph-bloc"); charge(c.id, z.querySelector(".ph-rang")); }
   }).observe(E, { childList: true, subtree: true });
   /* les clics : ajouter, voir en grand, supprimer */
-  const vue = document.createElement("div"); vue.className = "ph-vue"; let LISTE = [], IDX = 0;
-  const montreN = () => { const p = LISTE[IDX]; if (!p) return; const d = new Date(p.d);
-    vue.innerHTML = `<button class="x" data-ph="fermer" aria-label="Fermer">×</button>${LISTE.length > 1 ? `<div class="n">${IDX + 1} / ${LISTE.length}</div>` : ""}<img src="${p.u}" alt="Photo de la pose" draggable="false"><div class="d">${d.getDate()} ${MOIS[d.getMonth()]} ${d.getFullYear()}${LISTE.length > 1 ? " · glisse pour voir les autres" : ""}</div><button class="sup" data-ph="sup" data-id="${p.id}" data-c="${p.c}">Supprimer cette photo</button>`; };
-  { let x0 = null, y0 = 0; vue.addEventListener("touchstart", e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
-    vue.addEventListener("touchend", e => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null; if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
-      const n = IDX + (dx < 0 ? 1 : -1); if (n < 0 || n >= LISTE.length) return; IDX = n; montreN(); }, { passive: true }); }
+  /* 22/11 (Marie : « il faut que ça fasse comme l'iPhone ») : les photos glissent sous le doigt (la voisine arrive collée),
+     on descend avec le pouce pour fermer (le fond s'éclaircit), et « Enregistrer dans mon téléphone » */
+  const vue = document.createElement("div"); vue.className = "ph-vue"; let LISTE = [], IDX = 0, piste = null;
+  const MEDIA = () => { try { return Capacitor.isNativePlatform() && Capacitor.Plugins.Media && Capacitor.Plugins.Media.savePhoto ? Capacitor.Plugins.Media : null; } catch (e) { return null; } };
+  const ICE = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>';
+  const infos = () => { const p = LISTE[IDX]; if (!p) return; const d = new Date(p.d), n = vue.querySelector(".n"); if (n) n.textContent = `${IDX + 1} / ${LISTE.length}`;
+    vue.querySelector(".d").textContent = `${d.getDate()} ${MOIS[d.getMonth()]} ${d.getFullYear()}`; const su = vue.querySelector(".sup"); su.dataset.id = p.id; su.dataset.c = p.c; su.dataset.ok = ""; su.textContent = "Supprimer cette photo";
+    vue.querySelectorAll(".pv-pts i").forEach((x, i) => x.classList.toggle("on", i === IDX)); };
+  const place = anim => { piste.style.transition = anim ? "transform .34s cubic-bezier(.22,1,.36,1)" : "none"; piste.style.transform = `translateX(${-IDX * 100}%)`; infos(); };
+  const montreN = () => { vue.style.background = ""; vue.innerHTML = `<button class="x" data-ph="fermer" aria-label="Fermer">×</button>${LISTE.length > 1 ? '<div class="n"></div>' : ""}<div class="pv-piste">${LISTE.map(p => `<div class="pv-p"><img src="${p.u}" alt="Photo de la pose" draggable="false"></div>`).join("")}</div>
+      <div class="pv-bas">${LISTE.length > 1 ? `<div class="pv-pts">${LISTE.map(() => "<i></i>").join("")}</div>` : ""}<div class="d"></div><button class="pv-enr" data-ph="enr">${ICE}Enregistrer dans mon téléphone</button><button class="sup" data-ph="sup">Supprimer cette photo</button></div>`;
+    piste = vue.querySelector(".pv-piste"); place(false); };
+  const fermeVue = (dy = 0) => { if (!piste) return vue.remove(); piste.style.transition = "transform .26s cubic-bezier(.4,0,1,1), opacity .26s"; piste.style.transform = `translateX(${-IDX * 100}%) translateY(${Math.max(dy, 0) + 260}px) scale(.85)`; piste.style.opacity = "0";
+    vue.style.transition = "background .26s"; vue.style.background = "rgba(15,14,13,0)"; const b = vue.querySelector(".pv-bas"); if (b) b.style.opacity = "0"; setTimeout(() => { vue.remove(); vue.style.transition = ""; }, 270); };
+  { let x0 = null, y0 = 0, t0 = 0, mode = null;
+    vue.addEventListener("touchstart", e => { if (e.target.closest("button") || e.touches.length !== 1) { x0 = null; return; } x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now(); mode = null; }, { passive: true });
+    vue.addEventListener("touchmove", e => { if (x0 == null || !piste) return; let dx = e.touches[0].clientX - x0; const dy = e.touches[0].clientY - y0;
+      if (!mode) { if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; mode = Math.abs(dx) > Math.abs(dy) ? "h" : "v"; }
+      if (e.cancelable) e.preventDefault();
+      if (mode === "h") { if ((IDX === 0 && dx > 0) || (IDX === LISTE.length - 1 && dx < 0)) dx *= .3; piste.style.transition = "none"; piste.style.transform = `translateX(calc(${-IDX * 100}% + ${dx}px))`; }
+      else { const d = Math.max(0, dy) + Math.min(0, dy) * .2, k = Math.min(1, Math.abs(d) / 420); piste.style.transition = "none"; piste.style.transform = `translateX(${-IDX * 100}%) translateY(${d}px) scale(${1 - k * .25})`;
+        vue.style.background = `rgba(15,14,13,${1 - k * .85})`; const b = vue.querySelector(".pv-bas"); if (b) b.style.opacity = String(1 - k * 2); } }, { passive: false });
+    const fin = e => { if (x0 == null || !mode) { x0 = null; return; } const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0, v = Math.abs(mode === "h" ? dx : dy) / Math.max(1, Date.now() - t0); x0 = null;
+      if (mode === "h") { if (Math.abs(dx) > 60 || v > .45) IDX = Math.max(0, Math.min(LISTE.length - 1, IDX + (dx < 0 ? 1 : -1))); place(true); return; }
+      if (dy > 110 || (dy > 30 && v > .5)) return fermeVue(dy);
+      piste.style.transition = "transform .3s cubic-bezier(.22,1,.36,1)"; piste.style.transform = `translateX(${-IDX * 100}%)`; vue.style.transition = "background .3s"; vue.style.background = ""; const b = vue.querySelector(".pv-bas"); if (b) b.style.opacity = "";
+      setTimeout(() => { vue.style.transition = ""; }, 320); };
+    vue.addEventListener("touchend", fin, { passive: true }); vue.addEventListener("touchcancel", fin, { passive: true }); }
+  const enregistre = async b => { const p = LISTE[IDX]; if (!p) return; b.disabled = true;
+    try { const blob = await (await fetch(p.u)).blob(), d = new Date(p.d), nom = `pose-${d.getDate()}-${MOIS[d.getMonth()]}-${d.getFullYear()}.jpg`.normalize("NFD").replace(/[\u0300-\u036f]/g, ""), M = MEDIA();
+      if (M) { const u = await new Promise((ok, ko) => { const f = new FileReader(); f.onload = () => ok(f.result); f.onerror = ko; f.readAsDataURL(blob); }); await M.savePhoto({ path: u, fileName: nom.replace(/\.jpg$/, "") }); dit("Photo enregistrée dans tes photos ✓"); }
+      else await partageFichier(blob, nom, "Photo enregistrée ✓"); }
+    catch (err) { const m = String((err && err.message) || err || ""); dit(/denied|refus|permission|authori/i.test(m) ? "Autorise Loginail dans Réglages › Loginail › Photos" : "Oups, la photo n’a pas pu s’enregistrer. Réessaie."); }
+    finally { b.disabled = false; } };
   document.addEventListener("click", async e => { const t = e.target; if (!t.closest) return;
     const aj = t.closest('[data-ph="ajout"]'); if (aj) { e.stopPropagation(); e.preventDefault(); const z = aj.closest(".ph-bloc"); CIBLE = { cliente_id: z.dataset.cliPh, rendez_vous_id: z.dataset.rdv || null, rangee: z.querySelector(".ph-rang") }; inp.click(); return; }
     const vo = t.closest('[data-ph="voir"]'); if (vo) { e.stopPropagation(); e.preventDefault(); LISTE = [...vo.closest(".ph-rang").querySelectorAll('[data-ph="voir"]')].map(x => ({ ...x.dataset })); IDX = LISTE.findIndex(x => x.id === vo.dataset.id);
       vue.dataset.cli = vo.closest(".ph-bloc")?.dataset.cliPh || ""; montreN(); E.appendChild(vue); return; }
-    if (t.closest('[data-ph="fermer"]')) { e.stopPropagation(); vue.remove(); return; }
+    const en = t.closest('[data-ph="enr"]'); if (en) { e.stopPropagation(); e.preventDefault(); enregistre(en); return; }
+    if (t.closest('[data-ph="fermer"]')) { e.stopPropagation(); fermeVue(); return; }
     const su = t.closest('[data-ph="sup"]'); if (su) { e.stopPropagation(); if (su.dataset.ok !== "1") { su.dataset.ok = "1"; su.textContent = "Touche encore pour supprimer"; return; }
       await sb.storage.from(BUCKET).remove([su.dataset.c]); const { error } = await sb.from("photos_clientes").delete().eq("id", su.dataset.id); vue.remove();
       const z = E.querySelector(`.fc .ph-bloc[data-cli-ph="${vue.dataset.cli}"]`); if (z) charge(vue.dataset.cli, z.querySelector(".ph-rang")); dit(error ? "Oups, réessaie." : "Photo supprimée"); } }, true);
