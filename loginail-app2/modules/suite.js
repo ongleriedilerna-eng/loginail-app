@@ -578,7 +578,7 @@ h3 .lap{font-size:11px;vertical-align:4px}
 .rv-fid-n.gros b{font-weight:500;color:#1E1C1B}
 .ph-carte{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;border-radius:20px;padding:10px 10px 10px 16px;background:#fff;font-size:14px}.ph-carte b{font-weight:500}
 .ph-carte button{flex:none;border:0;border-radius:99px;background:var(--acc,#1E1C1B);color:#fff;padding:10px 16px;font:inherit;font-size:13px;display:flex;align-items:center;gap:6px}
-.semaine,.nav-sem{touch-action:pan-y}.semaine.suit{transition:none!important}.semaine.glisse{transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s}`;
+.semaine,.nav-sem{touch-action:pan-y}.semaine.suit{transition:none!important}.semaine.glisse{transition:transform .34s cubic-bezier(.22,1,.36,1),opacity .34s}`;
   document.head.appendChild(st);
   const tel = t => String(t || "").replace(/\s/g, "");
   new MutationObserver(() => {
@@ -613,18 +613,25 @@ h3 .lap{font-size:11px;vertical-align:4px}
       v.appendChild(c); });
     s.appendChild(v); };
   const prepare = s => { if (s.querySelector(":scope>.sem-v")) return; if (getComputedStyle(s).position === "static") s.style.position = "relative"; voisine(s, -1); voisine(s, 1); };
-  E.addEventListener("touchstart", e => { const z = !enCours && e.target.closest && e.target.closest(".semaine,.nav-sem"); x0 = z && e.touches.length === 1 ? e.touches[0].clientX : null; y0 = e.touches[0].clientY; bouge = false; }, { passive: true });
+  /* 21/11 soir (Marie : « on peut faire plus joli pour la glissade ») : le texte « Du … au … » et la journée en dessous suivent aussi le doigt
+     (plus doucement, ils s'effacent), puis la nouvelle semaine arrive du bon côté (gestes-2111.js) ; un petit coup rapide suffit. */
+  let t0 = 0; const suiveurs = () => [E.querySelector(".vue.on .nav-sem span"), E.querySelector(".vue.on .pap")].filter(Boolean);
+  E.addEventListener("touchstart", e => { const z = !enCours && e.target.closest && e.target.closest(".semaine,.nav-sem"); x0 = z && e.touches.length === 1 ? e.touches[0].clientX : null; y0 = e.touches[0].clientY; bouge = false; t0 = Date.now(); }, { passive: true });
   E.addEventListener("touchmove", e => { if (x0 == null) return; const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
     if (!bouge) { if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; if (Math.abs(dy) >= Math.abs(dx)) { x0 = null; return; } bouge = true; }
     if (e.cancelable) e.preventDefault();
-    const s = E.querySelector(".vue.on .semaine"); if (s) { prepare(s); s.classList.add("suit"); s.style.transform = `translateX(${dx}px)`; } }, { passive: false });
+    const s = E.querySelector(".vue.on .semaine"); if (s) { prepare(s); s.classList.add("suit"); s.style.transform = `translateX(${dx}px)`; }
+    suiveurs().forEach((el, i) => { el.style.transition = "none"; el.style.transform = `translateX(${dx * (i ? .12 : .45)}px)`; el.style.opacity = Math.max(i ? .35 : 0, 1 - Math.abs(dx) / (i ? 420 : 150)); }); }, { passive: false });
   const fin = async e => { if (x0 == null || !bouge) { x0 = null; return; } const dx = e.changedTouches[0].clientX - x0; x0 = null; bouge = false; window.__semAvale = Date.now();
     const s = E.querySelector(".vue.on .semaine"); if (!s) return;
     s.classList.remove("suit"); s.classList.add("glisse");
-    if (e.type === "touchcancel" || Math.abs(dx) < 45) { s.style.transform = ""; setTimeout(() => posee(s), 300); return; }   /* pas assez loin : elle revient */
+    const sv = suiveurs(), vite = Math.abs(dx) > 18 && Date.now() - t0 < 250;
+    if (e.type === "touchcancel" || (Math.abs(dx) < 45 && !vite)) { s.style.transform = ""; sv.forEach(el => { el.style.transition = "transform .3s cubic-bezier(.22,1,.36,1),opacity .3s"; el.style.transform = ""; el.style.opacity = ""; }); setTimeout(() => posee(s), 340); return; }   /* pas assez loin : elle revient */
     const d = dx < 0 ? 1 : -1; enCours = true; s.style.transform = `translateX(calc(${-d * 100}% - ${d * ECART}px))`;
+    sv.forEach((el, i) => { el.style.transition = "transform .22s cubic-bezier(.4,0,1,1),opacity .2s"; el.style.transform = `translateX(${-d * (i ? 30 : 60)}px)`; el.style.opacity = "0"; });
+    window.__semArr = { t: Date.now(), d };
     S.lundi = plusJours(S.lundi, 7 * d); S.jour = plusJours(S.jour, 7 * d);
-    try { await Promise.all([chargeSemaine(), new Promise(r => setTimeout(r, 290))]); } catch (x) {}
+    try { await Promise.all([chargeSemaine(), new Promise(r => setTimeout(r, 340))]); } catch (x) {}
     rendu(); enCours = false; const n = E.querySelector(".vue.on .semaine"); if (n) posee(n); };
   E.addEventListener("touchend", fin, { passive: true }); E.addEventListener("touchcancel", fin, { passive: true });
 })();
