@@ -195,8 +195,10 @@
   new MutationObserver(() => document.querySelectorAll('.vue[data-p="re"] .ligne').forEach(l => { if (l.querySelector(".s5-ic")) return; const t = l.querySelector(".t"); if (!t || !t.firstChild) return; const i = IC.find(x => (t.firstChild.textContent || "").trim().indexOf(x[0]) === 0); if (i) l.insertAdjacentHTML("afterbegin", sv(i[1])); })).observe(document.body, { childList: true, subtree: true });
 
   /* 4 · ajouter plusieurs clientes d'un coup */
+  /* 21/11 (Marie) : une majuscule au début de chaque mot, même si on l'a oubliée */
+  const maj = s => String(s || "").replace(/(^|[\s'’-])(\p{Ll})/gu, (x, a, b) => a + b.toUpperCase());
   const lis = t => t.split(/\n+/).map(l => l.trim()).filter(Boolean).map(l => { const m = l.match(/(\+?\d[\d .\-]{7,}\d)\s*$/), tel = m ? m[1].replace(/[.\-]/g, " ").replace(/\s+/g, " ").trim() : null, nom = (m ? l.slice(0, m.index) : l).replace(/[;,\t]+/g, " ").trim().split(/\s+/).filter(Boolean);
-    return nom.length ? { prenom: nom[0], nom: nom.slice(1).join(" ") || null, telephone: tel } : null; }).filter(Boolean);
+    return nom.length ? { prenom: maj(nom[0]), nom: maj(nom.slice(1).join(" ")) || null, telephone: tel } : null; }).filter(Boolean);
   /* les fichiers : une fiche contact de l'iPhone (.vcf) ou un tableau (.csv, Excel « enregistrer en CSV ») */
   const deVcf = t => t.replace(/\r?\n[ \t]/g, "").split(/BEGIN:VCARD/i).slice(1).map(c => { const v = k => { const m = c.match(new RegExp("^" + k + "(?:;[^:\\n]*)?:(.*)$", "im")); return m ? m[1].trim() : ""; };
       const n = v("N").split(";"), fn = v("FN"), tel = v("TEL"); let prenom = (n[1] || "").trim(), nom = (n[0] || "").trim(); if (!prenom && fn) { const w = fn.split(/\s+/); prenom = w.shift(); nom = w.join(" "); }
@@ -204,20 +206,23 @@
   const deCsv = t => { const L = t.split(/\r?\n/).filter(x => x.trim()), sep = (L[0] || "").split(";").length > (L[0] || "").split(",").length ? ";" : ",", cols = L.map(l => l.split(sep).map(x => x.replace(/^"|"$/g, "").trim()));
       const h = (cols[0] || []).map(x => x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")), i = r => h.findIndex(x => r.test(x)), ip = i(/prenom|first/), inn = i(/^nom|last|family/), it = i(/tel|phone|mobile|portable/), entete = ip >= 0 || inn >= 0 || it >= 0;
       return (entete ? cols.slice(1) : cols).map(c => entete ? [c[ip] || "", c[inn] || "", c[it] || ""].join(" ").trim() : c.join(" ").trim()).filter(Boolean).join("\n"); };
-  const feuillePlusieurs = () => ouvre(`<h3>Importer mes clientes</h3><div class="sous">Pour ne pas tout retaper quand tu commences.</div>
+  /* 21/11 (Marie) : ce qu'elle a écrit dans « Importer » est gardé (fenêtre fermée, appli quittée pour Insta…) jusqu'à « Ajouter » */
+  const BR = "loginail-import-brouillon", brLit = () => { try { return localStorage.getItem(BR) || ""; } catch (e) { return ""; } }, brEcrit = v => { try { v ? localStorage.setItem(BR, v) : localStorage.removeItem(BR); } catch (e) {} };
+  const feuillePlusieurs = () => { pl0(); const z = E.querySelector("#s5-liste"); if (z && brLit()) { z.value = brLit(); z.dispatchEvent(new Event("input", { bubbles: true })); } };
+  const pl0 = () => ouvre(`<h3>Importer mes clientes</h3><div class="sous">Pour ne pas tout retaper quand tu commences.</div>
       <label class="btn" style="display:block;margin-top:16px;text-align:center;cursor:pointer">Choisir un fichier<input type="file" id="s5-fic" accept=".vcf,.csv,.txt,text/vcard,text/csv,text/plain" hidden></label>
       <details style="margin-top:10px;font-size:13px;line-height:1.5;color:#6B625C"><summary style="cursor:pointer;font-weight:500;color:#1E1C1B">Comment récupérer mes clientes ?</summary>
         <p style="margin:8px 0 0"><b>Depuis les contacts de mon iPhone :</b> ouvre Contacts, touche une liste (ou crées-en une « Clientes »), reste appuyée dessus, puis « Exporter » et « Enregistrer dans Fichiers ». Reviens ici et choisis ce fichier.</p>
         <p style="margin:8px 0 0"><b>Depuis une autre appli de réservation :</b> écris à son service client et demande « l’export de mon fichier clientes ». Ce sont tes données : elle doit te les rendre. Tu reçois en général un fichier Excel : ouvre-le, « Enregistrer sous » en CSV, puis choisis-le ici.</p></details>
       <div class="lab2" style="margin-top:16px">Ou écris-les : une par ligne</div><div class="sous" style="text-align:left;margin:-2px 0 8px;font-size:12.5px">D’abord le prénom, puis le nom, puis le numéro. Le nom et le numéro ne sont pas obligatoires.</div>
-      <textarea class="msg" id="s5-liste" style="height:150px" placeholder="Prénom Nom Téléphone&#10;&#10;Par exemple :&#10;Jade Martin 06 12 34 56 78&#10;Inès Moreau&#10;Sarah"></textarea>
+      <textarea class="msg" id="s5-liste" autocapitalize="words" style="height:150px" placeholder="Prénom Nom Téléphone&#10;&#10;Par exemple :&#10;Jade Martin 06 12 34 56 78&#10;Inès Moreau&#10;Sarah"></textarea>
       <button class="btn" data-s5="pl-ok" style="margin-top:12px" disabled>Ajouter</button>`);
   document.addEventListener("change", e => { if (e.target.id !== "s5-fic") return; const f = e.target.files && e.target.files[0]; if (!f) return; const r = new FileReader();
     r.onload = () => { const t = String(r.result || ""), l = /BEGIN:VCARD/i.test(t) ? deVcf(t) : deCsv(t), z = E.querySelector("#s5-liste"); if (!l) return dit("Aucune cliente trouvée dans ce fichier"); z.value = (z.value.trim() ? z.value.trim() + "\n" : "") + l; z.dispatchEvent(new Event("input", { bubbles: true })); dit("Vérifie la liste, puis touche « Ajouter »"); };
     r.readAsText(f); });
   const cl1 = VUES.cl; VUES.cl = () => { const h = cl1(), rep = "Ajouter une cliente</button>"; return h.includes(rep) && S.clientes.length < 10 && !S.cherche.trim() ? h.replace(rep, rep + `<button class="s5-plus" data-s5="plusieurs">J’ai déjà des clientes : les importer</button>`) : h; };
   const re2 = VUES.re; VUES.re = () => { const h = re2(), rep = '<div class="k">Mes données</div><div class="liste">'; return h.includes(rep) ? h.replace(rep, rep + `<div class="ligne" data-s5="plusieurs">${sv('<path d="M12 20V9M7 13l5-5 5 5M5 4h14"/>')}<div class="t">Importer mes clientes<span>Depuis les contacts de mon téléphone ou un fichier</span></div><span class="fl">›</span></div>`) : h; };
-  document.addEventListener("input", e => { if (e.target.id !== "s5-liste") return; const n = lis(e.target.value).length, b = E.querySelector('[data-s5="pl-ok"]'); if (b) { b.disabled = !n; b.textContent = n ? `Ajouter ${n} cliente${n > 1 ? "s" : ""}` : "Ajouter"; } });
+  document.addEventListener("input", e => { if (e.target.id !== "s5-liste") return; brEcrit(e.target.value); const n = lis(e.target.value).length, b = E.querySelector('[data-s5="pl-ok"]'); if (b) { b.disabled = !n; b.textContent = n ? `Ajouter ${n} cliente${n > 1 ? "s" : ""}` : "Ajouter"; } });
 
   document.addEventListener("click", async e => { const t = e.target; if (!t.closest) return;
     /* 13/11 (iPhone) : la fenêtre « 13h · nouveau rendez-vous · bloquer » ne s'ouvre que dans l'Agenda, sur la case vraiment touchée */
@@ -235,7 +240,7 @@
     else if (k === "plusieurs") feuillePlusieurs();
     else if (k === "pl-ok") { const deja = new Set(S.clientes.map(c => nomCli(c).toLowerCase())), l = lis(E.querySelector("#s5-liste").value).filter((c, i, t) => !deja.has(nomCli(c).toLowerCase()) && t.findIndex(x => nomCli(x).toLowerCase() === nomCli(c).toLowerCase()) === i); if (!l.length) return dit("Ces clientes sont déjà dans ta liste"); a.disabled = true; a.textContent = "Un instant…";
       const { error } = await sb.from("clientes").insert(l); if (error) { a.disabled = false; a.textContent = "Ajouter"; return dit("Oups, ça n’a pas marché. Réessaie."); }
-      const { data } = await sb.from("clientes").select("*").order("prenom"); S.clientes = data || []; ferme(); rendu(); dit(l.length > 1 ? l.length + " clientes ajoutées ✓" : "Cliente ajoutée ✓"); }
+      const { data } = await sb.from("clientes").select("*").order("prenom"); S.clientes = data || []; brEcrit(""); ferme(); rendu(); dit(l.length > 1 ? l.length + " clientes ajoutées ✓" : "Cliente ajoutée ✓"); }
   }, true);
 })();
 

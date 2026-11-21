@@ -175,8 +175,11 @@
     const mois = Math.floor((now - new Date(v.der)) / (30.44 * 864e5)); if (mois >= 2) return `Dernière visite il y a ${mois} mois`;
     return n + (v.n >= FIDELE ? " · fidèle ✦" : ""); };
   const vCl = VUES.cl;
-  VUES.cl = () => { const tous = S.clientes, g = S.vFiltre && GARDE[S.vFiltre]; let h;
-    if (g) S.clientes = tous.filter(g); try { h = vCl(); } finally { S.clientes = tous; }
+  VUES.cl = () => { const tous = S.clientes, g = GARDE[S.tri]; let h;
+    if (g) { S.clientes = tous.filter(g);
+      if (S.tri === "anniv") S.clientes.sort((x, y) => String(x.anniversaire).slice(8, 10).localeCompare(String(y.anniversaire).slice(8, 10)));
+      else S.clientes.sort((x, y) => (vis(x).der || "").localeCompare(vis(y).der || "")); }
+    try { h = vCl(); } finally { S.clientes = tous; }
     const f = dom(h), te = f.querySelector(".tete");
     if (te) { const sm = te.querySelector("small"); if (sm) sm.textContent = `${tous.length} cliente${tous.length > 1 ? "s" : ""}`;
       const z = document.createElement("div"); z.className = "v-ronds"; const imp = te.querySelector('[data-s5="plusieurs"]'); if (imp) { imp.className = "v-rondb"; z.appendChild(imp); }
@@ -184,8 +187,8 @@
     [...f.children].filter(x => x.matches('.btn[data-a="cli-nouv"]')).forEach(b => b.remove());
     const lab = f.querySelector("label.cherche"), row = lab && lab.parentElement;
     if (row) { row.removeAttribute("style"); row.className = "v-cherche"; const tb = row.querySelector('[data-a="tri-menu"]'); if (tb) { tb.removeAttribute("style"); tb.className = "v-rondb" + (S.tri !== "az" ? " plein" : ""); }
-      row.insertAdjacentHTML("afterend", `<div class="v-filtres" role="tablist">${FILTRES.map(x => `<button role="tab" data-v-f="${x[0]}" aria-selected="${(S.vFiltre || "tout") === x[0]}" class="${(S.vFiltre || "tout") === x[0] ? "on" : ""}">${x[1]}</button>`).join("")}</div>`); }
-    if (g && !S.cherche.trim()) { const v = f.querySelector(".blanche.vide"); if (v) v.outerHTML = `<div class="blanche vide"><b>Personne pour l’instant</b><span>Aucune cliente dans « ${(FILTRES.find(x => x[0] === S.vFiltre) || [, ""])[1]} ».</span></div>`; }
+      }
+    if (g && !S.cherche.trim()) { const v = f.querySelector(".blanche.vide"); if (v) v.outerHTML = `<div class="blanche vide"><b>Personne pour l’instant</b><span>Aucune cliente dans « ${(TRIS.find(x => x[0] === S.tri) || [, ""])[1]} ».</span></div>`; }
     const carte = f.querySelector(".carte");
     if (carte && S.tri === "az" && !S.cherche.trim()) { const k = carte.previousElementSibling; if (k && k.classList.contains("k")) k.remove();
       const frag = document.createDocumentFragment(); let cur = null;
@@ -196,7 +199,8 @@
     else if (carte) { carte.classList.add("liste", "v-liste"); carte.removeAttribute("style"); }
     f.querySelectorAll(".cli[data-cli]").forEach(r => { const c = S.clientes.find(x => x.id === r.dataset.cli), em = r.querySelector(":scope>em");
       if (em) { em.className = "fl"; em.removeAttribute("style"); em.textContent = "›"; }
-      if (c && S.tri === "az") { const sp = r.querySelector(".t span"); if (sp) sp.textContent = info(c); } });
+      if (c && (S.tri === "az" || S.tri === "partie")) { const sp = r.querySelector(".t span"); if (sp) sp.textContent = info(c); }
+      if (c && S.tri === "anniv") { const sp = r.querySelector(".t span"), d = new Date(String(c.anniversaire).slice(0, 10) + "T12:00"); if (sp && !isNaN(d)) sp.textContent = "Anniversaire le " + d.getDate() + " " + MOIS[d.getMonth()]; } });
     enHaut(f, "cl", [te, row, f.querySelector(".v-filtres")]);
     return enTexte(f); };
   document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-v-f]"); if (!b) return; e.stopPropagation();

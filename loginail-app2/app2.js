@@ -58,6 +58,9 @@ const ouvre = h => { $(".feuille .fc", E).innerHTML = '<button class="fe-x" data
 const ecranEnPlace = () => setTimeout(() => { const a = document.activeElement; if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return; if (window.scrollX || window.scrollY) window.scrollTo(0, 0); }, 120);
 const ferme = () => { const a = document.activeElement; if (a && a.closest && a.closest(".feuille") && a.blur) a.blur(); E.classList.remove("fe"); ecranEnPlace(); };
 if (matchMedia("(pointer:coarse)").matches) document.addEventListener("focusout", ecranEnPlace);
+/* 21/11 (Marie) : quand on part sur une autre appli (Insta…) et qu'on revient, le clavier ne se rouvre plus tout seul par-dessus ce qu'on écrivait */
+document.addEventListener("visibilitychange", () => { if (document.hidden && document.activeElement && document.activeElement.blur) document.activeElement.blur(); });
+const majMots = s => String(s || "").replace(/(^|[\s'’-])(\p{Ll})/gu, (x, a, b) => a + b.toUpperCase());
 const oups = e => { console.error(e); dit("Oups, ça n’a pas marché. Réessaie."); };
 const tete = (t, s, d) => `<div class="tete"><div><small>${s || ""}</small><h1>${t}</h1></div>${d || ""}</div>`;
 
@@ -122,7 +125,8 @@ async function chargeVisites() { try { const { data } = await sb.from("rendez_vo
     (data || []).forEach(r => { if (!r.cliente_id || r.statut === "annule" || r.statut === "absente") return; const v = m[r.cliente_id] || (m[r.cliente_id] = { n: 0, der: "", proch: "" });
       if (r.fin < n || r.statut === "fini") { v.n++; if (r.debut > v.der) v.der = r.debut; } else if (!v.proch || r.debut < v.proch) v.proch = r.debut; });
     S.vis = m; if (S.onglet === "cl" && E.querySelector(".ong") && !E.querySelector(".feuille.on,.voile.on")) rendu(); } catch (e) {} }
-const TRIS = [["az", "A à Z"], ["vues", "Vues récemment"], ["proch", "Prochain rendez-vous"], ["neuves", "Ajoutées récemment"]];
+/* 21/11 (Marie) : « Pas venues depuis 2 mois » et « Anniversaire ce mois » sont dans le rond (plus de rangée de pilules) */
+const TRIS = [["az", "A à Z"], ["vues", "Vues récemment"], ["proch", "Prochain rendez-vous"], ["neuves", "Ajoutées récemment"], ["partie", "Pas venues depuis 2 mois"], ["anniv", "Anniversaire ce mois"]];
 const MOISC = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."], jourCourt = d => { const x = new Date(d); return x.getDate() + " " + MOISC[x.getMonth()]; };
 /* 17/11 : les créneaux annulés que la pro a supprimés, en attente que l'e-mail de la cliente parte (voir « rdv-suppr ») */
 const SUPP = (() => { try { return JSON.parse(localStorage.getItem("loginail-a-suppr") || "{}"); } catch (e) { return {}; } })();
@@ -305,7 +309,7 @@ function feuilleCliente(id) {
   const c = id ? S.clientes.find(x => x.id === id) || {} : {};
   const w = id && (S.vis || {})[id];
   ouvre(`<h3>${id ? esc(nomCli(c)) : "Nouvelle cliente"}</h3>${w && (w.n || w.proch) ? `<div class="sous" style="text-align:left;margin:4px 0 0">${w.n ? w.n + " visite" + (w.n > 1 ? "s" : "") + (w.der ? " · dernière le " + jourCourt(w.der) : "") : "Pas encore venue"}${w.proch ? " · prochain rendez-vous le " + jourCourt(w.proch) : ""}</div>` : ""}<div class="form" style="margin-top:12px">
-    <label>Prénom<input id="c-p" value="${esc(c.prenom)}" autocomplete="off"></label><label>Nom<input id="c-n" value="${esc(c.nom)}" autocomplete="off"></label>
+    <label>Prénom<input id="c-p" value="${esc(c.prenom)}" autocomplete="off" autocapitalize="words"></label><label>Nom<input id="c-n" value="${esc(c.nom)}" autocomplete="off" autocapitalize="words"></label>
     <label>Téléphone<input id="c-t" value="${esc(c.telephone)}" inputmode="tel"></label><label>E-mail<input id="c-e" value="${esc(c.email)}" inputmode="email"></label>
     <label>Anniversaire <small>facultatif</small><input id="c-a" type="date" value="${esc(c.anniversaire || "")}"></label></div>
     <label style="display:flex;align-items:center;gap:10px;margin:12px 2px 0;font-size:13.5px;text-align:left"><input id="c-oka" type="checkbox" ${c.ok_sms_anniv ? "checked" : ""} style="width:20px;height:20px;flex:none">Lui envoyer un SMS pour son anniversaire (elle est d’accord)</label>
@@ -493,7 +497,7 @@ E.addEventListener("click", async ev => {
       const { error } = await sb.from("rendez_vous").update({ debut: deb.toISOString(), fin: fin.toISOString() }).eq("id", r.id); if (error) { a.disabled = false; return oups(error); }
       await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit("Rendez-vous décalé ✓"); }
     else if (k === "cli-nouv") feuilleCliente(null);
-    else if (k === "cli-ok") { const v = { prenom: $("#c-p", E).value.trim(), nom: $("#c-n", E).value.trim() || null, telephone: $("#c-t", E).value.trim() || null, email: $("#c-e", E).value.trim() || null, anniversaire: $("#c-a", E).value || null, notes: $("#c-no", E).value.trim() || null, ok_sms_anniv: !!($("#c-oka", E) && $("#c-oka", E).checked) };
+    else if (k === "cli-ok") { const v = { prenom: majMots($("#c-p", E).value.trim()), nom: majMots($("#c-n", E).value.trim()) || null, telephone: $("#c-t", E).value.trim() || null, email: $("#c-e", E).value.trim() || null, anniversaire: $("#c-a", E).value || null, notes: $("#c-no", E).value.trim() || null, ok_sms_anniv: !!($("#c-oka", E) && $("#c-oka", E).checked) };
       if (!v.prenom) return dit("Écris au moins le prénom"); const id = a.dataset.id;
       const { error } = id ? await sb.from("clientes").update(v).eq("id", id) : await sb.from("clientes").insert(v); if (error) return oups(error);
       const { data } = await sb.from("clientes").select("*").order("prenom"); S.clientes = data || []; rendu(); if (id) feuilleCliente(id); else ferme(); dit("C’est enregistré ✓"); }
