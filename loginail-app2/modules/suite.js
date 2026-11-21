@@ -360,9 +360,9 @@
   const st = document.createElement("style");
   st.textContent = `.ecran input[type=time],.ecran input[type=date]{-webkit-appearance:none!important;appearance:none!important;height:52px!important;min-height:52px;line-height:52px!important;padding-top:0!important;padding-bottom:0!important;box-sizing:border-box}
 .ecran input[type=time]::-webkit-date-and-time-value,.ecran input[type=date]::-webkit-date-and-time-value{text-align:left;line-height:52px;margin:0;min-height:52px}
-.n-sug{display:flex;flex-direction:column;gap:6px;margin-top:6px}.n-sug:empty{display:none}
-.n-sug button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:#fff;border-radius:14px;padding:10px 12px;font:inherit;font-size:14.5px;text-align:left;color:inherit}
-.n-sug button i{flex:none;width:30px;height:30px;border-radius:50%;background:#EFE9E2;display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:500}
+.n-sug{display:flex;flex-direction:column;gap:4px;margin-top:6px}.n-sug:empty{display:none}
+.n-sug button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:#fff;border-radius:12px;padding:7px 10px;font:inherit;font-size:14px;text-align:left;color:inherit}
+.n-sug button i{flex:none;width:26px;height:26px;border-radius:50%;background:#EFE9E2;display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:500}
 .n-sug button span{margin-left:auto;font-size:12px;opacity:.5}
 .acc-plus{display:block;width:100%;border:0;background:none;padding:12px 0 4px;font:inherit;font-size:13.5px;text-decoration:underline;text-underline-offset:3px;color:#6B625C}
 .anv{display:flex;align-items:center;gap:12px;background:#fff;border-radius:20px;padding:12px 14px;margin:0 0 10px}
@@ -381,11 +381,13 @@
   /* la cliente : on tape A → toutes celles dont le prénom ou le nom commence par A */
   const propose = () => { const inp = E.querySelector("#n-cli"), z = E.querySelector("#n-sug"); if (!inp || !z) return; const q = sansAcc(inp.value);
     if (!q) { z.innerHTML = ""; return; }
-    const l = S.clientes.filter(c => { const n = sansAcc(nomCli(c)); return n.startsWith(q) || sansAcc(c.prenom).startsWith(q) || sansAcc(c.nom).startsWith(q); })
+    /* 22/11 (Marie, iPhone : « une lettre au pif, ça m'a ouvert la page en super grand ») : avec UNE lettre, seulement les prénoms ;
+       4 lignes au plus, petites, dans une boîte qui défile : la fenêtre ne grandit plus d'un coup */
+    const l = S.clientes.filter(c => { const n = sansAcc(nomCli(c)); return q.length < 2 ? sansAcc(String(c.prenom || "").replace(/^@+/, "")).startsWith(q) : n.startsWith(q) || sansAcc(c.prenom).startsWith(q) || sansAcc(c.nom).startsWith(q); })
       .sort((a, b) => (sansAcc(b.prenom).startsWith(q) - sansAcc(a.prenom).startsWith(q)) || nomCli(a).localeCompare(nomCli(b), "fr"));
     if (l.length === 1 && sansAcc(nomCli(l[0])) === q) { z.innerHTML = ""; return; }
-    z.innerHTML = l.slice(0, 8).map(c => `<button type="button" data-su="n-pick" data-n="${esc(nomCli(c))}"><i>${esc(((c.prenom || "")[0] || "") + ((c.nom || "")[0] || "")).toUpperCase()}</i>${esc(nomCli(c))}${c.telephone ? `<span>${esc(c.telephone)}</span>` : ""}</button>`).join("")
-      + (l.length > 8 ? `<div class="sous" style="font-size:12px">+ ${l.length - 8} autres : tape la suite du prénom</div>` : "")
+    z.innerHTML = l.slice(0, 4).map(c => `<button type="button" data-su="n-pick" data-n="${esc(nomCli(c))}"><i>${esc(((c.prenom || "")[0] || "") + ((c.nom || "")[0] || "")).toUpperCase()}</i>${esc(nomCli(c))}${c.telephone ? `<span>${esc(c.telephone)}</span>` : ""}</button>`).join("")
+      + (l.length > 4 ? `<div class="sous" style="font-size:12px;margin:2px 0 0">+ ${l.length - 4} autre${l.length - 4 > 1 ? "s" : ""} : tape la suite du prénom</div>` : "")
       + (!l.length ? `<div class="sous" style="font-size:12.5px;text-align:left">Aucune cliente à ce nom : elle sera créée.</div>` : ""); };
   document.addEventListener("input", e => { if (e.target.id === "n-cli") propose(); });
   /* l'accueil : les anniversaires du jour, au-dessus de « Aujourd'hui » */
