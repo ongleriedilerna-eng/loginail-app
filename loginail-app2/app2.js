@@ -319,13 +319,38 @@ let N = {};
 function feuilleNouveau(m) {   /* 17/11 (Marie) : d'abord la cliente, puis la prestation, puis l'heure */
   const j = new Date(S.jour); j.setHours(0, 0, 0, 0); N = { jour: j, m: m ?? 9 * 60, cli: null, presta: null };
   const P = prestasDispo();
-  ouvre(`<h3>Nouveau rendez-vous</h3><div class="sous">${JOURS[(j.getDay() + 6) % 7]} ${j.getDate()} ${MOIS[j.getMonth()]}</div>
-    <div class="lab2">Cliente</div><div style="display:flex;gap:8px;align-items:center"><input class="champ" id="n-cli" placeholder="Tape la 1re lettre : A, B, C…" autocomplete="off" autocapitalize="words" style="flex:1;min-width:0;margin:0"><button class="n-plus" data-a="n-neuve" id="n-neuve" aria-label="Nouvelle cliente"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="8" r="3.4"/><path d="M3.8 19c.6-3.4 3.2-5.4 6.2-5.4s5.6 2 6.2 5.4"/><path d="M19 8v6M16 11h6"/></svg></button></div><div id="n-sug" class="n-sug"></div><datalist id="n-cl">${S.clientes.map(c => `<option value="${esc(nomCli(c))}">`).join("")}</datalist>
+  /* 22/11 (Marie, version A choisie) : fenêtre plus petite. Date et heure en 2 pastilles sous le titre (l'heure s'ouvre en touchant la pastille),
+     les prestations sur une seule ligne qui glisse, le bouton dit l'heure de fin. */
+  const hh = `${String(Math.floor(N.m / 60)).padStart(2, "0")}:${String(N.m % 60).padStart(2, "0")}`;
+  ouvre(`<div class="n-tete"><h3>Nouveau rendez-vous</h3><div class="n-ph"><span class="n-p"><svg viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg>${COURT[(j.getDay() + 6) % 7]}. ${j.getDate()} ${MOISC[j.getMonth()]}</span><label class="n-p n-ph-h"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span id="n-h-t">${hh.replace(/^0/, "")}</span><input id="n-h" type="time" value="${hh}" step="900" aria-label="Heure"></label></div></div>
+    <div style="display:flex;gap:8px;align-items:center"><input class="champ" id="n-cli" placeholder="Tape la 1re lettre : A, B, C…" autocomplete="off" autocapitalize="words" style="flex:1;min-width:0;margin:0"><button class="n-plus" data-a="n-neuve" id="n-neuve" aria-label="Nouvelle cliente"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="8" r="3.4"/><path d="M3.8 19c.6-3.4 3.2-5.4 6.2-5.4s5.6 2 6.2 5.4"/><path d="M19 8v6M16 11h6"/></svg></button></div><div id="n-sug" class="n-sug"></div><datalist id="n-cl">${S.clientes.map(c => `<option value="${esc(nomCli(c))}">`).join("")}</datalist>
     <div id="n-neuve-z" hidden><div class="lab2">Son téléphone <small style="text-transform:none;letter-spacing:0;opacity:.6">facultatif</small></div><input class="champ" id="n-tel" inputmode="tel" placeholder="06 12 34 56 78" autocomplete="off"></div>
-    <div class="lab2">Prestation</div><div class="chips">${P.map((p, i) => `<button class="chip" data-np="${i}">${esc(p.nom)}<span>${duree(p.duree || 60)}</span></button>`).join("") || '<span class="sous">Ajoute tes prestations dans Réglages</span>'}</div>
-    <div class="lab2">Heure</div><input class="champ" id="n-h" type="time" value="${String(Math.floor(N.m / 60)).padStart(2, "0")}:${String(N.m % 60).padStart(2, "0")}" step="900" style="font-size:16px;width:100%;min-width:0;max-width:100%;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block;text-align:left">
+    <div class="lab2">Prestation</div><div class="chips n-glisse">${P.map((p, i) => `<button class="chip" data-np="${i}">${esc(p.nom)}<span>${duree(p.duree || 60)}</span></button>`).join("") || '<span class="sous">Ajoute tes prestations dans Réglages</span>'}</div>
     <button class="btn" data-a="nouveau-ok" style="margin-top:16px">Enregistrer</button>`);
+  nFin();
 }
+/* l'heure dans la pastille et l'heure de fin dans le bouton « Enregistrer · 12:00 – 13:30 » */
+function nFin() {
+  const i = document.getElementById("n-h"), t = document.getElementById("n-h-t"), b = document.querySelector('.fc [data-a="nouveau-ok"]'); if (!i || !b) return;
+  const [h, m] = (i.value || "09:00").split(":").map(Number), deb = h * 60 + m, f = deb + ((N.presta && N.presta.duree) || 0), hx = x => Math.floor(x / 60) % 24 + ":" + String(x % 60).padStart(2, "0");
+  if (t) t.textContent = hx(deb);
+  b.innerHTML = N.presta ? `Enregistrer <span style="opacity:.6;font-size:.9em">· ${hx(deb)} – ${hx(f)}</span>` : "Enregistrer";
+}
+document.addEventListener("input", e => { if (e.target.id === "n-h") nFin(); });
+document.addEventListener("change", e => { if (e.target.id === "n-h") nFin(); });
+{ const st = document.createElement("style"); st.textContent = `
+.n-tete h3{text-align:left;margin:0 44px 8px 0;font-size:26px}
+.n-ph{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.n-p{position:relative;height:34px;padding:0 13px;border-radius:999px;background:#fff;border:1px solid rgba(30,28,27,.12);display:inline-flex;align-items:center;gap:6px;font-size:14px;color:inherit;white-space:nowrap}
+.n-p svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;flex:none}
+.n-ph-h{cursor:pointer;transition:transform .12s}.n-ph-h:active{transform:scale(.96)}
+.n-ph-h input{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;margin:0;padding:0;font-size:16px;-webkit-appearance:none;appearance:none;cursor:pointer}
+.fc .chips.n-glisse{display:flex!important;flex-wrap:nowrap;gap:7px;overflow-x:auto;scrollbar-width:none;margin:0 -24px;padding:0 24px 2px;scroll-padding:0 24px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;-webkit-mask:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 36px),transparent);mask:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 36px),transparent)}
+.feuille:has(.n-tete){padding-bottom:calc(env(safe-area-inset-bottom,0px) + 22px)!important}
+.fc .chips.n-glisse::-webkit-scrollbar{display:none}
+.fc .chips.n-glisse .chip{flex:none;width:auto!important;min-height:50px;max-width:200px;scroll-snap-align:start;transition:background .18s,color .18s,transform .12s}
+.fc .chips.n-glisse .chip:active{transform:scale(.96)}
+.fc .chips.n-glisse + .rv-tot:empty{display:none}`; document.head.appendChild(st); }
 function feuilleCliente(id) {
   const c = id ? S.clientes.find(x => x.id === id) || {} : {};
   const w = id && (S.vis || {})[id];
@@ -455,7 +480,7 @@ E.addEventListener("click", async ev => {
   const jr = t.closest("[data-jour]"); if (jr) { S.jour = new Date(jr.dataset.jour); rendu(); return; }
   const rd = t.closest("[data-rdv]"); if (rd) return feuilleRdv(rd.dataset.rdv);
   const cl = t.closest("[data-cli]"); if (cl) return feuilleCliente(cl.dataset.cli);
-  const np = t.closest("[data-np]"); if (np) { np.parentElement.querySelectorAll(".chip").forEach(b => b.classList.toggle("on", b === np)); N.presta = prestasDispo()[+np.dataset.np]; return; }
+  const np = t.closest("[data-np]"); if (np) { np.parentElement.querySelectorAll(".chip").forEach(b => b.classList.toggle("on", b === np)); N.presta = prestasDispo()[+np.dataset.np]; nFin(); return; }
   const nd = t.closest("[data-nd]"); if (nd) { nd.parentElement.querySelectorAll(".chip").forEach(b => b.classList.toggle("on", b === nd)); return; }
   const km = t.closest("[data-km]"); if (km) { km.parentElement.querySelectorAll(".chip").forEach(b => b.classList.toggle("on", b === km)); K.moyen = km.dataset.km; return; }
   const ke = t.closest("[data-ke]"); if (ke) { ke.parentElement.querySelectorAll("button").forEach(b => b.classList.toggle("on", b === ke)); K.envoi = ke.dataset.ke; return; }
