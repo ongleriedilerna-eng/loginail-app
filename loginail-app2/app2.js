@@ -179,7 +179,7 @@ const prixDe = v => { if (v == null || String(v).trim() === "") return null; con
 const listeUnique = () => !!(S.site && S.site.donnees && S.site.donnees.nom);
 const prestasDuSite = () => { if (!listeUnique()) return []; const b = brouillon(); return (b && b.nom ? b : S.site.donnees).prestations || []; };
 const prestasDispo = () => { const l = prestasDuSite();
-  if (!l.length) return S.prestations.map(p => ({ id: p.id, nom: p.nom, duree: p.duree_min, prix: prixDe(p.prix) }));
+  if (!listeUnique()) return S.prestations.map(p => ({ id: p.id, nom: p.nom, duree: p.duree_min, prix: prixDe(p.prix) }));
   return l.map(p => ({ id: (S.prestations.find(x => x.nom === p.nom) || {}).id || null, nom: p.nom, duree: +p.duree || 60, prix: prixDe(p.prix) })); };
 const titreRdv = r => (r.clientes && r.titre) || r.prestations?.nom || "";   /* 13/11 : titre = « Pose gel + Nail art » quand il y a plusieurs prestations */
 const nomRdv = r => r.clientes ? nomCli(r.clientes) : (r.titre || "Bloqué");
