@@ -712,7 +712,7 @@ h3 .lap{font-size:11px;vertical-align:4px}
 
 /* ===== 19/11 (Marie) : « Annuler le rendez-vous » demande d'abord « Voulez-vous vraiment annuler ? » (un toucher par erreur prévenait la cliente).
    La question remplace les petits boutons, dans la même fiche ; « Oui, annuler » fait exactement l'annulation d'avant.
-   22/11 (Marie) : rendez-vous à venir avec une cliente → « Qui annule ? Moi / Ma cliente ». « Ma cliente » = elle a prévenu le salon (annule_par 'cliente_salon', sql/29) :
+   22/11 (Marie) : rendez-vous à venir avec une cliente → « Annuler le rendez-vous de X ? » + ce qui part, puis « Oui, c’est moi qui annule » / « Oui, c’est elle qui me l’a demandé » = elle a prévenu le salon (annule_par 'cliente_salon', sql/29) :
    son e-mail dit « à votre demande », plus « le salon a dû annuler ». ===== */
 (function () {
   const st = document.createElement("style");
@@ -720,6 +720,8 @@ h3 .lap{font-size:11px;vertical-align:4px}
 .an-conf b{display:block;font-weight:500;font-size:16px;color:#1E1C1B}.an-conf span{display:block;font-size:13px;color:#6B625C;margin-top:4px;line-height:1.4}
 .an-conf .an-bts{display:flex;gap:8px;margin-top:14px}.an-conf .an-bts button{flex:1;border:0;border-radius:99px;padding:13px 10px;font:inherit;font-size:14px}
 .an-conf .an-bts+.an-bts{margin-top:8px}
+.an-conf .an-bts.an-col{flex-direction:column;gap:8px}.an-conf .an-bts.an-col button{flex:none;width:100%}
+.an-conf span .an-sans{color:#A04A4A;font-weight:500}
 .an-conf .an-oui{background:#A04A4A;color:#fff}.an-conf .an-non{background:#F3EEE9;color:#1E1C1B}
 @keyframes anConf{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}`;
   document.head.appendChild(st);
@@ -730,12 +732,12 @@ h3 .lap{font-size:11px;vertical-align:4px}
       const d = r ? new Date(r.debut) : null, quand = d ? `${d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} à ${hm(d)}` : "";
       const futur = d && d > new Date(), mail = c && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((c.email || "").trim());
       const p = (c && String(c.prenom || "").trim()) || "", de = !p ? "de cette cliente" : /^[aeiouyhàâéèêëîïôöùûü]/i.test(p) ? `d’${p}` : `de ${p}`;
-      const qui = c && futur, titre = qui ? `Qui annule le rendez-vous ${esc(de)} ?` : c ? `Annuler le rendez-vous ${esc(de)} ?` : "Rouvrir ce créneau ?";
-      const info = !c ? esc(quand) : `${esc(quand)}${futur ? (mail ? "<br>L’e-mail qu’elle recevra dira qui a annulé." : "<br>Pense à la prévenir (pas d’e-mail).") : ""}`;
+      const qui = c && futur, titre = c ? `Annuler le rendez-vous ${esc(de)}&nbsp;?` : "Rouvrir ce créneau ?";
+      const info = !c ? esc(quand) : `${esc(quand)}${futur ? (mail ? "<br>Si tu l’annules, elle recevra un e-mail pour la prévenir." : '<br><strong class="an-sans">Pas d’e-mail dans sa fiche : préviens-la toi-même.</strong>') : ""}`;
       const oui = (mot, par) => `<button class="an-oui" data-a="statut" data-s="annule" data-ok="1" data-par="${par}" data-id="${b.dataset.id}">${mot}</button>`;
       const z = b.closest(".petits") || b; z.style.display = "none";
       z.insertAdjacentHTML("afterend", `<div class="an-conf"><b>${titre}</b><span>${info}</span>${qui
-        ? `<div class="an-bts">${oui("Moi", "pro")}${oui("Ma cliente", "cliente_salon")}</div><div class="an-bts"><button class="an-non" data-an="non">Non, le garder</button></div>`
+        ? `<div class="an-bts an-col">${oui("Oui, c’est moi qui annule", "pro")}${oui("Oui, c’est elle qui me l’a demandé", "cliente_salon")}</div><div class="an-bts"><button class="an-non" data-an="non">Non, le garder</button></div>`
         : `<div class="an-bts"><button class="an-non" data-an="non">Non, le garder</button>${oui("Oui, annuler", "pro")}</div>`}</div>`);
       /* petit iPhone : la fiche descend pour montrer la question en entier */
       const f = z.closest(".feuille"), q = z.nextElementSibling;

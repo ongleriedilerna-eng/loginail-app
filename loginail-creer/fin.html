@@ -26,36 +26,43 @@ p{margin:12px 0 0;font:300 15px/1.6 Jost,sans-serif;color:var(--muted)}
 .recap div{display:flex;gap:12px;align-items:baseline;font:300 15px Jost,sans-serif}
 .recap div::before{content:"";flex:none;width:12px;height:7px;border-left:1.4px solid;border-bottom:1.4px solid;transform:rotate(-45deg) translateY(-3px)}
 .go{display:block;width:100%;border:0;border-radius:999px;padding:18px;background:var(--noir);color:var(--fond);font:500 13px Jost,sans-serif;letter-spacing:.2em;text-align:center;text-decoration:none;cursor:pointer}
-.attente{width:42px;height:42px;margin:0 auto 22px;border:1.4px solid rgba(30,28,27,.15);border-top-color:var(--noir);border-radius:50%;animation:tourne 1s linear infinite}
-@keyframes tourne{to{transform:rotate(360deg)}}
 /* écran « Tout est prêt » (D69) */
 @font-face{font-family:'Abril Fatface';src:url(../loginail-site/polices/AbrilFatface-400-latin.woff2) format('woff2')}
-#pret{align-items:center;padding-bottom:5vh;--rose:#B5475E;--rosé:#F7E9EA;--doux:#8A817A;--pop:cubic-bezier(.3,1.5,.5,1)}
+#pret{align-items:center;justify-content:flex-start;padding-top:max(0px,calc((100dvh - 520px)/2));--rose:#B5475E;--rosé:#F7E9EA;--doux:#8A817A;--pop:cubic-bezier(.3,1.5,.5,1)}
 .etape{margin:0 0 14px;font:400 13px Jost,sans-serif;color:var(--doux);animation:monte .5s both}
-#pret h1{font:400 clamp(40px,11vw,48px)/1.02 'Abril Fatface',serif;letter-spacing:-.01em;animation:monte .5s .08s both}
+#pret h1{white-space:nowrap;font:400 clamp(30px,11vw,48px)/1.02 'Abril Fatface',serif;letter-spacing:-.01em;animation:monte .5s .08s both}
 #pret h1 em{font-style:normal;color:#B03562;position:relative}
 #pret h1 .st{position:absolute;right:-.42em;top:-.08em;font-size:.36em;color:#E99AB6;animation:scint 2.6s ease-in-out infinite}
-.sous{margin:14px auto 0;max-width:30ch;font:400 16px/1.5 Jost,sans-serif;color:#5F5751;animation:monte .5s .16s both}
-.pastilles{margin-top:24px;display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.sous{margin:14px auto 0;min-height:3em;max-width:30ch;font:400 16px/1.5 Jost,sans-serif;color:#5F5751;animation:monte .5s .16s both}
+.pastilles{margin-top:24px;min-height:92px;align-content:flex-start;display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
 .pastille{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px 0 10px;border-radius:999px;background:#fff;border:1px solid rgba(30,28,27,.1);font:400 15px Jost,sans-serif;
-  opacity:0;transform:scale(.85);animation:pose .45s var(--pop) forwards}
+  color:var(--doux);opacity:0;transform:scale(.85);animation:pose .3s var(--pop) forwards;transition:color .2s}
+.pastille.ok{color:var(--noir)}
 .pastille i{width:22px;height:22px;border-radius:50%;background:var(--rosé);display:grid;place-items:center;flex:none}
-.pastille i svg{width:12px;height:12px;stroke:var(--rose);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:20;stroke-dashoffset:20;animation:coche .3s ease-out forwards;animation-delay:inherit}
-.ouvre{margin-top:26px;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:58px;border-radius:999px;background:var(--noir);color:var(--fond);font:500 17px Jost,sans-serif;text-decoration:none;cursor:pointer;animation:monte .5s 1s both;transition:transform .15s}
+.pastille i svg{width:12px;height:12px;stroke:var(--rose);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:20;stroke-dashoffset:20}
+.pastille.ok i svg{animation:coche .3s ease-out forwards}
+.ouvre{margin-top:26px;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:58px;border-radius:999px;background:var(--noir);color:var(--fond);font:500 17px Jost,sans-serif;text-decoration:none;cursor:pointer;animation:monte .4s both;transition:transform .15s}
 .ouvre:active{transform:scale(.97)}
 .ouvre svg{width:16px;height:16px;stroke:currentColor;stroke-width:1.8;fill:none}
-.cadeau{margin-top:22px;display:inline-flex;align-items:center;gap:12px;padding:10px 18px 10px 10px;background:#fff;border-radius:18px;transform:rotate(-3deg);box-shadow:0 14px 30px -16px rgba(30,28,27,.35);text-align:left;animation:monte .5s 1.1s both}
+.cadeau{margin-top:22px;display:inline-flex;align-items:center;gap:12px;padding:10px 18px 10px 10px;background:#fff;border-radius:18px;transform:rotate(-3deg);box-shadow:0 14px 30px -16px rgba(30,28,27,.35);text-align:left;animation:monte .4s .12s both}
 .cadeau i{width:42px;height:42px;border-radius:12px;background:var(--rosé);display:grid;place-items:center;font-style:normal}
 .cadeau b{display:block;font:600 15px Jost,sans-serif}.cadeau span{font:400 12px Jost,sans-serif;color:var(--doux)}
+/* D81 : « Presque prêt… » et « Tout est prêt » = le MÊME écran, rien ne bouge ; les pastilles se cochent quand c'est vraiment rangé */
+.points{position:absolute;left:100%}
+.points b{font-weight:400;color:var(--noir);animation:scint 1s infinite}.points b:nth-child(2){animation-delay:.2s}.points b:nth-child(3){animation-delay:.4s}
+#pret:not(.charge) .points,#pret.charge .fini{display:none}
+#pret.charge .ouvre,#pret.charge .cadeau{visibility:hidden;animation:none}
 .etoile{position:absolute;color:#E99AB6;pointer-events:none;animation:scint 3s ease-in-out infinite}
 @keyframes monte{from{opacity:0;transform:translateY(12px)}}
 @keyframes pose{to{opacity:1;transform:none}}
 @keyframes coche{to{stroke-dashoffset:0}}
 @keyframes scint{0%,100%{opacity:.25;transform:scale(.6)}50%{opacity:1;transform:scale(1.1)}}
+@media (max-height:600px){#pret{padding-top:0}#pret .sous{margin-top:8px}.pastilles{margin-top:12px}.ouvre{margin-top:14px;flex:none}.cadeau{margin-top:12px}}
 @media (prefers-reduced-motion:reduce){#pret *{animation-duration:.01s!important;animation-delay:0s!important;animation-iteration-count:1!important}}
 [hidden]{display:none!important}
 html.cadre{--sat:54px;--sab:20px}
 html.cadre body{display:flex;align-items:center;justify-content:center;min-height:100vh}
+html.cadre #pret{padding-top:177px}
 html.cadre #tel{width:402px;height:874px;max-width:none;border-radius:55px;margin:0;box-shadow:0 0 0 12px #1b1b1d,0 0 0 14px #3a3a3c,0 40px 80px -30px rgba(30,28,27,.55);zoom:var(--z,1);flex:none}
 .c-barre{position:absolute;top:0;left:0;right:0;height:54px;display:flex;justify-content:space-between;align-items:center;padding:4px 34px 0 46px;font:600 16px -apple-system,system-ui,sans-serif;z-index:95;pointer-events:none}
 .c-barre svg{height:12px;margin-left:6px;fill:currentColor}
@@ -66,17 +73,17 @@ html.cadre #tel{width:402px;height:874px;max-width:none;border-radius:55px;margi
 <body>
 <div id="tel">
   <svg class="logo" viewBox="0 -2 330 72" aria-label="Loginail" id="logo"></svg>
-  <div class="centre" id="range"><div class="attente"></div><h1>Un instant…</h1><p>On range tes informations dans ton espace.</p></div>
-  <div class="centre" id="pret" hidden>
+  <div class="centre" id="range" hidden></div>
+  <div class="centre charge" id="pret">
     <span class="etoile" style="left:12%;top:18%;font-size:14px">✦</span>
     <span class="etoile" style="right:10%;top:26%;font-size:10px;animation-delay:-1s">✦</span>
     <span class="etoile" style="left:8%;bottom:22%;font-size:11px;animation-delay:-2s">✦</span>
     <span class="etoile" style="right:14%;bottom:14%;font-size:15px;animation-delay:-.5s">✦</span>
     <div class="etape">Ton espace Loginail</div>
-    <h1 id="titre">Tout est <em>prêt<span class="st">✦</span></em>.</h1>
-    <div class="sous" id="sous">Tout ce que tu as rempli y est déjà.</div>
+    <h1 id="titre" aria-live="polite"><span id="debut">Presque</span> <em>prêt<span class="st fini">✦</span><span class="points" aria-hidden="true"><b>.</b><b>.</b><b>.</b></span></em><span class="fini">.</span></h1>
+    <div class="sous" id="sous">On range tout ce que tu as rempli.</div>
     <div class="pastilles" id="recap"></div>
-    <a class="ouvre" id="ouvrir" hidden>Ouvrir mon espace <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h12M9 3l5 5-5 5"/></svg></a>
+    <a class="ouvre" id="ouvrir">Ouvrir mon espace <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h12M9 3l5 5-5 5"/></svg></a>
     <div class="cadeau"><i>🎁</i><div><b>1er mois offert</b><span>sans engagement</span></div></div>
   </div>
   <div class="centre" id="perdu" hidden><h1>Ce lien ne marche plus.</h1><p>Il a peut-être déjà servi, ou il a plus d’une heure. Recommence, on t’en envoie un nouveau.</p></div>
@@ -110,7 +117,7 @@ let REFUS = /error(_code|_description)?=/.test(location.hash);   /* ancien lien 
 const montre = (...ids) => ["range", "pret", "perdu", "ouvrir", "recommencer"].forEach(i => $(i).hidden = !ids.includes(i));
 
 /* range le brouillon dans le coffre (une seule fois : ensuite on l'efface) */
-async function range(user) {
+async function range(user, vu = () => {}, range1 = () => {}) {
   // le plus sûr d'abord : celui gardé dans le coffre (?b=…), puis celui du compte, puis celui de ce téléphone
   let b = null;
   try { const local = JSON.parse(localStorage.getItem("loginail-brouillon")); if (local) b = local; } catch (e) {}
@@ -118,6 +125,7 @@ async function range(user) {
   const bid = BID;
   if (bid) { const { data } = await coffre.rpc("prendre_brouillon", { bid }); if (data) b = { ...(b || {}), ...data }; }
   if (!b) return null;
+  vu(b);
   const { error: e1 } = await coffre.from("profils").update({
     prenom: b.prenom || null, nom_salon: b.nom || null, telephone: b.telephone || null,
     adresse: b.rue || null, code_postal: b.cp || null, ville: b.ville || null,
@@ -126,6 +134,7 @@ async function range(user) {
     presentation: b.presentation || null,
   }).eq("id", user.id);
   if (e1) throw e1;
+  range1("nom");
   // les prestations : seulement si l'espace n'en a pas encore (on ne double rien)
   const { count } = await coffre.from("prestations").select("id", { count: "exact", head: true });
   if (!count && b.prestations?.length) {
@@ -133,11 +142,13 @@ async function range(user) {
     const { error: e2 } = await coffre.from("prestations").insert(b.prestations.map((p, i) => ({ nom: String(p.nom || "Prestation"), prix: (p.prix === "" || p.prix == null || isNaN(+p.prix)) ? null : +p.prix, duree_min: parseInt(p.duree) || 60, ordre: i })));
     if (e2) throw e2;
   }
+  range1("prestations");
   if (b.horaires) {
     const { error: e3 } = await coffre.from("horaires").upsert(b.horaires.map((h, j) => ({
       pro_id: user.id, jour: j, ouvert: !!h, debut: h?.d || "09:00", fin: h?.f || "18:00", pause_debut: h?.pd || null, pause_fin: h?.pf || null })));
     if (e3) throw e3;
   }
+  range1("jours");
   /* 06/11 : son site va dans le coffre, avec son adresse (dilerna, dilerna-2…) : les clientes peuvent réserver */
   const { data: deja } = await coffre.from("sites").select("slug").maybeSingle();
   if (!deja) {
@@ -150,6 +161,7 @@ async function range(user) {
       if (!/duplicate|unique/i.test(error.message)) throw error;
     }
   }
+  range1("site");
   await coffre.auth.updateUser({ data: { brouillon: null } });
   try { localStorage.removeItem("loginail-brouillon"); } catch (e) {}
   return b;
@@ -161,13 +173,12 @@ const SIMU = (() => { try { return localStorage.getItem("loginail-simu") === "1"
 const COCHE = '<i><svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5"/></svg></i>';
 function recap(b) {
   const n = b.prestations?.length || 0, jours = (b.horaires || []).filter(Boolean).length;
-  [b.nom, n && `${n} prestation${n > 1 ? "s" : ""}`, jours && `${jours} jour${jours > 1 ? "s" : ""} d’ouverture`, "Ton site"]
-    .filter(Boolean).forEach((t, i) => {
-      const p = document.createElement("span"); p.className = "pastille"; p.innerHTML = COCHE;
-      p.append(t); p.style.animationDelay = (.35 + i * .14) + "s"; $("recap").append(p);
+  [["nom", b.nom], ["prestations", n && `${n} prestation${n > 1 ? "s" : ""}`], ["jours", jours && `${jours} jour${jours > 1 ? "s" : ""} d’ouverture`], ["site", "Ton site"]]
+    .filter(([, t]) => t).forEach(([cle, t], i) => {
+      const p = document.createElement("span"); p.className = "pastille"; p.dataset.cle = cle; p.innerHTML = COCHE;
+      p.append(t); p.style.animationDelay = i * .05 + "s"; $("recap").append(p);
     });
 }
-const bienvenue = prenom => { if (prenom) $("sous").textContent = `Bienvenue ${prenom} : tout ce que tu as rempli y est déjà.`; };
 /* lien refusé : on ne range JAMAIS dans le compte déjà ouvert sur l'appareil (ce n'est pas forcément le sien) */
 async function refuse() {
   history.replaceState(null, "", location.pathname + IPHONE + "#error=refus");
@@ -179,24 +190,39 @@ async function refuse() {
   }
   montre("perdu", "recommencer");
 }
+/* une coche à la fois (un quart de seconde, pour qu'on voie le geste), jamais avant que ce soit rangé */
+let file = Promise.resolve();
+const pause = ms => new Promise(ok => setTimeout(ok, ms));
+function coche(cle) {
+  file = file.then(async () => {
+    const p = $("recap").querySelector(`.pastille[data-cle="${cle}"]:not(.ok)`);
+    if (p) { await pause(250); p.classList.add("ok"); }
+  });
+}
+async function toutPret(prenom) {
+  ["nom", "prestations", "jours", "site"].forEach(coche);
+  await file; await pause(200);
+  $("debut").textContent = "Tout est";
+  $("sous").textContent = prenom ? `Bienvenue ${prenom} : tout ce que tu as rempli y est déjà.` : "Tout ce que tu as rempli y est déjà.";
+  $("pret").classList.remove("charge");
+}
 async function depart() {
   if (REFUS && !SIMU) return refuse();
   if (SIMU) {
     let b = null; try { b = JSON.parse(localStorage.getItem("loginail-brouillon")); } catch (e) {}
-    bienvenue(b?.prenom);
     recap(b || {});
     $("ouvrir").href = "appli-simu.html";
-    montre("pret", "ouvrir"); return;
+    montre("pret", "ouvrir"); toutPret(b?.prenom); return;
   }
   const { data: { session } } = await coffre.auth.getSession();
   if (!session) { montre("perdu", "recommencer"); return; }
   try {
-    const b = await range(session.user);
+    const b = await range(session.user, recap, coche);
     const { data: p } = await coffre.from("profils").select("prenom").eq("id", session.user.id).single();
-    bienvenue(p?.prenom);
-    recap(b || {});
-    montre("pret", "ouvrir");
+    if (!b) recap({});
+    await toutPret(p?.prenom);
   } catch (e) {
+    montre("range");
     $("range").innerHTML = "<h1>Petit souci.</h1><p>Tes informations ne se sont pas rangées. Vérifie ta connexion, puis recharge la page.</p>";
   }
 }
