@@ -13,15 +13,15 @@
   const puces=(k,l,v)=>`<div class="chips" data-lg-ch="${k}">${l.map(x=>`<button class="chip${x===v?" on":""}" data-lg-c>${x}</button>`).join("")}</div>`;
   MSF["ms-legal"]=()=>{const b=lit(),L=b.legal||{};const adr=L.adresse||[b.rue,[b.cp,b.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ");
     return croix+`<h3>Mes infos légales</h3><div class="sous">Elles remplissent toutes seules les pages légales de ton site</div>
-    ${L.mediateur?"":'<div class="lg-med"><b>Le médiateur de la consommation est obligatoire.</b> C’est la loi, et c’est à toi de le choisir. Son nom et son site se notent en bas de cette page.</div>'}<div class="form" style="margin-top:12px">
+    ${L.mediateur?"":'<div class="lg-med">Pense aussi à ton <b>médiateur de la consommation</b>, la loi en demande un. Pas encore choisi ? Pas de souci, enregistre déjà le reste.</div>'}<div class="form" style="margin-top:12px">
     <label>Prénom et nom<input data-lg="nomComplet" value="${esc(L.nomComplet)}" placeholder="Prénom Nom"></label>
     <label>Nom commercial <small>facultatif</small><input data-lg="entreprise" value="${esc(L.entreprise||b.nom)}" placeholder="Ton onglerie"></label>
     <label>SIRET<input data-lg="siret" value="${esc(L.siret)}" placeholder="14 chiffres" inputmode="numeric"></label>
     <label>Adresse de l’entreprise<input data-lg="adresse" value="${esc(adr)}" placeholder="Rue, code postal, ville"></label>
     <label>E-mail de contact<input data-lg="email" value="${esc(L.email||b.email)}" placeholder="toi@exemple.fr" inputmode="email"></label></div>
     <div class="liste" style="margin-top:10px"><div class="ligne"><div class="t">TVA non applicable<span>Article 293 B du CGI, pour la micro-entreprise</span></div><button class="sw${L.tvaNon===false?"":" on"}" data-lg-sw="tvaNon"></button></div></div>
-    <div class="lab" style="margin-top:14px">Mon médiateur de la consommation <small>obligatoire par la loi</small></div>
-    <div class="sous" style="text-align:left;margin:2px 0 8px;font-size:12px;line-height:1.5">Obligatoire pour toute pro qui travaille avec des particuliers, même sans site internet. Beaucoup l’oublient ! Écris son nom et son site. Tu n’en as pas encore ? Enregistre le reste, puis reviens l’ajouter dès que tu l’as choisi.</div>
+    <div class="lab" style="margin-top:14px">Mon médiateur de la consommation</div>
+    <div class="sous" style="text-align:left;margin:2px 0 8px;font-size:12px;line-height:1.5">C’est lui qui aide si un souci avec une cliente ne se règle pas entre vous. Note son nom et son site ici, quand tu l’as choisi.</div>
     <div class="form"><label>Nom du médiateur<input data-lg="mediateur" value="${esc(L.mediateur)}" placeholder="Nom du médiateur"></label><label>Son site<input data-lg="mediateurSite" value="${esc(L.mediateurSite)}" placeholder="www.exemple.fr"></label></div>
     <button class="btn" data-lg-ok="legal" style="width:100%;margin-top:14px">Enregistrer</button>`};
   MSF["ms-bon"]=()=>{const r=regles(lit());return croix+`<h3>Bon à savoir</h3><div class="sous">Tes règles, montrées à la cliente avant qu’elle réserve</div>
@@ -44,7 +44,7 @@
     document.querySelectorAll(".ms2-apercu iframe").forEach(f=>{f.src="loginail-creer/pret.html?public&appli="+Date.now()})},true);
   /* dans « Mon site » : la partie « Obligatoire » (avec ce qui manque) */
   const bloc=()=>{const b=lit(),m=manque(b),r=regles(b);
-    return `<div class="lg-bloc"><div class="k">Obligatoire</div><div class="liste"><div class="ligne" data-a="ms-legal"><div class="t">Mes infos légales<span${m.length?' style="color:#A04A4A"':""}>${m.length?"Il manque "+m.join(", "):!(b.legal||{}).mediateur?"Nom et SIRET ✓ · ajoute ton médiateur, c’est obligatoire":"Complet ✓"}</span></div><span class="fl">›</span></div>
+    return `<div class="lg-bloc"><div class="k">Obligatoire</div><div class="liste"><div class="ligne" data-a="ms-legal"><div class="t">Mes infos légales<span${m.length?' style="color:#A04A4A"':""}>${m.length?"Il manque "+m.join(", "):!(b.legal||{}).mediateur?"Nom et SIRET ✓ · pense à ton médiateur":"Complet ✓"}</span></div><span class="fl">›</span></div>
     <div class="ligne" data-a="ms-bon"><div class="t">Bon à savoir<span>${r.acompte?"Acompte "+r.montant:"Sans acompte"} · annulation ${r.annulation}</span></div><span class="fl">›</span></div></div></div>`};
   const pose=()=>document.querySelectorAll('.vue[data-p="si"]').forEach(vu=>{const ks=[...vu.querySelectorAll(".k")];const k=ks.find(x=>/Mon contenu/.test(x.textContent));if(!k)return;
     /* « Bon à savoir » passe dans « Obligatoire » */
