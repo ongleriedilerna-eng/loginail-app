@@ -106,7 +106,7 @@
     if (etape === 4 && REEL) rf.innerHTML = tete + `<div class="kick">4 / 4</div><h2>On confirme ?</h2>
       <div class="recap"><div><span>${esc(R.nom)}</span><b>${euros(R.prix)}</b></div><div><span>Quand</span><b>${R.jourTxt} à ${hm(R.heure)}</b></div>${R.acompte ? `<div><span>Acompte</span><b>${euros(R.acompte)}</b></div>` : ""}</div>
       <button class="go" data-reel>CONFIRMER MA RÉSERVATION</button>
-      ${R.acompte ? `<p class="petit">Le paiement de l’acompte en ligne arrive bientôt : le salon vous dira comment le régler.</p>` : ""}<p class="petit rerr" style="color:#A04A4A"></p>`;
+      ${R.acompte ? `<p class="petit">Le salon vous dira comment régler l’acompte.</p>` : ""}<p class="petit rerr" style="color:#A04A4A"></p>`;
     else if (etape === 4) rf.innerHTML = tete + `<div class="kick">4 / 4</div><h2>L’acompte</h2>
       <div class="recap"><div><span>${esc(R.nom)} · ${R.jourTxt} à ${hm(R.heure)}</span><b>${euros(R.prix)}</b></div><div><span>Acompte à payer maintenant</span><b>${euros(R.acompte)}</b></div><div><span>Le reste, au salon</span><b>${euros(R.prix - R.acompte)}</b></div></div>
       <button class="apay" data-paye><svg viewBox="0 0 17 20" style="width:17px;height:20px;vertical-align:-3px;margin-right:3px"><path fill="currentColor" d="M14.1 10.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3.1.9-3.9.9-.8 0-2-.9-3.4-.9C3.6 4.8 2 5.8 1.1 7.4c-1.9 3.2-.5 8 1.3 10.6.9 1.3 1.9 2.7 3.3 2.6 1.3-.1 1.8-.8 3.4-.8 1.6 0 2 .8 3.4.8 1.4 0 2.3-1.3 3.2-2.6 1-1.5 1.4-2.9 1.4-3-.1 0-2.9-1.1-3-4.4zM11.5 2.9c.7-.9 1.2-2 1.1-3.2-1 0-2.3.7-3 1.6-.7.8-1.3 2-1.1 3.1 1.1.1 2.3-.6 3-1.5z"/></svg>Pay</button><div class="ou"><span>ou par carte</span></div>
