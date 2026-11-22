@@ -4,6 +4,10 @@
 (function () {
   const st = document.createElement("style");
   st.textContent = `.fi-haut{display:flex;align-items:flex-start;gap:8px;text-align:left;padding-right:46px}.fi-haut h3{margin:0;text-align:left;font-size:25px;line-height:1.1}.fi-haut small{display:block;margin-top:5px;font-size:12.5px;opacity:.6}
+.fi-d{align-items:center;gap:12px}.fi-d .fi-g{flex:1;min-width:0}
+.fi-d h3.fi-nom{font-size:30px;line-height:1.08;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fi-d h3.fi-nom.long{white-space:normal}
+.fi-d small{line-height:1.45;margin-top:4px}
+.fi-carre{flex:none;display:grid;grid-template-columns:repeat(2,40px);gap:8px}.fi-carre .fi-rond{width:40px;height:40px;transition:transform .12s}.fi-carre .fi-rond:active{transform:scale(.92)}.fi-carre .fi-rond svg{width:17px;height:17px}
 .fi-rond{flex:none;width:42px;height:42px;border-radius:50%;border:0;background:#fff;display:grid;place-items:center;padding:0}.fi-rond svg{width:18px;height:18px}
 .fi-sw{display:flex;background:#fff;border-radius:999px;padding:4px;margin:16px 0 14px}.fi-sw button{flex:1;border:0;background:none;border-radius:999px;padding:11px 0;font:inherit;font-size:13.5px;font-weight:500;color:#8A847E}.fi-sw button.on{background:#1E1C1B;color:#fff}
 .fi-k{margin:16px 0 8px;font-size:10.5px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#8A847E;text-align:left;display:flex;align-items:center;gap:8px}
@@ -126,10 +130,14 @@
 
   /* ---------- la fiche ---------- */
   let ID = null, ONG = "fiche", RDV = null, TOUT = false, SAISIE = null, OUV = null, RANGE = false, TOUS = false, DRAG = null, ORD = null, VUS = new Set();
-  const tete = c => `<div class="fi-haut"><div style="flex:1;min-width:0"><h3>${esc(nomCli(c))}</h3><small>${esc(c.telephone || "Pas de numéro")}${c.instagram && String(c.prenom || "")[0] !== "@" ? " · @" + esc(c.instagram) : ""}</small></div>
+  /* un nom long : l'écriture rapetisse (jusqu'à 23 px) ; s'il ne tient toujours pas, il passe sur 2 lignes plutôt que d'être coupé */
+  const nomTient = () => { const n = document.querySelector(".fc .fi-nom"); if (!n) return; if (document.fonts && document.fonts.status !== "loaded") document.fonts.ready.then(() => { if (n.isConnected) nomTient(); }); let t = 30; n.style.fontSize = ""; n.classList.remove("long");
+    while (n.scrollWidth > n.clientWidth + 1 && t > 23) { t--; n.style.fontSize = t + "px"; } if (n.scrollWidth > n.clientWidth + 1) n.classList.add("long"); };
+  /* 22/11 (Marie, version D) : le nom sur UNE ligne à gauche (numéro et Insta en dessous), les ronds rangés en carré à droite (2 en haut, 2 en bas) */
+  const tete = c => `<div class="fi-haut fi-d"><div class="fi-g"><h3 class="fi-nom">${esc(nomCli(c))}</h3><small>${esc(c.telephone || "Pas de numéro")}${c.instagram && String(c.prenom || "")[0] !== "@" ? "<br>@" + esc(c.instagram) : ""}</small></div><div class="fi-carre">
     ${c.telephone ? `<button class="fi-rond" data-href="tel:${tel(c.telephone)}" aria-label="Appeler">${IC.tel}</button><button class="fi-rond" data-href="sms:${tel(c.telephone)}" aria-label="Envoyer un message">${IC.msg}</button>` : ""}
     ${c.instagram ? `<button class="fi-rond" data-href="https://www.instagram.com/${encodeURIComponent(c.instagram)}/" data-neuf aria-label="Son Instagram">${IC.insta}</button>` : ""}
-    <button class="fi-rond" data-fi="modifier" aria-label="Modifier la fiche">${IC.crayon}</button></div>
+    <button class="fi-rond" data-fi="modifier" aria-label="Modifier la fiche">${IC.crayon}</button></div></div>
     <div class="fi-sw"><button data-fi="ong" data-o="fiche" class="${ONG === "fiche" ? "on" : ""}">Fiche</button><button data-fi="ong" data-o="notes" class="${ONG === "notes" ? "on" : ""}">Notes</button></div>`;
   function pageFiche(c) { if (!RDV) return `<div class="sous" style="padding:30px 0">Un instant…</div>`;
     const now = new Date().toISOString(), ok = RDV.filter(r => r.statut !== "annule"), proch = ok.filter(r => r.fin >= now && r.statut === "prevu").sort((a, b) => a.debut.localeCompare(b.debut)), hist = ok.filter(r => r.fin < now || r.statut === "fini" || r.statut === "absente");
@@ -181,7 +189,7 @@
   document.addEventListener("click", e => { if (!MODIF || !E.classList.contains("fe")) return; const x = e.target.closest && e.target.closest('[data-a="fermer"], .voile'); if (!x) return;
     if (!$("#c-p", E)) { MODIF = false; return; } e.stopPropagation(); e.preventDefault(); const a = document.activeElement; if (a && a.blur) a.blur(); montre(); }, true);
   function montre(garde) { MODIF = false; const c = S.clientes.find(x => x.id === ID); if (!c) return ferme(); const z = $(".feuille", E), y = garde && z ? z.scrollTop : 0;
-    ouvre(tete(c) + (ONG === "fiche" ? pageFiche(c) : pageNotes(c))); if (z && garde) z.scrollTop = y; const r = $("#fi-rep", E); if (r) r.focus(); }
+    ouvre(tete(c) + (ONG === "fiche" ? pageFiche(c) : pageNotes(c))); nomTient(); if (z && garde) z.scrollTop = y; const r = $("#fi-rep", E); if (r) r.focus(); }
   async function chargeRdv() { const id = ID; const { data } = await sb.from("rendez_vous").select("*, prestations(id,nom)").eq("cliente_id", id).order("debut", { ascending: false }); if (ID !== id) return; RDV = data || []; if (ONG === "fiche" && E.classList.contains("fe") && $(".fi-sw", E)) montre(true); }
 
   document.addEventListener("click", e => { const a = e.target.closest && e.target.closest(".fc [data-rdv], .fc [data-a='decaler']"); if (!a || !RDV) return; const id = a.dataset.rdv || a.dataset.id; if (S.rdv.some(x => x.id === id)) return;

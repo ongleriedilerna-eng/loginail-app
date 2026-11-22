@@ -221,7 +221,7 @@ function vueClientes() {
   else if (S.tri === "neuves") L = L.slice().sort((x, y) => (y.cree_le || "").localeCompare(x.cree_le || ""));
   const sous = c => { const w = v(c); return S.tri === "vues" ? (w.der ? "Vue le " + jourCourt(w.der) : "Pas encore venue") : S.tri === "proch" ? (w.proch ? "Prochain : " + jourCourt(w.proch) : "Pas de rendez-vous prévu") : S.tri === "neuves" && c.cree_le ? "Ajoutée le " + jourCourt(c.cree_le) : (c.telephone || "Pas de numéro"); };
   return tete("Clientes", `${S.clientes.length} cliente${S.clientes.length > 1 ? "s" : ""}`)
-    + `<div style="display:flex;gap:8px;align-items:center;position:relative"><label class="cherche" style="flex:1;margin:0">${I.lo}<input id="cherche" value="${esc(S.cherche)}" placeholder="Chercher une cliente" style="border:0;background:none;font:inherit;font-size:16px;flex:1;outline:none;min-width:0">${S.cherche ? `<button data-a="cherche-x" aria-label="Effacer la recherche" style="flex:none;width:30px;height:30px;margin-right:-8px;border:0;border-radius:50%;background:rgba(30,28,27,.1);color:#1E1C1B;display:grid;place-items:center;padding:0"><svg viewBox="0 0 24 24" width="13" height="13" style="stroke:currentColor;stroke-width:2.4;fill:none"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg></button>` : ""}</label>
+    + `<div style="display:flex;gap:8px;align-items:center;position:relative"><label class="cherche" style="flex:1;margin:0">${I.lo}<input id="cherche" value="${esc(S.cherche)}" placeholder="Rechercher une cliente" style="border:0;background:none;font:inherit;font-size:16px;flex:1;outline:none;min-width:0">${S.cherche ? `<button data-a="cherche-x" aria-label="Effacer la recherche" class="cherche-x"><svg viewBox="0 0 24 24" width="9" height="9"><path d="M7 7l10 10M17 7L7 17"/></svg></button>` : ""}</label>
       <button data-a="tri-menu" aria-label="Trier mes clientes" style="flex:none;width:50px;height:50px;border-radius:50%;border:0;background:${S.tri === "az" ? "#fff" : "var(--noir,#1E1C1B)"};color:${S.tri === "az" ? "inherit" : "#fff"};display:grid;place-items:center;padding:0"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 7h16M7 12h10M10 17h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
       ${S.triOuvert ? `<div class="tris" style="position:absolute;right:0;top:58px;z-index:20;background:#fff;border-radius:18px;padding:6px;box-shadow:0 18px 40px -16px rgba(0,0,0,.45);min-width:230px">${TRIS.map(t => `<button data-a="tri" data-t="${t[0]}" style="display:flex;justify-content:space-between;align-items:center;width:100%;border:0;background:${S.tri === t[0] ? "rgba(30,28,27,.06)" : "none"};border-radius:12px;padding:12px 14px;font:inherit;font-size:14.5px;text-align:left">${t[1]}<span>${S.tri === t[0] ? "✓" : ""}</span></button>`).join("")}</div>` : ""}</div>`
     + `<button class="btn" data-a="cli-nouv" style="width:100%;margin-top:10px">Ajouter une cliente</button>`
@@ -329,6 +329,12 @@ function feuilleNouveau(m) {   /* 17/11 (Marie) : d'abord la cliente, puis la pr
     <button class="btn" data-a="nouveau-ok" style="margin-top:16px">Enregistrer</button>`);
   nFin();
 }
+{ const st = document.createElement("style"); st.textContent = `
+.cherche-x{flex:none;width:19px;height:19px;margin:0 -4px 0 4px;border:0;border-radius:50%;background:rgba(30,28,27,.28);color:#fff;display:grid;place-items:center;padding:0;cursor:pointer;animation:chx .18s ease both;position:relative}
+.cherche-x::after{content:"";position:absolute;inset:-12px}
+.cherche-x svg{stroke:currentColor;stroke-width:3;fill:none;stroke-linecap:round}
+.cherche-x:active{background:rgba(30,28,27,.45)}
+@keyframes chx{from{opacity:0;transform:scale(.6)}}`; document.head.appendChild(st); }
 /* l'heure dans la pastille et l'heure de fin dans le bouton « Enregistrer · 12:00 – 13:30 » */
 function nFin() {
   const i = document.getElementById("n-h"), t = document.getElementById("n-h-t"), b = document.querySelector('.fc [data-a="nouveau-ok"]'); if (!i || !b) return;
@@ -350,7 +356,14 @@ document.addEventListener("change", e => { if (e.target.id === "n-h") nFin(); })
 .fc .chips.n-glisse::-webkit-scrollbar{display:none}
 .fc .chips.n-glisse .chip{flex:none;width:auto!important;min-height:50px;max-width:200px;scroll-snap-align:start;transition:background .18s,color .18s,transform .12s}
 .fc .chips.n-glisse .chip:active{transform:scale(.96)}
-.fc .chips.n-glisse + .rv-tot:empty{display:none}`; document.head.appendChild(st); }
+.fc .chips.n-glisse + .rv-tot:empty{display:none}
+/* 22/11 (Marie : « je tape M, ça va jusqu'en haut ») : les clientes proposées sur UNE ligne qui glisse, la fenêtre ne grandit presque plus */
+.fc .n-sug{flex-direction:row!important;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:6px!important;margin:8px -24px 0!important;padding:0 24px 2px}
+.fc .n-sug::-webkit-scrollbar{display:none}
+.fc .n-sug button{width:auto!important;flex:none;border-radius:999px!important;padding:4px 13px 4px 4px!important;border:1px solid rgba(30,28,27,.1)!important;white-space:nowrap;animation:nsg .18s ease both}
+.fc .n-sug button span{display:none}
+.fc .n-sug .sous{flex:none;align-self:center;white-space:nowrap;margin:0!important}
+@keyframes nsg{from{opacity:0;transform:translateY(4px)}}`; document.head.appendChild(st); }
 function feuilleCliente(id) {
   const c = id ? S.clientes.find(x => x.id === id) || {} : {};
   const w = id && (S.vis || {})[id];
