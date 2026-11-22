@@ -106,6 +106,7 @@ $("recommencer").href = "index.html" + IPHONE;
 /* 21/11 : le bouton du mail mène ici (loginail) avec ?token_hash=…&type=…&r=<adresse de retour avec ?b=…>, plus vers supabase.co (= spams) */
 const P = new URLSearchParams(location.search);
 const BID = P.get("b") || (() => { try { return new URL(P.get("r")).searchParams.get("b"); } catch (e) { return null; } })();
+let REFUS = /error(_code|_description)?=/.test(location.hash);   /* ancien lien refusé par le serveur */
 const montre = (...ids) => ["range", "pret", "perdu", "ouvrir", "recommencer"].forEach(i => $(i).hidden = !ids.includes(i));
 
 /* range le brouillon dans le coffre (une seule fois : ensuite on l'efface) */
@@ -167,7 +168,19 @@ function recap(b) {
     });
 }
 const bienvenue = prenom => { if (prenom) $("sous").textContent = `Bienvenue ${prenom} : tout ce que tu as rempli y est déjà.`; };
+/* lien refusé : on ne range JAMAIS dans le compte déjà ouvert sur l'appareil (ce n'est pas forcément le sien) */
+async function refuse() {
+  history.replaceState(null, "", location.pathname + IPHONE + "#error=refus");
+  const { data: { session } } = await coffre.auth.getSession();
+  if (session) {
+    $("perdu").querySelector("p").textContent = "Il a peut-être déjà servi. Un compte est déjà ouvert sur cet appareil : rien n’y a été changé.";
+    $("recommencer").textContent = "OUVRIR CE COMPTE";
+    $("recommencer").href = $("ouvrir").href;
+  }
+  montre("perdu", "recommencer");
+}
 async function depart() {
+  if (REFUS && !SIMU) return refuse();
   if (SIMU) {
     let b = null; try { b = JSON.parse(localStorage.getItem("loginail-brouillon")); } catch (e) {}
     bienvenue(b?.prenom);
@@ -191,10 +204,10 @@ async function depart() {
 let fait = false;
 if (SIMU) { fait = true; depart(); }
 else if (P.get("token_hash")) {
-  /* on valide le jeton ici ; s'il a déjà servi (2e clic), depart() retrouve la connexion déjà ouverte */
+  /* on valide le jeton ici ; refusé (périmé, déjà servi) : refuse(), rien n'est écrit */
   fait = true;
   coffre.auth.verifyOtp({ token_hash: P.get("token_hash"), type: P.get("type") || "email" })
-    .catch(() => {})
+    .then(({ data, error }) => { if (error || !data?.session) REFUS = true; }, () => { REFUS = true; })
     .then(() => { history.replaceState(null, "", location.pathname + (BID ? "?b=" + encodeURIComponent(BID) : "") + (IPHONE ? (BID ? "&" : "?") + "iphone" : "")); depart(); });
 }
 coffre.auth.onAuthStateChange((ev, s) => { if (s && !fait) { fait = true; setTimeout(depart, 0); } });
