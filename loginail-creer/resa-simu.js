@@ -15,6 +15,8 @@
   const tel = document.querySelector(".tel"); if (!tel) return;
   const encre = (typeof INKJ !== "undefined" && INKJ[BR.couleur]) || "#1E1C1B";
   const JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
+  /* 22/11 (sql/31) : le serveur reçoit ce que la cliente a VU (nom, prix, durée), pas seulement une place dans la liste */
+  const vue = i => { const p = BR.prestations[i]; return { nom: p.nom ?? null, prix: p.prix ?? null, duree: p.duree ?? null }; };
   /* 22/11 : sans prix = « Sur devis », comme sur le site (avant : « 0 € ») */
   const euros = n => n == null || n === "" ? "Sur devis" : `${String(Math.round(n * 100) / 100).replace(".", ",")} €`;
   const prixDe = p => p.prix == null || p.prix === "" ? null : p.prix;
@@ -83,6 +85,8 @@
   .rs .go:disabled{opacity:.35;cursor:default}
   .rs .apay{width:100%;margin-top:16px;border:0;border-radius:999px;padding:15px;background:#000;color:#fff;font:500 19px -apple-system,system-ui,sans-serif;cursor:pointer}
   .rs .ou{display:flex;align-items:center;gap:12px;margin:14px 0 0;font:300 12.5px Jost;color:#8a8076}.rs .ou::before,.rs .ou::after{content:"";flex:1;height:1px;background:rgba(30,28,27,.15)}
+  .rs .chg{margin:0 0 6px;padding:14px 16px;border-radius:18px;background:#F6E4E2;color:#7E2F2F;text-align:center;font:400 14px/1.45 Jost;overflow-wrap:anywhere}
+  .rs .chg b{display:block;margin-bottom:3px;font:500 15.5px/1.35 Jost}
   .rs .petit{margin:12px 4px 0;text-align:center;font:300 12.5px/1.5 Jost;color:#8a8076}
   .rs .jr.plein{background:none;border-style:dashed}.rs .jr.plein small{display:block;font:300 9.5px Jost;letter-spacing:.04em;color:#8a8076;margin-top:1px}
   .rs .jr.plein.on{background:#fff;border-style:solid;border-color:var(--rs);color:#1E1C1B}
@@ -183,6 +187,14 @@
   async function chargeOcc() { if (!REEL) return; const a = new Date(), b = new Date(); b.setDate(b.getDate() + 15);
     try { const l = await rpc("moments_pris", { s: window.LOGI_SLUG, de: cle(a), a: cle(b) }); OCC = {};
       (l || []).forEach(m => { const d = new Date(m.debut), f = new Date(m.fin), k = cle(d); (OCC[k] = OCC[k] || []).push([d.getHours() * 60 + d.getMinutes(), f.getHours() * 60 + f.getMinutes() + (cle(f) !== k ? 1440 : 0)]); }); } catch (e) {} }
+  /* la prestation touchée n'est plus là, ou a changé : rien n'est enregistré, on lui remontre la liste à jour */
+  async function prestaChangee() {
+    const nom = R.nom;
+    let aJour = false;
+    try { const b = await rpc("lire_site", { s: window.LOGI_SLUG }); if (b && Array.isArray(b.prestations)) { BR.prestations = b.prestations; aJour = true; } } catch (e) {}
+    R = {}; att = 0; jourChoisi = null; etape = 1; dessine();
+    rf.querySelector("h2").insertAdjacentHTML("afterend", `<div class="chg" role="alert"><b>« ${esc(nom)} » vient d’être modifiée ou retirée par le salon.</b>Rien n’a été enregistré. ${aJour ? "Choisissez dans la liste à jour." : "Rechargez la page pour voir la liste à jour."}</div>`);
+  }
   async function ouvre() { if (etape >= 5 || att === 2) { R = {}; etape = 1; jourChoisi = null; } att = 0; await chargeOcc();
     /* 19/11 : lien de l'e-mail → sa prestation est déjà choisie, on ouvre sur « Le jour et l'heure » */
     if (prestaVoulue) { const i = BR.prestations.findIndex(p => String(p.nom).trim() === prestaVoulue.trim()); prestaVoulue = "";
@@ -204,9 +216,10 @@
     if (t.id === "ago") { const p = rf.querySelector("#ap").value.trim(), tl = rf.querySelector("#at").value.trim(), em = rf.querySelector("#ae").value.trim(), z = rf.querySelector(".aerr");
       if (!REEL) { att = 2; return dessine(); }
       t.disabled = true; t.textContent = "UN INSTANT…";
-      rpc("attendre", { s: window.LOGI_SLUG, p_jour: cle(jourChoisi.date), p_presta: R.i, p_prenom: p, p_tel: tl, p_email: em })
+      rpc("attendre", { s: window.LOGI_SLUG, p_jour: cle(jourChoisi.date), p_presta: R.i, p_prenom: p, p_tel: tl, p_email: em, p_choisie: vue(R.i) })
         .then(() => { att = 2; dessine(); })
-        .catch(e => { const m = String(e.message || ""); t.disabled = false; t.textContent = "ME PRÉVENIR";
+        .catch(e => { const m = String(e.message || ""); if (m === "prestation_changee") return prestaChangee();
+          t.disabled = false; t.textContent = "ME PRÉVENIR";
           if (z) z.textContent = m === "email" ? "Vérifiez votre e-mail." : m === "coordonnees" ? "Vérifiez votre prénom et votre téléphone." : /^(trop|plein)$/.test(m) ? "La liste d’attente est pleine pour l’instant. Appelez le salon." : "Ça n’a pas marché. Réessayez, ou appelez le salon."; });
       return; }
     if (t.dataset.p) { const p = BR.prestations[+t.dataset.p]; R = choisir(p, +t.dataset.p); jourChoisi = null; etape = 2; return dessine(); }
@@ -217,9 +230,10 @@
       setTimeout(() => { etape = 5; try { localStorage.setItem("loginail-resa", JSON.stringify({ ...R, salon: BR.nom, rue: BR.rue, cp: BR.cp, ville: BR.ville, placeId: BR.placeId }));
         const L = lis("loginail-resas") || []; L.push({ id: Date.now(), date: R.jour, heure: R.heure, duree: R.duree, prenom: R.prenom, nom: R.nomC, tel: R.tel, email: R.email, okAnniv: !!R.okAnniv, presta: R.nom, prix: R.prix, acompte: R.acompte, vu: false }); localStorage.setItem("loginail-resas", JSON.stringify(L)); } catch (e) {} dessine(); }, 900); return; }
     if (t.hasAttribute("data-reel")) { t.disabled = true; t.textContent = "UN INSTANT…"; const d = new Date(jourChoisi.date); d.setMinutes(R.heure);
-      rpc("reserver", { s: window.LOGI_SLUG, p_presta: R.i, p_debut: d.toISOString(), p_prenom: R.prenom, p_nom: R.nomC, p_tel: R.tel, p_email: R.email, p_ok_anniv: !!R.okAnniv })
+      rpc("reserver", { s: window.LOGI_SLUG, p_presta: R.i, p_debut: d.toISOString(), p_prenom: R.prenom, p_nom: R.nomC, p_tel: R.tel, p_email: R.email, p_ok_anniv: !!R.okAnniv, p_choisie: vue(R.i) })
         .then(() => { etape = 5; dessine(); })
         .catch(async e => { const m = String(e.message || ""); const z = rf.querySelector(".rerr");
+          if (m === "prestation_changee") return prestaChangee();
           if (/pris/.test(m)) { await chargeOcc(); etape = 2; dessine(); const k = rf.querySelector(".rien,.h"); if (k) k.insertAdjacentHTML("beforebegin", `<p class="petit" style="color:#A04A4A">Ce créneau vient d’être pris, choisissez-en un autre.</p>`); return; }
           if (z) z.textContent = "La réservation n’a pas marché. Réessayez, ou appelez le salon."; t.disabled = false; t.textContent = "CONFIRMER MA RÉSERVATION"; }); return; }
     if (t.id === "rsms") { location.href = "sms-simu.html"; }

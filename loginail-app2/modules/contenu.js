@@ -15,7 +15,7 @@
   document.head.appendChild(st);
   /* --- Prestations et prix --- */
   MSF["ms-presta"]=()=>{const l=lit().prestations||[];return croix+`<h3>Prestations et prix</h3><div class="sous">${l.length} prestation${l.length>1?"s":""} · la même liste pour ton agenda et ton site</div>
-    <div class="liste" style="margin-top:12px">${l.map((p,i)=>`<div class="ligne" data-cs-p="${i}"><div class="t">${LOGI_PRESTA.esc(p.nom)}<span>${LOGI_PRESTA.meta({...p,duree:+p.duree||60})}</span></div><span class="fl">›</span></div>`).join("")||'<div class="ligne"><div class="t">Aucune prestation pour l’instant</div></div>'}</div>
+    <div class="liste" style="margin-top:12px">${l.map((p,i)=>`<div class="ligne" data-cs-p="${i}"><div class="t">${LOGI_PRESTA.esc(p.nom)}<span>${LOGI_PRESTA.esc(LOGI_PRESTA.meta({...p,duree:+p.duree||60}))}</span></div><span class="fl">›</span></div>`).join("")||'<div class="ligne"><div class="t">Aucune prestation pour l’instant</div></div>'}</div>
     <button class="btn" data-cs-p="-1" style="width:100%;margin-top:14px">Ajouter une prestation</button>`};
   const pedit=i=>{const p=i>=0?(lit().prestations||[])[i]||{}:{};return croix+`<h3>${i>=0?LOGI_PRESTA.esc(p.nom):"Nouvelle prestation"}</h3><div class="form" style="margin-top:12px">
     <label>Nom<input data-cs-nom value="${esc(p.nom)}" placeholder="Par exemple : Pose américaine"></label>

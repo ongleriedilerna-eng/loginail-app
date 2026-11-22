@@ -1,6 +1,7 @@
 /* ===== 22/11 (Marie) : « une barre de recherche », puis « tout simplement trois petits traits pour trier en tout, presta, nail art » =====
    Dans les deux listes : Mon site › Prestations et prix, et Réglages › Mes prestations.
-   On ne refait jamais la liste : on cache les lignes, donc la case garde le clavier et chaque ligne garde son numéro. */
+   On ne refait jamais la liste : on cache les lignes, donc la case garde le clavier et chaque ligne garde son numéro.
+   22/11 (Marie) : « Ajouter » est sous la recherche, plus tout en bas ; si elle tape un nom qu'elle n'a pas, il le reprend dans la fiche. */
 (function () {
   /* la même règle que « Nail art » sur le site des salons (loginail-creer/pret.html, famille) : si elle change là-bas, la changer ici */
   const ART = /nail ?art|déco|strass|paillette|french|baby ?boomer/;
@@ -14,6 +15,7 @@
 #E .pr-haut{position:sticky;top:-12px;z-index:2;margin:4px -24px 0;padding:12px 24px 10px;background:var(--v-c,var(--creme))}
 #E .pr-haut+.liste{margin-top:2px!important}
 #E .pr-rang{position:relative;display:flex;align-items:center;gap:8px}
+#E .pr-haut>.btn.pr-plus{display:block;width:100%!important;height:44px;min-height:44px;margin:8px 0 0!important;padding:0 16px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 #E .pr-haut .cherche{flex:1;min-width:0;height:42px;margin:0}
 #E .pr-rang .v-rondb{position:relative;width:40px;height:40px}
 #E .pr-rang .v-rondb::after{content:"";position:absolute;inset:-3px}
@@ -37,6 +39,12 @@
   const remet = () => { q = ""; choix = "tout"; y = 0; };
   const feuille = () => E.querySelector(".feuille");
 
+  /* ce qu'elle a tapé, si elle ne l'a pas déjà mot pour mot */
+  function aAjouter(lignes) {
+    const nom = q.replace(/\s+/g, " ").trim(), p = plat(nom); if (!p) return "";
+    return lignes.some(l => { const n = l.querySelector(".t")?.firstChild; return n && n.nodeType === 3 && plat(n.textContent) === p; }) ? "" : nom;
+  }
+
   function trie() {
     const fc = E.querySelector(".feuille .fc"), haut = fc && fc.querySelector(".pr-haut"); if (!haut) return;
     const mots = plat(q).split(" ").filter(Boolean), lignes = [...fc.querySelectorAll(LIGNE)];
@@ -50,6 +58,8 @@
     });
     if (fin) fin.classList.add("pr-fin");
     haut.querySelector("[data-pr-x]").hidden = !q;
+    const plus = haut.querySelector(".pr-plus");
+    if (plus) { const neuf = aAjouter(lignes), mot = neuf ? `+ Ajouter « ${neuf} »` : "+ Ajouter une prestation"; if (plus.textContent !== mot) plus.textContent = mot; }
     haut.querySelectorAll("[data-pr-f]").forEach(b => { const on = b.dataset.prF === choix; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
     /* le rond devient foncé quand la liste est triée, comme dans Clientes */
     haut.querySelector("[data-pr-tri]").classList.toggle("plein", choix !== "tout");
@@ -70,8 +80,9 @@
     const liste = fc.querySelector(".liste");
     /* « Mon site » refait la feuille sans sa croix après un enregistrement : on la remet */
     if (!fc.querySelector(".fe-x")) fc.insertAdjacentHTML("afterbegin", '<button class="fe-x" data-a="fermer" aria-label="Fermer">×</button>');
-    liste.insertAdjacentHTML("beforebegin", `<div class="pr-haut"><div class="pr-rang"><label class="cherche">${I.lo}<input data-pr-q type="search" enterkeyhint="search" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Rechercher une prestation" placeholder="Rechercher une prestation"><button type="button" class="cherche-x" data-pr-x aria-label="Effacer la recherche" hidden><svg viewBox="0 0 24 24" width="9" height="9"><path d="M7 7l10 10M17 7L7 17"/></svg></button></label><button type="button" class="v-rondb" data-pr-tri aria-label="Trier mes prestations" aria-expanded="false"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 7h16M7 12h10M10 17h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button><div class="pr-menu tris" hidden>${FILTRES.map(f => `<button type="button" data-pr-f="${f[0]}">${f[1]}<span></span></button>`).join("")}</div></div></div>`);
+    liste.insertAdjacentHTML("beforebegin", `<div class="pr-haut"><div class="pr-rang"><label class="cherche">${I.lo}<input data-pr-q type="search" autocapitalize="sentences" enterkeyhint="search" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Rechercher une prestation" placeholder="Rechercher une prestation"><button type="button" class="cherche-x" data-pr-x aria-label="Effacer la recherche" hidden><svg viewBox="0 0 24 24" width="9" height="9"><path d="M7 7l10 10M17 7L7 17"/></svg></button></label><button type="button" class="v-rondb" data-pr-tri aria-label="Trier mes prestations" aria-expanded="false"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 7h16M7 12h10M10 17h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button><div class="pr-menu tris" hidden>${FILTRES.map(f => `<button type="button" data-pr-f="${f[0]}">${f[1]}<span></span></button>`).join("")}</div></div></div>`);
     liste.insertAdjacentHTML("afterend", '<div class="pr-rien" role="status" hidden></div>');
+    const plus = fc.querySelector(LISTE); plus.classList.add("pr-plus"); fc.querySelector(".pr-haut").appendChild(plus);
     fc.querySelector("[data-pr-q]").value = q; trie();
     feuille().scrollTop = y;   /* après une modification, elle retrouve sa place dans la liste */
   }
@@ -92,7 +103,11 @@
       y = 0; trie(); f.scrollTop = 0; return;
     }
     if (!f.querySelector(".pr-haut")) return;
-    if (t.closest(LISTE)) { remet(); f.scrollTop = 0; }   /* une nouvelle prestation doit se voir au retour */
+    if (t.closest(LISTE)) {   /* une nouvelle prestation doit se voir au retour */
+      const nom = aAjouter([...f.querySelectorAll(LIGNE)]); remet(); f.scrollTop = 0;
+      /* la fiche s'ouvre juste après ce toucher : on y met ce qu'elle a tapé, elle n'a plus que le prix et la durée */
+      if (nom) setTimeout(() => { const i = f.querySelector("[data-cs-nom],#p-n"); if (i && !i.value) { i.value = nom; i.dispatchEvent(new Event("input", { bubbles: true })); } });
+    }
     else if (t.closest(LIGNE)) { y = f.scrollTop; f.scrollTop = 0; }
   }, true);
   document.addEventListener("input", e => { if (!e.target.matches("[data-pr-q]")) return; q = e.target.value; y = 0; trie(); feuille().scrollTop = 0; });
