@@ -528,14 +528,14 @@ E.addEventListener("click", async ev => {
       if (S.rdv.some(r => r.statut !== "annule" && new Date(r.debut) < fin && new Date(r.fin) > deb)) return dit("Ce créneau est déjà pris");
       const { error } = await sb.from("rendez_vous").insert({ cliente_id: cli?.id || null, prestation_id: p?.id || null, titre: cli ? (p?.nom || null) : (saisie || "Bloqué"), debut: deb.toISOString(), fin: fin.toISOString(), prix: p?.prix ?? null });
       if (error) return oups(error); ferme(); await chargeSemaine(); rendu(); dit("Rendez-vous enregistré ✓"); }
-    else if (k === "statut") { const { error } = await sb.from("rendez_vous").update({ statut: a.dataset.s }).eq("id", a.dataset.id); if (error) return oups(error);
+    else if (k === "statut") { const { error } = await sb.from("rendez_vous").update(a.dataset.par === "cliente_salon" ? { statut: a.dataset.s, annule_par: "cliente_salon" } : { statut: a.dataset.s }).eq("id", a.dataset.id); if (error) return oups(error);
       const r0 = (S.rdv || []).concat(S.tous || []).find(x => x.id === a.dataset.id), c0 = r0 && r0.cliente_id && (S.clientes || []).find(x => x.id === r0.cliente_id);
       const annul = !c0 || new Date(r0.debut) < new Date() ? "Rendez-vous annulé" : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((c0.email || "").trim()) ? "Annulé · la cliente reçoit un e-mail dans 1 minute" : "Annulé · pense à prévenir la cliente (pas d’e-mail)";
       ferme(); await chargeSemaine(); chargeVisites(); rendu(); dit({ fini: "C’est noté ✓", absente: "Marquée pas venue", annule: annul, prevu: "Remis comme prévu" }[a.dataset.s]); }
     /* 17/11 (Marie) : rendez-vous annulé → « Supprimer le créneau » : il disparaît de l'agenda.
        Si la pro vient d'annuler et que l'e-mail « Rendez-vous annulé » n'est pas encore parti (il part 1 minute après), on attend 2 minutes avant d'effacer pour de bon. */
     else if (k === "rdv-suppr") { const id = a.dataset.id, r0 = (S.rdv || []).concat(S.cloche || []).find(x => x.id === id);
-      const attendre = r0 && r0.annule_par === "pro" && !r0.mail_annul_envoye && r0.annule_le && Date.now() - new Date(r0.annule_le) < 3 * 60000;
+      const attendre = r0 && (r0.annule_par === "pro" || r0.annule_par === "cliente_salon") && !r0.mail_annul_envoye && r0.annule_le && Date.now() - new Date(r0.annule_le) < 3 * 60000;
       if (attendre) { suppLater(id, new Date(r0.annule_le).getTime() + 2 * 60000); }
       else { const { error } = await sb.from("rendez_vous").delete().eq("id", id); if (error) return oups(error); }
       ferme(); await chargeSemaine(); rendu(); dit("Créneau supprimé ✓"); }
