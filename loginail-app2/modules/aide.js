@@ -101,18 +101,40 @@ label.btn{display:flex!important;align-items:center;justify-content:center}
   const r0 = rendu; rendu = function () { r0.apply(this, arguments); try { pose(); } catch (e) {} };
 })();
 
-/* ===== 13/11 (Marie) : supprimer une cliente (dans sa fiche, avec le crayon) ===== */
+/* ===== 13/11 (Marie) : supprimer une cliente (dans sa fiche, avec le crayon)
+   22/11 (Marie) : « Supprimer … ? Non / Oui » s'affiche au milieu de l'écran (plus en bas de la fiche, où il fallait descendre). ===== */
 (function () {
   const ID = () => { const b = document.querySelector('.fc [data-a="cli-ok"]'); return b && b.dataset.id; };
+  const st = document.createElement("style");
+  st.textContent = `.sup-fond{position:fixed;inset:0;z-index:320;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(30,20,22,.4);touch-action:none;cursor:pointer;animation:supFond .18s ease both}
+.sup-boite{box-sizing:border-box;cursor:default;width:100%;max-width:340px;max-height:100%;overflow:auto;border-radius:24px;background:#fff;padding:22px 18px 18px;text-align:center;font:300 14px/1.5 Jost,sans-serif;color:#6B625C;animation:supBoite .22s cubic-bezier(.2,.85,.25,1) both}
+.sup-boite b{display:block;margin-bottom:6px;font-weight:500;font-size:17px;line-height:1.3;color:#1E1C1B;overflow-wrap:anywhere}
+.sup-boite p{margin:0}.sup-boite p+p{margin-top:6px;color:#A33A2E;font-weight:500}
+.sup-bts{display:flex;gap:8px;margin-top:18px}.sup-bts button{flex:1;min-height:48px;border:0;border-radius:99px;padding:13px 4px;white-space:nowrap;font:400 15px/1.2 Jost,sans-serif;background:#F3EEE9;color:#1E1C1B;cursor:pointer}
+.sup-bts [data-sup="oui"]{background:#A33A2E;color:#fff}.sup-bts button[disabled]{opacity:.6}
+@keyframes supFond{from{opacity:0}}@keyframes supBoite{from{opacity:0;transform:scale(.94)}}
+@media (prefers-reduced-motion:reduce){.sup-fond,.sup-boite{animation:none}}`;
+  document.head.appendChild(st);
+  const range = () => document.querySelectorAll(".sup-fond").forEach(x => x.remove());
+  /* iPhone : toucher le fond ne donne pas toujours de « clic » → on écoute le doigt qui se lève */
+  document.addEventListener("touchend", e => { const t = e.target; if (!t.classList || !t.classList.contains("sup-fond")) return;
+    e.preventDefault(); e.stopPropagation(); if (!t.querySelector("[disabled]")) range(); }, { capture: true, passive: false });
   new MutationObserver(() => { const b = document.querySelector('.fc [data-a="cli-ok"]'); if (!b || !b.dataset.id || document.querySelector(".fc [data-sup]")) return;
     b.insertAdjacentHTML("afterend", `<button class="lien-t" data-sup="1" style="display:block;margin:14px auto 0;color:#A33A2E">Supprimer cette cliente</button>`); }).observe(document.body, { childList: true, subtree: true });
-  document.addEventListener("click", async e => { const a = e.target.closest && e.target.closest("[data-sup]"); if (!a) return; e.stopPropagation(); const id = ID(), c = S.clientes.find(x => x.id === id); if (!c) return;
+  document.addEventListener("click", async e => { const t = e.target; if (!t.closest) return;
+    const fond = t.closest(".sup-fond"), a = t.closest("[data-sup]"); if (!a && !fond) return; e.stopPropagation();
+    if (fond && fond.querySelector("[disabled]")) return;                                /* suppression en cours */
+    if (!a) { if (t === fond) range(); return; }                                         /* toucher à côté = Non */
+    if (a.dataset.sup === "non") return range();
+    const id = fond ? fond.dataset.id : ID(), c = S.clientes.find(x => x.id === id); if (!c) return range();
     if (a.dataset.sup === "1") { const n = (S.tous || []).filter(r => r.cliente_id === id && r.statut === "prevu" && new Date(r.debut) > new Date()).length;
-      a.outerHTML = `<div class="blanche" style="margin-top:14px;padding:14px 16px;text-align:center;font-size:14px;line-height:1.5"><b style="font-weight:500">Supprimer ${esc(nomCli(c))} ?</b><br>Sa fiche et ses notes seront effacées pour toujours.${n ? `<br>Ses ${n > 1 ? n + " rendez-vous à venir seront annulés" : "rendez-vous à venir sera annulé"}.` : ""}
-        <div style="display:flex;gap:8px;margin-top:12px"><button class="btn clair" data-sup="non" style="flex:1;margin:0">Non</button><button class="btn" data-sup="oui" style="flex:1;margin:0;background:#A33A2E">Oui, supprimer</button></div></div>`; return; }
-    if (a.dataset.sup === "non") { feuilleCliente(id); return; }
+      const act = document.activeElement; if (act && act.blur) act.blur();                /* clavier rangé : la question est bien au milieu */
+      range();
+      document.body.insertAdjacentHTML("beforeend", `<div class="sup-fond" data-id="${esc(id)}"><div class="sup-boite" role="alertdialog" aria-modal="true" aria-labelledby="sup-titre"><b id="sup-titre">Supprimer ${esc(nomCli(c))}&nbsp;?</b><p>Sa fiche et ses notes seront effacées pour toujours.</p>${n ? `<p>${n > 1 ? `Ses ${n} rendez-vous à venir seront annulés` : "Son rendez-vous à venir sera annulé"}, <span style="white-space:nowrap">sans e-mail&nbsp;:</span> préviens-la.</p>` : ""}
+        <div class="sup-bts"><button data-sup="non">Non</button><button data-sup="oui">Oui, supprimer</button></div></div></div>`);
+      return; }
     a.disabled = true; const maint = new Date().toISOString();
     await sb.from("rendez_vous").update({ statut: "annule" }).eq("cliente_id", id).eq("statut", "prevu").gte("debut", maint);
-    const { error } = await sb.from("clientes").delete().eq("id", id); if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessaie."); }
-    S.clientes = S.clientes.filter(x => x.id !== id); await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit("Cliente supprimée"); }, true);
+    const { error } = await sb.from("clientes").delete().eq("id", id); if (error) { range(); return dit("Oups, ça n’a pas marché. Réessaie."); }
+    S.clientes = S.clientes.filter(x => x.id !== id); range(); ferme(); await chargeSemaine(); chargeVisites(); rendu(); dit("Cliente supprimée"); }, true);
 })();

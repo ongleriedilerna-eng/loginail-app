@@ -65,5 +65,5 @@
     const b = t.closest("[data-ep]"); if (!b) return; e.stopPropagation(); const id = b.dataset.id, k = b.dataset.ep; ferme();
     if (k === "pin") { const l = lit(), on = l.includes(id); ecrit(on ? l.filter(x => x !== id) : [id].concat(l)); rendu(); dit(on ? "Cliente désépinglée" : "Épinglée en haut de ta liste ✓"); }
     else if (k === "modif" || k === "suppr") { feuilleCliente(id); setTimeout(() => { const m = document.querySelector('.fc [data-fi="modifier"]'); if (m) m.click();
-      if (k === "suppr") setTimeout(() => { const s = document.querySelector('.fc [data-sup="1"]'); if (s) { s.click(); const z = document.querySelector('.fc [data-sup="oui"]'); if (z) z.scrollIntoView({ block: "center", behavior: "smooth" }); } }, 80); }, 60); } }, true);
+      if (k === "suppr") setTimeout(() => { const s = document.querySelector('.fc [data-sup="1"]'); if (s) s.click(); }, 80); }, 60); } }, true);
 })();
