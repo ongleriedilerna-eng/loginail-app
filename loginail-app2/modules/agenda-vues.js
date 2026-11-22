@@ -9,9 +9,11 @@
   let moisVu = null, jourVu = "", entre = "", occupe = false, avale = 0;
 
   const st = document.createElement("style");
-  st.textContent = `#E .av-titre{display:inline-flex;align-items:center;gap:5px;min-height:44px;margin:0;padding:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer}
+  st.textContent = `#E .av-titre{display:inline-grid;grid-template-columns:auto auto;align-items:center;justify-items:start;column-gap:5px;text-align:left;min-height:44px;margin:0;padding:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer}
 #E .av-titre svg{flex:none;width:13px;height:13px;transition:transform .2s}
 #E .av-titre[aria-expanded=true] svg{transform:rotate(180deg)}
+#E .av-titre small.av-mode{grid-column:1/-1;display:block;margin-top:1px;font:400 12px/15px Jost,sans-serif;color:var(--gris)}
+#E .av-tete .v-ronds{margin-bottom:11px}
 #E .av-tete .su-auj2{padding:0 11px!important;font-size:13px!important}
 #E .av-tete .su-auj2 svg{display:none}
 #E .av-menu{position:absolute;z-index:60;min-width:214px;padding:6px;border-radius:18px;background:#fff;box-shadow:0 18px 40px -14px rgba(0,0,0,.42);transform-origin:top left;animation:av-menu .17s ease-out both}
@@ -144,7 +146,8 @@
     const f = document.createElement("div"); f.innerHTML = h0;
     const t = f.querySelector(".tete"), h1 = t && t.querySelector("h1"); if (!h1) return h0;
     t.classList.add("av-tete");
-    h1.innerHTML = '<button class="av-titre" data-av="menu" aria-haspopup="menu" aria-expanded="false">Agenda<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>';
+    /* 22/11 (Marie) : en tout petit sous « Agenda », la vue où elle est */
+    h1.innerHTML = '<button class="av-titre" data-av="menu" aria-haspopup="menu" aria-expanded="false"><span>Agenda</span><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' + `<small class="av-mode">${MODES.find(m => m[0] === mode)[1]}</small></button>`;
     const pap = f.querySelector(".pap"); if (mode === "jour" || !pap) return f.innerHTML;
     f.querySelector(".semaine")?.classList.add("av-cache");
     f.querySelector(".nav-sem .v-ferme")?.remove();   /* en semaine et en mois, ça ne parle pas d'un seul jour */
@@ -257,6 +260,36 @@
     va(plusJours(S.jour, 7 * d));
   }
 
+  /* 22/11 (Marie : « j'appuie à 15 h, ça me remet sur Jour ») : l'heure touchée dans une colonne de la semaine.
+     Les heures n'ont pas toutes la même hauteur (repartit) : on lit la place réelle des traits. Le chiffre est à cheval
+     sur son trait, donc toucher juste au-dessus compte pour cette heure. Si l'heure commence par un rendez-vous, on propose sa fin. */
+  function minuteTouchee(col, y, jour) {
+    let m = +col.parentElement.dataset.debut;
+    col.querySelectorAll("u[data-m]").forEach(u => { if (u.getBoundingClientRect().top <= y + 5) m = +u.dataset.m; });
+    S.rdv.filter(r => r.statut !== "annule" && memeJour(new Date(r.debut), jour))
+      .map(r => [min(new Date(r.debut)), memeJour(new Date(r.fin), jour) ? min(new Date(r.fin)) : 1440])
+      .sort((a, b) => a[0] - b[0]).forEach(([a, b]) => { if (a <= m && b > m && b < 1440) m = b; });
+    return m;
+  }
+
+  /* Sur téléphone, le toucher est « aimanté » par le bouton voisin, jusqu'à 14 px : une heure vide ouvrait la date (donc le Jour)
+     ou le rendez-vous d'à côté. On garde le point réel du doigt ; à 3 px ou moins d'un rendez-vous, c'est bien lui qu'elle visait. */
+  let doigt = null;
+  addEventListener("touchstart", e => { const p = e.touches.length === 1 && e.touches[0]; doigt = p ? { x: p.clientX, y: p.clientY, t: Date.now() } : null; }, { capture: true, passive: true });
+  function colonneTouchee(e) {
+    const p = doigt && Date.now() - doigt.t < 1000 ? doigt : null; doigt = null;
+    const cible = e.target, vise = cible.closest(".av-b,.av-tj");
+    if (p && cible.closest('.av-g,[data-a="nouveau"]')) {   /* le « + » flottant aimante aussi */
+      const vrai = document.elementFromPoint(p.x, p.y), col = vrai && !vrai.closest(".av-b") && vrai.closest(".av-col");
+      if (col) {
+        if (vise && vise.classList.contains("av-b")) { const r = vise.getBoundingClientRect(); if (Math.hypot(Math.max(0, r.left - p.x, p.x - r.right), Math.max(0, r.top - p.y, p.y - r.bottom)) <= 3) return null; }
+        return { col, y: p.y };
+      }
+    }
+    const col = !vise && cible.closest(".av-col");
+    return col ? { col, y: e.clientY } : null;
+  }
+
   addEventListener("click", e => {
     const t = e.target; if (!t.closest) return;
     const ouvert = E.querySelector(".av-menu");
@@ -274,6 +307,14 @@
       stop(); S.jour = new Date(t.closest("[data-av-choisi]").dataset.avChoisi); return feuilleNouveau(null);
     }
     const m = t.closest("[data-av-mois]"); if (m) { stop(); return tourne(+m.dataset.avMois); }
+    /* une heure vide de la semaine : on ajoute, sans quitter la semaine (la date en haut ouvre toujours la journée) */
+    const touche = colonneTouchee(e);
+    if (touche) {
+      stop(); if (occupe) return;
+      const jour = new Date(touche.col.dataset.avJ), m = minuteTouchee(touche.col, touche.y, jour);
+      S.jour = jour; S.papY = null;
+      return window.__feuilleCreneau ? window.__feuilleCreneau(m) : feuilleNouveau(m);
+    }
     if (mode !== "jour" && !E.classList.contains("fe") && t.closest('[data-a="nouveau"]')) {
       /* le « + » ne devine pas le jour : il serait parti sur le dernier jour regardé */
       stop();

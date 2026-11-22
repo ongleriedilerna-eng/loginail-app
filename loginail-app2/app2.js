@@ -395,6 +395,19 @@ document.addEventListener("change", e => { if (e.target.id === "n-h") nFin(); })
 .fc .n-sug button span{display:none}
 .fc .n-sug .sous{flex:none;align-self:center;white-space:nowrap;margin:0!important}
 @keyframes nsg{from{opacity:0;transform:translateY(4px)}}`; document.head.appendChild(st); }
+/* 22/11 (Marie) : « Nouveau jour » dit le jour de la semaine. Une case date ne sait pas l'écrire : on l'écrit dessous,
+   et la vraie case, transparente, garde le calendrier du téléphone. */
+const jourLong = d => `${JOURS[(d.getDay() + 6) % 7]} ${d.getDate()} ${MOIS[d.getMonth()]} ${d.getFullYear()}`;
+["input", "change"].forEach(ev => document.addEventListener(ev, e => { if (e.target.id !== "dc-j") return;
+  const t = document.getElementById("dc-j-t"); if (t) t.textContent = e.target.value ? jourLong(new Date(e.target.value + "T12:00:00")) : "Choisis un jour"; }));
+/* à la souris, le calendrier ne s'ouvrait que sur sa petite icône */
+document.addEventListener("click", e => { if (e.target.id === "dc-j" && e.target.showPicker && matchMedia("(pointer:fine)").matches) try { e.target.showPicker(); } catch (x) {} });
+{ const st = document.createElement("style"); st.textContent = `
+#E .dc-jour{position:relative;box-sizing:border-box;height:52px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:16px}
+#E .dc-jour span{white-space:nowrap}
+#E .dc-jour svg{flex:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6}
+#E .dc-jour:focus-within{outline:1.5px solid var(--v-acc,#B5475E)}
+#E .dc-jour input{position:absolute;inset:0;width:100%;height:100%;min-width:0;margin:0;padding:0;border:0;opacity:0;font-size:16px;-webkit-appearance:none;appearance:none;cursor:pointer}`; document.head.appendChild(st); }
 function feuilleCliente(id) {
   const c = id ? S.clientes.find(x => x.id === id) || {} : {};
   const w = id && (S.vis || {})[id];
@@ -607,7 +620,7 @@ E.addEventListener("click", async ev => {
       dit(d && d.demo ? "Dans le salon d’essai, aucun SMS ne part" : d && d.envoye ? "SMS envoyé : regarde ton téléphone ✓" : d && d.erreur ? d.erreur : "L’essai n’est pas parti. Réessaie plus tard."); }
     else if (k === "decaler") { const r = S.rdv.find(x => x.id === a.dataset.id); if (!r) return; const d = new Date(r.debut), p2 = n => String(n).padStart(2, "0");
       ouvre(`<h3>Déplacer le rendez-vous</h3><div class="sous">${esc(nomRdv(r))} · ${esc(titreRdv(r))}</div>
-        <div class="lab2">Nouveau jour</div><input class="champ" id="dc-j" type="date" value="${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}" style="font-size:16px;width:100%;min-width:0;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block">
+        <div class="lab2">Nouveau jour</div><div class="champ dc-jour"><span id="dc-j-t" aria-hidden="true">${jourLong(d)}</span>${I.ag}<input id="dc-j" type="date" aria-label="Nouveau jour" value="${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}"></div>
         <div class="lab2">Nouvelle heure</div><input class="champ" id="dc-h" type="time" value="${p2(d.getHours())}:${p2(d.getMinutes())}" step="900" style="font-size:16px;width:100%;min-width:0;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block">
         <button class="btn" data-a="decaler-ok" data-id="${r.id}" style="margin-top:16px">Déplacer</button>`); }
     else if (k === "decaler-ok") { const r = S.rdv.find(x => x.id === a.dataset.id), j = $("#dc-j", E).value, h = $("#dc-h", E).value; if (!r || !j || !h) return dit("Choisis le jour et l’heure");

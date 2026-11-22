@@ -8,6 +8,8 @@
 .pap .pr .tagx{display:inline-block;margin-left:6px;border-radius:999px;background:#1E1C1B;color:#fff;padding:1px 7px;font-size:10px;font-weight:500;letter-spacing:.04em;vertical-align:1px}
 .rv-tot{display:flex;justify-content:space-between;margin-top:10px;font-size:13px;color:#6B625C}
 .rv-note{margin-top:12px;border-radius:14px;background:#fff;padding:10px 13px;font-size:13.5px;line-height:1.45;text-align:left}.rv-note b{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8A847E;font-weight:500;margin-bottom:3px}
+#E .fc .rv-duo{display:flex;gap:8px;margin-top:12px}
+#E .fc .rv-duo .btn{flex:1 1 0;width:auto;min-width:0;height:46px;margin:0;border-radius:999px;white-space:nowrap}
 .fc .fiche-t h3[data-cli]{cursor:pointer;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px}`;
   document.head.appendChild(st);
   const P = () => prestasDispo(), parTitre = r => { const t = (r.titre || (r.prestations && r.prestations.nom) || "").split(" + "); return P().map((p, i) => t.includes(p.nom) ? i : -1).filter(i => i >= 0); };
@@ -28,9 +30,12 @@
     const h = z.querySelector("h3"); if (h && r.cliente_id) { h.dataset.cli = r.cliente_id; const so = h.nextElementSibling; (so || h).insertAdjacentHTML("afterend", `<button class="lien-t" data-cli="${r.cliente_id}" style="display:block;margin:4px 0 0;padding:2px 0;text-align:left;font-size:13px">Voir sa fiche ›</button>`); }
     let x = ""; if (r.note) x += `<div class="rv-note"><b>Note</b>${esc(r.note)}</div>`;
     if (r.statut === "annule" && r.cliente_id) x += `<button class="btn" data-rv="remplacer" data-id="${r.id}" style="margin-top:14px">Mettre une autre cliente à la place</button>`;
-    if (r.cliente_id && r.statut !== "annule") x += `<button class="btn clair" data-rv="modifier" data-id="${r.id}" style="margin-top:12px">Modifier le rendez-vous</button>`;
-    /* 13/11 (Marie) : « Déplacer le rendez-vous » bien visible, à côté de Modifier (le petit « Décaler » du bas disparaît) */
-    if (r.statut === "prevu") { x += `<button class="btn clair" data-a="decaler" data-id="${r.id}" style="margin-top:8px">Déplacer le rendez-vous</button>`; const pd = document.querySelector('.fc .petits [data-a="decaler"]'); if (pd) pd.remove(); }
+    /* 22/11 (Marie) : deux pilules sur la même ligne, « Modifier » et « Déplacer » */
+    let duo = "";
+    if (r.cliente_id && r.statut !== "annule") duo += `<button class="btn clair" data-rv="modifier" data-id="${r.id}" aria-label="Modifier le rendez-vous">Modifier</button>`;
+    /* 13/11 (Marie) : Déplacer bien visible, à côté de Modifier (le petit « Décaler » du bas disparaît) */
+    if (r.statut === "prevu") { duo += `<button class="btn clair" data-a="decaler" data-id="${r.id}" aria-label="Déplacer le rendez-vous">Déplacer</button>`; const pd = document.querySelector('.fc .petits [data-a="decaler"]'); if (pd) pd.remove(); }
+    if (duo) x += `<div class="rv-duo">${duo}</div>`;
     { const c = r.cliente_id && S.clientes.find(y => y.id === r.cliente_id); if (c && window.__fid && __fid.on() && r.statut !== "annule") { const e = __fid.etat(c);
       x += `<div class="rv-fid"><span>Fidélité · <b>${e.fait}</b> sur ${e.f.n}${e.pret ? ` · carte complète : ${esc(e.f.cadeau)}` : ""}</span><button data-rv="fid-plus" data-id="${r.id}">+ 1 point</button></div>${r.statut === "prevu" ? `<div class="rv-fid-n">« C’est fini » ajoute aussi 1 point tout seul.</div>` : ""}`; } }
     z.insertAdjacentHTML("afterend", x); }).observe(document.body, { childList: true, subtree: true });
