@@ -27,8 +27,8 @@
 #E .feuille .ap .btn{width:100%;margin-top:18px}
 #E .feuille .ap .btn.ap-2{margin-top:10px!important;background:#fff!important;color:#2A1B1E!important;border:1px solid rgba(30,28,27,.22)!important}
 #E .feuille .ap .s5-gestes{text-align:left}
-#E .feuille .ap .s5-gestes li b{font-weight:600!important;color:#BE4A60!important}
-#E .ap-rappel{display:flex;align-items:center;gap:10px;box-sizing:border-box;margin:0 0 10px;padding:9px 10px 9px 14px;border-radius:16px;background:#F7E6E4;font-size:14px;line-height:1.3;color:#2A1B1E;text-align:left}
+#E .feuille .ap .s5-gestes li b{font-weight:600!important;color:var(--v-acc,#BE4A60)!important}
+#E .ap-rappel{display:flex;align-items:center;gap:10px;box-sizing:border-box;margin:0 0 10px;padding:9px 10px 9px 14px;border-radius:16px;background:var(--v-rose,#F7E6E4);font-size:14px;line-height:1.3;color:#2A1B1E;text-align:left}
 #E .ap-rappel p{flex:1;min-width:0;margin:0}
 #E .ap-rappel b{display:block;font-weight:500}
 #E .ap-rappel small{display:block;margin-top:2px;font-size:12.5px;color:#6B5559}

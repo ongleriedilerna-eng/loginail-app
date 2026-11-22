@@ -1,23 +1,27 @@
 /* ===== 05/11 (Marie) OBLIGATOIRE : « Mes infos légales » et « Bon à savoir » enregistrés pour de vrai → ils remplissent tout seuls
    les mentions légales, la confidentialité et les conditions de réservation de son site. ===== */
 (function(){
-  const lit=()=>{try{return JSON.parse(localStorage.getItem("loginail-brouillon"))||{}}catch(_){return {}}};
+  /* 22/11 : téléphone sans brouillon complet → on part du site rangé dans le compte, sinon « Enregistrer » le remplacerait par les seules infos légales */
+  const lit=()=>{let b={};try{b=JSON.parse(localStorage.getItem("loginail-brouillon"))||{}}catch(_){}
+    const d=typeof S==="object"&&S.site&&S.site.donnees;return d&&!b.nom?Object.assign(JSON.parse(JSON.stringify(d)),b):b};
   const ecrit=b=>{try{localStorage.setItem("loginail-brouillon",JSON.stringify(b));return true}catch(_){return false}};
   const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
   const REG0={acompte:true,montant:"15 €",retard:"10 min",annulation:"48 h avant",autre:""};
   const regles=b=>Object.assign({},REG0,b.regles||{});
   const manque=b=>{const L=b.legal||{};const m=[];if(!L.nomComplet)m.push("ton nom");if(!/^\d{14}$/.test((L.siret||"").replace(/\s/g,"")))m.push("ton SIRET");return m};
+  window.__legalManque=()=>manque(lit());   /* pour le rappel de l'Accueil (rappel-legal.js) */
   const puces=(k,l,v)=>`<div class="chips" data-lg-ch="${k}">${l.map(x=>`<button class="chip${x===v?" on":""}" data-lg-c>${x}</button>`).join("")}</div>`;
   MSF["ms-legal"]=()=>{const b=lit(),L=b.legal||{};const adr=L.adresse||[b.rue,[b.cp,b.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ");
-    return croix+`<h3>Mes infos légales</h3><div class="sous">Elles remplissent toutes seules les pages légales de ton site</div><div class="form" style="margin-top:12px">
+    return croix+`<h3>Mes infos légales</h3><div class="sous">Elles remplissent toutes seules les pages légales de ton site</div>
+    ${L.mediateur?"":'<div class="lg-med"><b>Le médiateur de la consommation est obligatoire.</b> C’est la loi, et c’est à toi de le choisir. Son nom et son site se notent en bas de cette page.</div>'}<div class="form" style="margin-top:12px">
     <label>Prénom et nom<input data-lg="nomComplet" value="${esc(L.nomComplet)}" placeholder="Prénom Nom"></label>
     <label>Nom commercial <small>facultatif</small><input data-lg="entreprise" value="${esc(L.entreprise||b.nom)}" placeholder="Ton onglerie"></label>
     <label>SIRET<input data-lg="siret" value="${esc(L.siret)}" placeholder="14 chiffres" inputmode="numeric"></label>
     <label>Adresse de l’entreprise<input data-lg="adresse" value="${esc(adr)}" placeholder="Rue, code postal, ville"></label>
     <label>E-mail de contact<input data-lg="email" value="${esc(L.email||b.email)}" placeholder="toi@exemple.fr" inputmode="email"></label></div>
     <div class="liste" style="margin-top:10px"><div class="ligne"><div class="t">TVA non applicable<span>Article 293 B du CGI, pour la micro-entreprise</span></div><button class="sw${L.tvaNon===false?"":" on"}" data-lg-sw="tvaNon"></button></div></div>
-    <div class="lab" style="margin-top:14px">Mon médiateur de la consommation <small>facultatif pour enregistrer</small></div>
-    <div class="sous" style="text-align:left;margin:2px 0 8px;font-size:12px;line-height:1.5">Obligatoire pour toute pro qui travaille avec des particuliers, même sans site internet. Beaucoup l’oublient ! Si tu en as un, écris son nom et son site. Sinon, laisse vide : tu peux quand même enregistrer.</div>
+    <div class="lab" style="margin-top:14px">Mon médiateur de la consommation <small>obligatoire par la loi</small></div>
+    <div class="sous" style="text-align:left;margin:2px 0 8px;font-size:12px;line-height:1.5">Obligatoire pour toute pro qui travaille avec des particuliers, même sans site internet. Beaucoup l’oublient ! Écris son nom et son site. Tu n’en as pas encore ? Enregistre le reste, puis reviens l’ajouter dès que tu l’as choisi.</div>
     <div class="form"><label>Nom du médiateur<input data-lg="mediateur" value="${esc(L.mediateur)}" placeholder="Nom du médiateur"></label><label>Son site<input data-lg="mediateurSite" value="${esc(L.mediateurSite)}" placeholder="www.exemple.fr"></label></div>
     <button class="btn" data-lg-ok="legal" style="width:100%;margin-top:14px">Enregistrer</button>`};
   MSF["ms-bon"]=()=>{const r=regles(lit());return croix+`<h3>Bon à savoir</h3><div class="sous">Tes règles, montrées à la cliente avant qu’elle réserve</div>
@@ -36,11 +40,11 @@
     if(ok.dataset.lgOk==="legal"){const L=b.legal||{};fc.querySelectorAll("[data-lg]").forEach(i=>L[i.dataset.lg]=i.value.trim());L.siret=L.siret.replace(/\s/g,"");L.tvaNon=fc.querySelector('[data-lg-sw="tvaNon"]').classList.contains("on");
       if(L.siret&&!/^\d{14}$/.test(L.siret)){toast(e,"Le SIRET a 14 chiffres");return}b.legal=L}
     else{const r=regles(b);r.acompte=fc.querySelector('[data-lg-sw="acompte"]').classList.contains("on");fc.querySelectorAll("[data-lg-ch]").forEach(g=>{const o=g.querySelector(".on");if(o)r[g.dataset.lgCh]=o.textContent});r.autre=fc.querySelector("[data-lg-txt]").value.trim();b.regles=r}
-    if(!ecrit(b))return;e.classList.remove("fe");const m=manque(b);toast(e,ok.dataset.lgOk==="legal"&&m.length?"Enregistré · il manque encore "+m.join(", "):"Enregistré ✓ · ton site est à jour");
+    if(!ecrit(b))return;e.classList.remove("fe");if(typeof S==="object"&&S.onglet==="acc")rendu();const m=manque(b);toast(e,ok.dataset.lgOk==="legal"&&m.length?"Enregistré · il manque encore "+m.join(", "):"Enregistré ✓ · ton site est à jour");
     document.querySelectorAll(".ms2-apercu iframe").forEach(f=>{f.src="loginail-creer/pret.html?public&appli="+Date.now()})},true);
   /* dans « Mon site » : la partie « Obligatoire » (avec ce qui manque) */
   const bloc=()=>{const b=lit(),m=manque(b),r=regles(b);
-    return `<div class="lg-bloc"><div class="k">Obligatoire</div><div class="liste"><div class="ligne" data-a="ms-legal"><div class="t">Mes infos légales<span${m.length?' style="color:#A04A4A"':""}>${m.length?"Il manque "+m.join(", "):!(b.legal||{}).mediateur?"Complet ✓ · petit rappel : ton médiateur, quand tu pourras":"Complet ✓"}</span></div><span class="fl">›</span></div>
+    return `<div class="lg-bloc"><div class="k">Obligatoire</div><div class="liste"><div class="ligne" data-a="ms-legal"><div class="t">Mes infos légales<span${m.length?' style="color:#A04A4A"':""}>${m.length?"Il manque "+m.join(", "):!(b.legal||{}).mediateur?"Nom et SIRET ✓ · ajoute ton médiateur, c’est obligatoire":"Complet ✓"}</span></div><span class="fl">›</span></div>
     <div class="ligne" data-a="ms-bon"><div class="t">Bon à savoir<span>${r.acompte?"Acompte "+r.montant:"Sans acompte"} · annulation ${r.annulation}</span></div><span class="fl">›</span></div></div></div>`};
   const pose=()=>document.querySelectorAll('.vue[data-p="si"]').forEach(vu=>{const ks=[...vu.querySelectorAll(".k")];const k=ks.find(x=>/Mon contenu/.test(x.textContent));if(!k)return;
     /* « Bon à savoir » passe dans « Obligatoire » */

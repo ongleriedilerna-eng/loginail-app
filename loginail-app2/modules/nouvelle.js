@@ -5,11 +5,11 @@
    Une cliente déjà connue (même numéro) qui réserve en ligne n'a pas la pilule : ce n'est pas une nouvelle. */
 (function () {
   const st = document.createElement("style");
-  st.textContent = `.cli .nv{display:inline-block;margin-left:7px;padding:2px 9px;border-radius:99px;background:#E8A3B4;color:#fff;font-size:10.5px;font-weight:500;font-style:normal;letter-spacing:.02em;line-height:1.5;vertical-align:2px;white-space:nowrap}
-.cli.neuve .av{box-shadow:0 0 0 2px #fff,0 0 0 3.5px #E8A3B4}
-.cli.neuve .t span.enl{color:#C0647C}
+  st.textContent = `.cli .nv{display:inline-block;margin-left:7px;padding:2px 9px;border-radius:99px;background:var(--v-acc,#E8A3B4);color:#fff;font-size:10.5px;font-weight:500;font-style:normal;letter-spacing:.02em;line-height:1.5;vertical-align:2px;white-space:nowrap}
+.cli.neuve .av{box-shadow:0 0 0 2px #fff,0 0 0 3.5px var(--v-acc,#E8A3B4)}
+.cli.neuve .t span.enl{color:var(--v-acc,#C0647C)}
 .ong button[data-go="cl"]{position:relative}
-.ong button[data-go="cl"].pt-nv::after{content:"";position:absolute;top:2px;left:calc(50% + 7px);width:9px;height:9px;border-radius:50%;background:#E8A3B4;box-shadow:0 0 0 2px #fff}`;
+.ong button[data-go="cl"].pt-nv::after{content:"";position:absolute;top:2px;left:calc(50% + 7px);width:9px;height:9px;border-radius:50%;background:var(--v-acc,#E8A3B4);box-shadow:0 0 0 2px #fff}`;
   document.head.appendChild(st);
 
   const a_voir = id => { const c = (S.clientes || []).find(x => x.id === id); return !!(c && c.en_ligne_a_voir); };

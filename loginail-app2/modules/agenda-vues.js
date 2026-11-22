@@ -36,13 +36,13 @@
 #E .av-hh i{position:absolute;right:3px;font:400 10px Jost,sans-serif;color:#7A716B;transform:translateY(-50%)}
 #E .av-col u{position:absolute;left:0;right:0;height:1px;background:rgba(30,28,27,.05);pointer-events:none}
 #E .av-col s{position:absolute;left:0;right:0;height:2px;background:var(--v-acc,#B5475E);pointer-events:none;z-index:2}
-#E .av-b{position:absolute;box-sizing:border-box;min-height:12px;margin:0;overflow:hidden;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:1px 1px 0 2px;border:0;border-radius:6px;background:#EFCFD3;color:inherit;font:400 9px/10px Jost,sans-serif;text-align:left;cursor:pointer}
+#E .av-b{position:absolute;box-sizing:border-box;min-height:12px;margin:0;overflow:hidden;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:1px 1px 0 2px;border:0;border-radius:6px;background:var(--v-h1,#EFCFD3);color:inherit;font:400 9px/10px Jost,sans-serif;text-align:left;cursor:pointer}
 #E .av-b>span{display:block;flex:none;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;letter-spacing:-.01em}
 #E .av-b>.av-h{text-overflow:clip}
 #E .av-b>.av-n{font-weight:500;font-size:9.6px}
 #E .av-b>.av-p{font-size:8.8px}
 #E .av-b.bloc{background:#E6E0DA}
-#E .av-b.fini{background:#F8EBED;color:#51474A}
+#E .av-b.fini{background:var(--v-h2,#F8EBED);color:#51474A}
 #E .av-b.bloc.fini{background:#EEEAE6}
 #E .av-b.etroit{padding:1px 0 0 1px}
 #E .av-b.abs{background:repeating-linear-gradient(135deg,#F1ECE6 0 5px,#E9E2DA 5px 10px)}
@@ -147,7 +147,7 @@
     h1.innerHTML = '<button class="av-titre" data-av="menu" aria-haspopup="menu" aria-expanded="false">Agenda<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>';
     const pap = f.querySelector(".pap"); if (mode === "jour" || !pap) return f.innerHTML;
     f.querySelector(".semaine")?.classList.add("av-cache");
-    f.querySelectorAll(".blanche").forEach(x => { if (/fermé ce jour-là/.test(x.textContent)) x.remove(); });
+    f.querySelector(".nav-sem .v-ferme")?.remove();   /* en semaine et en mois, ça ne parle pas d'un seul jour */
     const k = [...f.querySelectorAll(".k")].find(x => /rendez-vous/.test(x.textContent)), nav = f.querySelector(".nav-sem");
     if (mode === "semaine") {
       const fin = plusJours(S.lundi, 7), n = S.rdv.filter(r => r.cliente_id && r.statut !== "annule" && new Date(r.debut) >= S.lundi && new Date(r.debut) < fin).length;

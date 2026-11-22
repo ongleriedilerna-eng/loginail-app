@@ -139,7 +139,7 @@
     return h; };
 
   /* ---------- 5 · Agenda ---------- */
-  const vAg = VUES.ag;
+  const vAg = VUES.ag, MOIS_C = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
   VUES.ag = () => { const f = dom(vAg()), te = f.querySelector(".tete"), j = S.jour, L = S.lundi, F = plusJours(L, 6);
     const zone = te && te.lastElementChild && te.lastElementChild.tagName === "DIV" && te.lastElementChild.querySelector("button") ? te.lastElementChild : null;
     if (zone) { zone.removeAttribute("style"); zone.className = "v-ronds";
@@ -149,6 +149,9 @@
       const mo = zone.querySelector('[data-a="mois"]'); if (mo) mo.setAttribute("aria-label", "Choisir une date"); }
     const sm = te && te.querySelector("small"); if (sm) sm.textContent = sm.textContent.replace(/^./, c => c.toUpperCase());
     const ns = f.querySelector(".nav-sem span"); if (ns) ns.textContent = L.getMonth() === F.getMonth() ? `Du ${L.getDate()} au ${F.getDate()} ${MOIS[F.getMonth()]}` : `Du ${L.getDate()} ${MOIS[L.getMonth()]} au ${F.getDate()} ${MOIS[F.getMonth()]}`;
+    if (ns && ns.parentElement.hasAttribute("data-ferme")) {
+      if (L.getMonth() !== F.getMonth()) { const court = d => `${d.getDate()} ${MOIS_C[d.getMonth()]}`; ns.textContent = `Du ${court(L)} au ${court(F)}`; }   /* à cheval sur 2 mois : en court, pour tenir sur une ligne */
+      ns.insertAdjacentHTML("beforeend", '<em class="v-ferme"> · Fermé ce jour</em>'); }
     f.querySelectorAll(".semaine button small").forEach(s => { if (s.textContent !== "auj.") s.textContent = s.textContent.toLowerCase() + "."; });
     const du = S.rdv.filter(r => memeJour(new Date(r.debut), j) && r.statut !== "annule" && r.cliente_id), tot = du.filter(r => r.statut !== "absente").reduce((s, r) => s + (+r.prix || 0), 0);
     const k = [...f.children].filter(x => x.classList.contains("k")).find(x => /rendez-vous/.test(x.textContent));
@@ -316,7 +319,7 @@
   /* ---------- 9 · après chaque dessin : le bouton « + » de l'agenda, le bandeau, les lettres ---------- */
   let FAB = null;
   const fab = () => { if (!E.querySelector(".ong")) return;
-    if (!FAB || !FAB.isConnected) { FAB = document.createElement("button"); FAB.className = "v-fab"; FAB.dataset.a = "nouveau"; FAB.setAttribute("aria-label", "Nouveau rendez-vous"); FAB.innerHTML = svg(IC.plus, 26); E.appendChild(FAB); }
+    if (!FAB || !FAB.isConnected) { FAB = document.createElement("button"); FAB.className = "v-fab"; FAB.dataset.a = "nouveau"; FAB.setAttribute("aria-label", "Nouveau rendez-vous"); FAB.innerHTML = svg(IC.plus, 20); E.appendChild(FAB); }
     FAB.hidden = S.onglet !== "ag"; };
   const r0 = rendu;
   /* 18/11 (Marie : « l'agenda ne doit bouger ni en haut ni en bas ») : le haut et la barre du bas restent en place, seules les heures défilent.
@@ -553,8 +556,14 @@
 @media (min-width:1000px) and (orientation:landscape){html.plein #E .vue[data-p="ag"]>.pap{margin-left:-34px;margin-right:-34px;box-shadow:0 -1px 0 #E9E5E2,16px 0 0 #fff}}
 #E .v-now{position:absolute;left:46px;right:0;height:0;border-top:1.5px solid var(--v-acc);z-index:1;pointer-events:none}
 #E .v-now:before{content:"";position:absolute;left:-4px;top:-4.5px;width:7px;height:7px;border-radius:50%;background:var(--v-acc)}
-#E .v-fab{position:absolute;z-index:69;right:max(20px,calc((100% - 560px)/2 + 20px));bottom:calc(max(24px,env(safe-area-inset-bottom)) + 78px);width:56px;height:56px;border-radius:50%;border:0;background:var(--v-fonce);color:#fff;display:grid;place-items:center;padding:0;cursor:pointer;box-shadow:0 14px 30px -12px rgba(42,27,30,.6);transition:transform .12s;animation:vFab .3s cubic-bezier(.3,1.4,.5,1)}
+#E .v-fab{position:absolute;z-index:69;right:max(20px,calc((100% - 560px)/2 + 20px));bottom:calc(max(24px,env(safe-area-inset-bottom)) + 78px);width:42px;height:42px;border-radius:50%;border:0;background:var(--v-fonce);color:#fff;display:grid;place-items:center;padding:0;cursor:pointer;box-shadow:0 14px 30px -12px rgba(42,27,30,.6);transition:transform .12s;animation:vFab .3s cubic-bezier(.3,1.4,.5,1)}
 #E .v-fab[hidden]{display:none}
+/* 22/11 (Marie) : le « + » à la taille des ronds du haut ; le doigt garde une zone plus large */
+#E .v-fab:before{content:"";position:absolute;inset:-5px;border-radius:50%}
+@media (max-width:350px){#E .v-fab{width:36px;height:36px}#E .v-fab:before{inset:-6px}}
+#E .nav-sem span{white-space:nowrap}
+#E .nav-sem .v-ferme{font-style:normal;font-weight:500;color:var(--v-acc)}
+@media (max-width:350px){#E .vue[data-p="ag"] .nav-sem[data-ferme] span{font-size:11px}}
 @keyframes vFab{from{transform:scale(.6);opacity:0}}
 /* ----- Clientes ----- */
 #E .v-cherche{display:flex;gap:8px;align-items:center;margin-top:18px;position:relative}

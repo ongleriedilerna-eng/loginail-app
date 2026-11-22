@@ -69,6 +69,9 @@
 @keyframes epm{from{opacity:0;transform:scale(.92)}}
 .ep-menu .ep-nom{font-size:12.5px;color:#8A817A;padding:8px 12px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ep-menu button{display:flex;align-items:center;gap:11px;width:100%;border:0;background:none;padding:12px;border-radius:12px;font:inherit;font-size:15px;color:#1E1C1B;text-align:left}
+/* 22/11 (Marie : écran bleu « Copier · Traduire · Partager ») : le voile et le menu sont posés dans body, hors de .ecran qui coupe la sélection ;
+   l'iPhone sélectionnait donc tout l'écran. On la coupe sur eux, sur la liste, et partout tant que le doigt ou le menu est là. */
+.cli,.cli *,.ep-voile,.ep-menu,.ep-menu *,.sup-fond,.sup-fond *,html.ep-appui,html.ep-appui *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important}
 .ep-menu button:active{background:#F4EFEA}.ep-menu button.rouge{color:#A33A2E}`;
   document.head.appendChild(st);
 
@@ -85,24 +88,28 @@
     const d = document.createElement("div"); d.appendChild(f); return d.innerHTML; };
 
   /* 2 · l'appui long */
-  let T = null, X0 = 0, Y0 = 0, LIGNE = null, BLOQUE = 0;
-  const stop = () => { clearTimeout(T); T = null; if (LIGNE) LIGNE.classList.remove("ep-tenu"); };
-  const debut = (el, x, y) => { stop(); LIGNE = el; X0 = x; Y0 = y; el.classList.add("ep-tenu");
-    T = setTimeout(() => { T = null; el.classList.remove("ep-tenu"); BLOQUE = Date.now(); try { navigator.vibrate && navigator.vibrate(12); } catch (e) {} menu(el); }, 480); };
+  let T = null, OUVERT = false, X0 = 0, Y0 = 0, LIGNE = null, BLOQUE = 0;
+  const racine = document.documentElement, sansBleu = () => { const s = getSelection(); if (s) s.removeAllRanges(); };
+  const stop = () => { clearTimeout(T); T = null; if (LIGNE) LIGNE.classList.remove("ep-tenu"); if (!document.querySelector(".ep-menu")) racine.classList.remove("ep-appui"); };
+  const debut = (el, x, y) => { stop(); racine.classList.add("ep-appui"); sansBleu(); LIGNE = el; X0 = x; Y0 = y; el.classList.add("ep-tenu");
+    T = setTimeout(() => { T = null; el.classList.remove("ep-tenu"); BLOQUE = Date.now(); OUVERT = true; sansBleu(); try { navigator.vibrate && navigator.vibrate(12); } catch (e) {} menu(el); }, 480); };
   const ligne = t => t && t.closest && t.closest('.vue[data-p="cl"] .cli[data-cli]');
-  document.addEventListener("touchstart", e => { const el = ligne(e.target); if (!el || e.touches.length > 1) return; debut(el, e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+  document.addEventListener("touchstart", e => { OUVERT = false; BLOQUE = 0; const el = ligne(e.target); if (!el || e.touches.length > 1) return; debut(el, e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
   document.addEventListener("touchmove", e => { if (T && (Math.abs(e.touches[0].clientX - X0) > 8 || Math.abs(e.touches[0].clientY - Y0) > 8)) stop(); }, { passive: true });
-  document.addEventListener("touchend", () => { if (T) stop(); }, { passive: true });
-  document.addEventListener("touchcancel", stop, { passive: true });
+  document.addEventListener("touchend", e => { if (T) return stop(); if (!OUVERT) return;
+    OUVERT = false; BLOQUE = Date.now(); if (e.cancelable) e.preventDefault(); }, { passive: false });   /* même après 2 secondes, lâcher n'ouvre pas la fiche */
+  document.addEventListener("touchcancel", () => { OUVERT = false; stop(); }, { passive: true });
+  document.addEventListener("selectstart", e => { if (racine.classList.contains("ep-appui")) e.preventDefault(); });
   document.addEventListener("mousedown", e => { if (e.button) return; const el = ligne(e.target); if (el) debut(el, e.clientX, e.clientY); });
   document.addEventListener("mousemove", e => { if (T && (Math.abs(e.clientX - X0) > 8 || Math.abs(e.clientY - Y0) > 8)) stop(); });
-  document.addEventListener("mouseup", () => { if (T) stop(); });
-  document.addEventListener("contextmenu", e => { if (ligne(e.target)) e.preventDefault(); });
+  document.addEventListener("mouseup", () => { if (T) stop(); else if (OUVERT) { OUVERT = false; BLOQUE = Date.now(); } });
+  document.addEventListener("contextmenu", e => { if (ligne(e.target) || racine.classList.contains("ep-appui")) e.preventDefault(); });
   /* le doigt qui se lève après l'appui long ne doit pas ouvrir la fiche */
   document.addEventListener("click", e => { if (BLOQUE && Date.now() - BLOQUE < 700 && !(e.target.closest && e.target.closest(".ep-menu"))) { e.stopPropagation(); e.preventDefault(); BLOQUE = 0; } }, true);
 
-  const ferme = () => document.querySelectorAll(".ep-voile,.ep-menu").forEach(x => x.remove());
-  function menu(el) { ferme(); const id = el.dataset.cli, c = S.clientes.find(x => x.id === id); if (!c) return; const on = lit().includes(id), r = el.getBoundingClientRect();
+  const retire = () => document.querySelectorAll(".ep-voile,.ep-menu").forEach(x => x.remove());
+  const ferme = () => { retire(); racine.classList.remove("ep-appui"); };
+  function menu(el) { retire(); const id = el.dataset.cli, c = S.clientes.find(x => x.id === id); if (!c) return; const on = lit().includes(id), r = el.getBoundingClientRect();
     document.body.insertAdjacentHTML("beforeend", `<div class="ep-voile"></div><div class="ep-menu" role="menu"><div class="ep-nom">${esc(nomCli(c) || "Cliente")}</div>
       <button data-ep="pin" data-id="${id}">${PIN}${on ? "Désépingler" : "Épingler en haut"}</button><button data-ep="modif" data-id="${id}">${IC.crayon}Modifier</button><button data-ep="suppr" data-id="${id}" class="rouge">${IC.poubelle}Supprimer</button></div>`);
     const m = document.querySelector(".ep-menu"), h = m.offsetHeight, bas = r.bottom + 8 + h < innerHeight - 90;
