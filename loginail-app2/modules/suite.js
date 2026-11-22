@@ -345,13 +345,13 @@
     if (!loin && !avant) return h;
     const cl = loin ? (avant ? "" : " arrive") : " part";
     return h.replace('<button data-a="mois"', `<button data-su="auj" aria-label="Revenir à aujourd’hui" class="su-auj2${cl}"${loin ? "" : ' tabindex="-1" aria-hidden="true"'}><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Aujourd’hui</button><button data-a="mois"`); };
-  const re0 = VUES.re; VUES.re = () => { const h = re0(), on = localStorage.getItem("loginail-agenda-horaires") !== "non";
-    const l = `<div class="ligne"><div class="t">Mon agenda suit mes horaires<span>${on ? "L’agenda montre seulement tes heures d’ouverture" : "L’agenda montre toute la journée, de 8h à 20h"}</span></div><button class="sw${on ? " on" : ""}" data-su="ag-hor" aria-label="Mon agenda suit mes horaires"></button></div>`;
+  const re0 = VUES.re; VUES.re = () => { const h = re0(), on = localStorage.getItem("loginail-agenda-horaires") === "oui";
+    const l = `<div class="ligne"><div class="t">Mon agenda suit mes horaires<span>${on ? "L’agenda montre seulement tes heures d’ouverture" : "L’agenda montre toute la journée, de 7h à 22h"}</span></div><button class="sw${on ? " on" : ""}" data-su="ag-hor" aria-label="Mon agenda suit mes horaires"></button></div>`;
     for (const rep of ['<div class="k">Mes réservations</div><div class="liste">', '<div class="k">Mon salon</div><div class="liste">', '<div class="k">Mes données</div><div class="liste">']) if (h.includes(rep)) return h.replace(rep, rep + l);
     return h; };
   document.addEventListener("click", async e => { const t = e.target; if (!t.closest) return;
     if (t.closest('[data-su="auj"]')) { e.stopPropagation(); e.preventDefault(); const d = auj(); S.jour = d; S.lundi = plusJours(d, -((d.getDay() + 6) % 7)); await chargeSemaine(); rendu(); return; }
-    if (t.closest('[data-su="ag-hor"]')) { e.stopPropagation(); e.preventDefault(); const on = localStorage.getItem("loginail-agenda-horaires") !== "non"; localStorage.setItem("loginail-agenda-horaires", on ? "non" : "oui"); rendu(); dit(on ? "L’agenda montre toute la journée" : "L’agenda suit tes horaires"); } }, true);
+    if (t.closest('[data-su="ag-hor"]')) { e.stopPropagation(); e.preventDefault(); const on = localStorage.getItem("loginail-agenda-horaires") === "oui"; localStorage.setItem("loginail-agenda-horaires", on ? "non" : "oui"); rendu(); dit(on ? "L’agenda montre toute la journée" : "L’agenda suit tes horaires"); } }, true);
 })();
 
 /* ===== 13/11 (Marie, essai iPhone 3) : heures bien centrées · cliente qu'on retrouve en tapant la 1re lettre · accueil : 5 rendez-vous puis « voir les autres »,
@@ -361,6 +361,10 @@
   st.textContent = `.ecran input[type=time],.ecran input[type=date]{-webkit-appearance:none!important;appearance:none!important;height:52px!important;min-height:52px;line-height:52px!important;padding-top:0!important;padding-bottom:0!important;box-sizing:border-box}
 .ecran input[type=time]::-webkit-date-and-time-value,.ecran input[type=date]::-webkit-date-and-time-value{text-align:left;line-height:52px;margin:0;min-height:52px}
 .n-sug{display:flex;flex-direction:column;gap:4px;margin-top:6px}.n-sug:empty{display:none}
+.n-sug.n-sug-f{position:absolute;left:0;right:0;top:calc(100% + 6px);margin:0;z-index:8;background:#F6F3EF;border-radius:16px;padding:6px;box-shadow:0 18px 36px -14px rgba(30,20,22,.45);animation:nSug .16s ease-out}
+.n-sug.n-sug-f button{box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.fc .n-sug.n-sug-f{margin:0!important;padding:6px!important;gap:6px!important}
+@keyframes nSug{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .n-sug button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:#fff;border-radius:12px;padding:7px 10px;font:inherit;font-size:14px;text-align:left;color:inherit}
 .n-sug button i{flex:none;width:26px;height:26px;border-radius:50%;background:#EFE9E2;display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:500}
 .n-sug button span{margin-left:auto;font-size:12px;opacity:.5}
@@ -379,7 +383,10 @@
   document.head.appendChild(st);
   const sansAcc = t => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
   /* la cliente : on tape A → toutes celles dont le prénom ou le nom commence par A */
+  /* 22/11 (Marie, iPhone : « quand je tape C, ça monte, puis ça redescend petit à petit ») : la liste des clientes FLOTTE sous la case,
+     par-dessus les prestations ; la fenêtre garde toujours la même taille, quel que soit le nombre de clientes proposées */
   const propose = () => { const inp = E.querySelector("#n-cli"), z = E.querySelector("#n-sug"); if (!inp || !z) return; const q = sansAcc(inp.value);
+    const rg = inp.parentElement; if (rg && z.parentElement !== rg) { rg.style.position = "relative"; rg.appendChild(z); z.classList.add("n-sug-f"); }
     if (!q) { z.innerHTML = ""; return; }
     /* 22/11 (Marie, iPhone : « une lettre au pif, ça m'a ouvert la page en super grand ») : avec UNE lettre, seulement les prénoms ;
        4 lignes au plus, petites, dans une boîte qui défile : la fenêtre ne grandit plus d'un coup */
