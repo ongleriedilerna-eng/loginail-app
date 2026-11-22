@@ -39,8 +39,8 @@
   async function actualise(silence) {
     if (enCours || !S.user) return; enCours = true;
     try {
-      if (S.onglet === "si" || S.onglet === "re") await chargeTout();   /* Mon site / Réglages : le site et le profil aussi */
-      else { const [cl] = await Promise.all([sb.from("clientes").select("*").order("prenom"), chargeSemaine()]); if (cl && !cl.error && cl.data) S.clientes = cl.data; await chargeVisites(); }
+      if ((S.onglet === "si" || S.onglet === "re") && !E.classList.contains("fe")) await chargeTout();   /* Mon site / Réglages : le site et le profil aussi */
+      else { const [cl] = await Promise.all([sb.from("clientes").select("*").order("prenom"), chargeSemaine()]); if (cl && !cl.error && cl.data) S.clientes = cl.data; await chargeVisites(); await rafraichitSite(); }
       dernier = Date.now();
       const a = document.activeElement;   /* on ne redessine pas sous ses doigts : ni feuille ouverte, ni recherche en cours */
       if (libre() && !(a && a.matches && a.matches("input,textarea,select"))) { const v = E.querySelector(".vue.on"), y = v ? v.scrollTop : 0; rendu(); const v2 = E.querySelector(".vue.on"); if (v2) v2.scrollTop = y; }

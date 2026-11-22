@@ -35,10 +35,20 @@ Storage.prototype.setItem = function (k, v) { _setItem.call(this, k, v); if (thi
 /* les changements faits dans le site ouvert en grand (même appareil) partent aussi dans le coffre */
 addEventListener("storage", e => { if (e.key === "loginail-brouillon") pousseSite(); });
 addEventListener("message", m => { if (m.data === "loginail-site-enregistre") pousseSite(); });
-let _tp; const pousseSite = () => { clearTimeout(_tp); _tp = setTimeout(async () => { if (!S.user || !S.site) return; const d = brouillon(); if (!d) return;
+/* 22/11 (liste unique) : une modification pas encore partie n'est jamais écrasée par un rechargement.
+   _aEnvoyer = le compte dont le brouillon attend de partir (jamais envoyé dans un autre compte) ; _version = chaque modification. */
+let _tp, _aEnvoyer = null, _version = 0, _envoi = Promise.resolve();
+const envoieSite = () => { clearTimeout(_tp); return _envoi = _envoi.then(async () => {
+  if (!_aEnvoyer || !S.user) return;
+  if (_aEnvoyer !== S.user.id) { _aEnvoyer = null; return; }
+  if (!S.site) return; const d = brouillon(); if (!d) return;
   delete d.univers; delete d.exempleFictif; delete d._charmsU;
-  const { error } = await sb.from("sites").update({ donnees: d, maj: new Date().toISOString() }).eq("pro_id", S.user.id);
-  if (error) { console.error(error); dit("Pas enregistré en ligne, réessaie"); } else S.site.donnees = d; }, 700); }; /* l'agenda papier : 8 h → 20 h, 30 px par demi-heure */
+  const qui = S.user.id; _aEnvoyer = null; let error;
+  try { ({ error } = await sb.from("sites").update({ donnees: d, maj: new Date().toISOString() }).eq("pro_id", qui)); } catch (e) { error = e; }
+  if (error) { _aEnvoyer = qui; console.error(error); dit("Pas enregistré en ligne, réessaie"); } else if (S.site) S.site.donnees = d;
+}).catch(e => console.error(e)); };
+const pousseSite = () => { if (!S.user || !S.site) return; _aEnvoyer = S.user.id; _version++; clearTimeout(_tp); _tp = setTimeout(envoieSite, 700); };
+addEventListener("online", () => envoieSite()); /* l'agenda papier : 8 h → 20 h, 30 px par demi-heure */
 
 /* ---------- le squelette (comme la démo) ---------- */
 function squelette() {
@@ -116,6 +126,7 @@ function ecranConnexion(envoye) {
 
 /* ---------- les données ---------- */
 async function chargeTout() {
+  await envoieSite(); const version = _version;   /* d'abord ce qui attend de partir */
   const [p, pr, cl, st] = await Promise.all([
     sb.from("profils").select("*").eq("id", S.user.id).maybeSingle(),
     sb.from("prestations").select("*").order("ordre").order("cree_le"),
@@ -123,8 +134,17 @@ async function chargeTout() {
     sb.from("sites").select("slug,en_ligne,maj,donnees").maybeSingle()]);
   if (p.error || pr.error || cl.error) throw p.error || pr.error || cl.error;
   S.profil = p.data || {}; S.prestations = pr.data || []; S.clientes = cl.data || []; S.site = st.data || null;
-  if (S.site && S.site.donnees && S.site.donnees.nom) { window.__pasSync = 1; localStorage.setItem("loginail-brouillon", JSON.stringify(S.site.donnees)); window.__pasSync = 0; }
+  if (!_aEnvoyer && version === _version && S.site && S.site.donnees && S.site.donnees.nom) { window.__pasSync = 1; localStorage.setItem("loginail-brouillon", JSON.stringify(S.site.donnees)); window.__pasSync = 0; }
   await chargeSemaine(); chargeVisites();
+}
+/* 22/11 (liste unique) : l'agenda lit la liste du site, donc on la relit aussi au retour dans l'appli et en tirant pour actualiser */
+async function rafraichitSite() {
+  if (!S.site || E.classList.contains("fe")) return;   /* jamais sous une feuille ouverte : elle modifie une prestation par sa place */
+  await envoieSite(); if (_aEnvoyer) return; const version = _version, qui = S.user && S.user.id;
+  const { data, error } = await sb.from("sites").select("slug,en_ligne,maj,donnees").maybeSingle();
+  if (error || !data || _aEnvoyer || version !== _version || !S.user || S.user.id !== qui || E.classList.contains("fe")) return;
+  S.site = data;
+  if (data.donnees && data.donnees.nom) { window.__pasSync = 1; localStorage.setItem("loginail-brouillon", JSON.stringify(data.donnees)); window.__pasSync = 0; }
 }
 /* 12/11 (Marie) : pour chaque cliente — combien de fois elle est venue, sa dernière visite, son prochain rendez-vous */
 async function chargeVisites() { try { const { data } = await sb.from("rendez_vous").select("id,cliente_id,prestation_id,titre,debut,fin,prix,statut,source,cree_le"); S.tous = data || []; const m = {}, n = new Date().toISOString();
@@ -153,9 +173,14 @@ async function chargeSemaine() {
   const t = await sb.from("tickets").select("*").gte("cree_le", d0.toISOString()).order("cree_le", { ascending: false });
   S.tickets = t.data || [];
 }
-/* ce qu'on propose quand on ajoute un rendez-vous : les prestations de l'appli, sinon celles du site */
-const prestasDispo = () => S.prestations.length ? S.prestations.map(p => ({ id: p.id, nom: p.nom, duree: p.duree_min, prix: p.prix }))
-  : ((S.site && S.site.donnees && S.site.donnees.prestations) || []).map(p => ({ id: null, nom: p.nom, duree: p.duree || 60, prix: p.prix }));
+/* 22/11 (Marie : « oui, une seule ») : dès qu'elle a un site, SA liste (celle que les clientes réservent) sert partout : Réglages, agenda, Mon site.
+   L'ancienne table « prestations » ne sert plus que sans site, et à garder le lien des rendez-vous (modules/liste-unique.js). */
+const prixDe = v => { if (v == null || String(v).trim() === "") return null; const n = +String(v).replace(",", "."); return isNaN(n) ? null : n; };   /* vide = sans prix, jamais 0 € */
+const listeUnique = () => !!(S.site && S.site.donnees && S.site.donnees.nom);
+const prestasDuSite = () => { if (!listeUnique()) return []; const b = brouillon(); return (b && b.nom ? b : S.site.donnees).prestations || []; };
+const prestasDispo = () => { const l = prestasDuSite();
+  if (!l.length) return S.prestations.map(p => ({ id: p.id, nom: p.nom, duree: p.duree_min, prix: prixDe(p.prix) }));
+  return l.map(p => ({ id: (S.prestations.find(x => x.nom === p.nom) || {}).id || null, nom: p.nom, duree: +p.duree || 60, prix: prixDe(p.prix) })); };
 const titreRdv = r => (r.clientes && r.titre) || r.prestations?.nom || "";   /* 13/11 : titre = « Pose gel + Nail art » quand il y a plusieurs prestations */
 const nomRdv = r => r.clientes ? nomCli(r.clientes) : (r.titre || "Bloqué");
 
@@ -252,7 +277,7 @@ function vueReglages() {
   const regles = (S.site && S.site.donnees && S.site.donnees.regles) || {};
   return tete("Réglages", S.user.email)
     + `<div class="k">Mon salon</div><div class="liste">${L("Mon salon", esc([S.profil.prenom, S.profil.nom_salon, S.profil.ville].filter(Boolean).join(" · ") || "Prénom, nom du salon, téléphone"), "salon")}
-      ${L("Mes prestations", S.prestations.length ? S.prestations.length + " prestation" + (S.prestations.length > 1 ? "s" : "") : "À ajouter", "prestas")}</div>`
+      ${L("Mes prestations", prestasDispo().length ? prestasDispo().length + " prestation" + (prestasDispo().length > 1 ? "s" : "") : "À ajouter", "prestas")}</div>`
     + `<div class="k">Mes réservations</div><div class="liste">${L("Réservation en ligne", S.site ? (S.site.en_ligne ? "Tes clientes réservent sur ton site" : "Fermée : ton site s’affiche, sans réservation") : "Mets d’abord ton site en ligne", S.site ? null : "site", S.site ? `<button class="sw${S.site.en_ligne ? " on" : ""}" data-a="resa-sw" aria-label="Réservation en ligne"></button>` : undefined)}
       ${L("Acompte, retard, annulation", (regles.acompte === false ? "Sans acompte" : "Acompte " + (regles.montant || "15 €")) + " · annulation " + (regles.annulation || "48 h avant"), "ms-bon")}</div>`
     + `<div class="k">SMS à mes clientes</div><div class="liste">${L("Rappel la veille", "Voir le message et recevoir un essai", "sms-info")}</div>`
@@ -391,7 +416,8 @@ function feuilleSalon() {
     <label>Téléphone<input id="s-t" value="${esc(p.telephone)}" inputmode="tel"></label><label>Ville<input id="s-v" value="${esc(p.ville)}"></label></div><button class="btn" data-a="salon-ok">Enregistrer</button>`);
 }
 function feuillePrestas() {
-  ouvre(`<h3>Mes prestations</h3><div class="liste" style="margin-top:12px">${S.prestations.map(p => `<div class="ligne" data-a="presta" data-id="${p.id}"><div class="t">${esc(p.nom)}<span>${duree(p.duree_min)}</span></div><em>${euros(p.prix)}</em><span class="fl">›</span></div>`).join("") || '<div class="ligne"><div class="t">Aucune prestation</div></div>'}</div>
+  if (listeUnique() && MSF["ms-presta"]) return ouvre(MSF["ms-presta"]());   /* le même écran que Mon site › Prestations et prix */
+  ouvre(`<h3>Mes prestations</h3><div class="liste" style="margin-top:12px">${S.prestations.map(p => `<div class="ligne" data-a="presta" data-id="${p.id}"><div class="t">${esc(p.nom)}<span>${duree(p.duree_min)}</span></div><em>${euros(p.prix) || "Sans prix"}</em><span class="fl">›</span></div>`).join("") || '<div class="ligne"><div class="t">Aucune prestation</div></div>'}</div>
     <button class="btn" data-a="presta" data-id="">Ajouter une prestation</button>`);
 }
 /* 22/11 (Marie : « y a des prestations qui durent moins de 30 min ») : 15, 30, 45 min, 1 h, 1 h 30, 2 h, 2 h 30.
@@ -579,8 +605,11 @@ E.addEventListener("click", async ev => {
     else if (k === "prestas") feuillePrestas();
     else if (k === "presta") feuillePresta(a.dataset.id || null);
     else if (k === "presta-ok") { const nom = $("#p-n", E).value.trim(); if (!nom) return dit("Écris le nom"); const d = $(".chip.on[data-nd]", E);
-      const v = { nom, prix: parseFloat(($("#p-p", E).value || "0").replace(",", ".")) || 0, duree_min: d ? +d.dataset.nd : 60 }, id = a.dataset.id;
-      const { error } = id ? await sb.from("prestations").update(v).eq("id", id) : await sb.from("prestations").insert(v); if (error) return oups(error);
+      const v = { nom, prix: prixDe($("#p-p", E).value), duree_min: d ? +d.dataset.nd : 60 }, id = a.dataset.id;
+      const range = async () => (id ? await sb.from("prestations").update(v).eq("id", id) : await sb.from("prestations").insert(v)).error;
+      let error = await range();
+      if (error && error.code === "23502" && v.prix === null) { v.prix = 0; error = await range(); }   /* 22/11 : cet ancien écran (sans site) marche aussi si la colonne refuse le vide (sql/01 : not null) */
+      if (error) return oups(error);
       const { data } = await sb.from("prestations").select("*").order("ordre").order("cree_le"); S.prestations = data || []; feuillePrestas(); rendu(); dit("C’est enregistré ✓"); }
     else if (k === "presta-suppr") { const { error } = await sb.from("prestations").delete().eq("id", a.dataset.id); if (error) return oups(error);
       S.prestations = S.prestations.filter(p => p.id !== a.dataset.id); feuillePrestas(); rendu(); }

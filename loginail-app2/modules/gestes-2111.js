@@ -170,7 +170,7 @@
 
   /* ---------- 5 · les ronds du calendrier : une place = un rond, plein = déjà pris ---------- */
   /* la durée HABITUELLE de ses prestations (la médiane) : avec la plus courte, une journée faisait 18 ronds vides */
-  const dureeMin = () => { const l = (S.prestations.length ? S.prestations.map(p => +p.duree_min) : (donnees().prestations || []).map(p => +p.duree)).filter(x => x > 0).sort((a, b) => a - b); return Math.max(30, l.length ? l[Math.floor(l.length / 2)] : 60); };
+  const dureeMin = () => { const l = prestasDispo().map(p => +p.duree).filter(x => x > 0).sort((a, b) => a - b); return Math.max(30, l.length ? l[Math.floor(l.length / 2)] : 60); };
   const places = (d, R) => { const h = horaires()[(d.getDay() + 6) % 7], d0 = new Date(d); d0.setHours(0, 0, 0, 0);
     const du = R.filter(r => r.statut !== "annule" && new Date(r.debut) < plusJours(d0, 1) && new Date(r.fin) > d0), pris = du.filter(r => r.cliente_id && memeJour(new Date(r.debut), d0)).length;
     if (!h || !h.d || !h.f) return { pris, libres: 0 };

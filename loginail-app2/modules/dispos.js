@@ -29,7 +29,7 @@
   const horaires = () => donnees().horaires || [];
   /* la prestation la plus courte (au moins 30 min : c'est le pas du site de réservation) */
   /* 21/11 soir : la durée HABITUELLE (médiane), plus la plus courte — sinon « 9h, 9h30, 10h… » pour une seule cliente */
-  const dureeMin = () => { const l = (S.prestations.length ? S.prestations.map(p => +p.duree_min) : (donnees().prestations || []).map(p => +p.duree)).filter(x => x > 0).sort((a, b) => a - b);
+  const dureeMin = () => { const l = prestasDispo().map(p => +p.duree).filter(x => x > 0).sort((a, b) => a - b);
     return Math.max(PAS, l.length ? l[Math.floor(l.length / 2)] : 60); };
   /* une période (une semaine ou un mois) : pour chaque jour, ouvert ou fermé, et ses places libres */
   async function periode(de, a) {

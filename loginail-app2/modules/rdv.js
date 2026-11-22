@@ -11,7 +11,7 @@
 .fc .fiche-t h3[data-cli]{cursor:pointer;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px}`;
   document.head.appendChild(st);
   const P = () => prestasDispo(), parTitre = r => { const t = (r.titre || (r.prestations && r.prestations.nom) || "").split(" + "); return P().map((p, i) => t.includes(p.nom) ? i : -1).filter(i => i >= 0); };
-  const somme = l => ({ duree: l.reduce((s, i) => s + (P()[i].duree || 60), 0) || 60, prix: l.reduce((s, i) => s + (+P()[i].prix || 0), 0), nom: l.map(i => P()[i].nom).join(" + ") });
+  const somme = l => ({ duree: l.reduce((s, i) => s + (P()[i].duree || 60), 0) || 60, prix: l.length && l.every(i => P()[i].prix == null) ? null : l.reduce((s, i) => s + (+P()[i].prix || 0), 0), nom: l.map(i => P()[i].nom).join(" + ") });
 
   /* 1 · nouveau rendez-vous : on peut toucher plusieurs prestations */
   let SEL = [];
