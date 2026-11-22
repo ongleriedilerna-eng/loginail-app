@@ -325,7 +325,7 @@
   /* 18/11 (Marie, version C « le mix », choisie après la table ronde) : la journée de la prothésiste remplit l'écran toute seule.
      Une heure fait entre 40 px (minimum lisible) et 60 px ; 9 h – 18 h tient sans glisser sur un iPhone. Un rendez-vous court tient sur une ligne
      (heure de début · prestation), et un espace en bas pour que le « + » ne cache jamais le dernier rendez-vous. */
-  const ajuste = p => { if (p.dataset.k) return; const n = p.querySelectorAll(".pl").length / 2 || 1, place = p.clientHeight - 50;
+  const ajuste = p => { if (p.dataset.k) return; const n = p.querySelectorAll(".pl").length / 2 || 1, place = p.clientHeight - (parseFloat(getComputedStyle(p).paddingBottom) || 50);   /* la place laissée sous le « + » */
     /* 22/11 : un jour avec un rendez-vous de moins de 30 min, une heure fait 72 px (15 min = une ligne lisible) */
     const prs = [...p.querySelectorAll(".pr")], debuts = prs.filter(x => !x.classList.contains("barre")).map(x => parseFloat(x.style.top)), court = prs.some(x => parseFloat(x.style.height) < R - .1);
     const k = court ? 72 / 60 : Math.max(40 / 60, Math.min(1, place / (n * 60))); p.dataset.k = k.toFixed(3); p.style.setProperty("--plh", (R * k).toFixed(2) + "px");
@@ -544,6 +544,13 @@
 #E .pap .pr.v-bloc{background:repeating-linear-gradient(135deg,#F3EFEB 0 7px,#EEE9E4 7px 14px);box-shadow:inset 3px 0 0 #C9BFB6!important}
 #E .pap .pr.v-bloc b{font-weight:400;color:var(--gris)}
 #E .pap .pr.su-tient{background:#fff}
+/* 22/11 (Marie : « dans un rectangle arrondi, ça fait moche ») : en Jour, les heures vont d'un bord à l'autre et jusqu'à la barre du bas.
+   L'ombre de 16 px remplit l'écart entre deux journées quand elle glisse (ECART de jour-glisse.js) : une seule longue bande. */
+#E .vue[data-p="ag"]>.pap{margin:0 -22px calc(max(24px,env(safe-area-inset-bottom)) - env(safe-area-inset-bottom) - 35px);border:0;border-radius:0;padding-bottom:74px;box-shadow:0 -1px 0 #E9E5E2,16px 0 0 #fff,16px -1px 0 #E9E5E2}
+/* le pouce posé sur un rendez-vous fait défiler les heures ; rester appuyée le déplace toujours (suite.js bloque alors le défilement) */
+#E .vue[data-p="ag"]>.pap .pr{touch-action:pan-y}
+@media (min-width:700px){html.plein #E .vue[data-p="ag"]>.pap{margin-left:0;margin-right:0;box-shadow:0 -1px 0 #E9E5E2}}
+@media (min-width:1000px) and (orientation:landscape){html.plein #E .vue[data-p="ag"]>.pap{margin-left:-34px;margin-right:-34px;box-shadow:0 -1px 0 #E9E5E2,16px 0 0 #fff}}
 #E .v-now{position:absolute;left:46px;right:0;height:0;border-top:1.5px solid var(--v-acc);z-index:1;pointer-events:none}
 #E .v-now:before{content:"";position:absolute;left:-4px;top:-4.5px;width:7px;height:7px;border-radius:50%;background:var(--v-acc)}
 #E .v-fab{position:absolute;z-index:69;right:max(20px,calc((100% - 560px)/2 + 20px));bottom:calc(max(24px,env(safe-area-inset-bottom)) + 78px);width:56px;height:56px;border-radius:50%;border:0;background:var(--v-fonce);color:#fff;display:grid;place-items:center;padding:0;cursor:pointer;box-shadow:0 14px 30px -12px rgba(42,27,30,.6);transition:transform .12s;animation:vFab .3s cubic-bezier(.3,1.4,.5,1)}
