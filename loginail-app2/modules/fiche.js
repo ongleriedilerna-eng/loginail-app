@@ -5,7 +5,7 @@
   const st = document.createElement("style");
   st.textContent = `.fi-haut{display:flex;align-items:flex-start;gap:8px;text-align:left;padding-right:46px}.fi-haut h3{margin:0;text-align:left;font-size:25px;line-height:1.1}.fi-haut small{display:block;margin-top:5px;font-size:12.5px;opacity:.6}
 .fi-d{align-items:center;gap:12px}.fi-d .fi-g{flex:1;min-width:0}
-.fi-d h3.fi-nom{font-size:30px;line-height:1.08;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fi-d h3.fi-nom.long{white-space:normal}
+.fi-d h3.fi-nom{font-size:30px;line-height:1.08;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fi-d h3.fi-nom.long{white-space:normal;overflow-wrap:anywhere}
 .fi-d small{line-height:1.45;margin-top:4px}
 .fi-carre{flex:none;display:grid;grid-template-columns:repeat(2,40px);gap:8px}.fi-carre .fi-rond{width:40px;height:40px;transition:transform .12s}.fi-carre .fi-rond:active{transform:scale(.92)}.fi-carre .fi-rond svg{width:17px;height:17px}
 .fi-rond{flex:none;width:42px;height:42px;border-radius:50%;border:0;background:#fff;display:grid;place-items:center;padding:0}.fi-rond svg{width:18px;height:18px}
@@ -17,7 +17,7 @@
 .fi-q{flex:none;width:24px;height:24px;border-radius:50%;border:1px dashed rgba(30,28,27,.3);display:grid;place-items:center;font-size:11px;color:#8A847E}.fi-ic{flex:none;width:28px;height:28px;border-radius:9px;background:#EDE7E0;display:grid;place-items:center;font-size:13px}
 .fi-b{flex:none;border:0;background:none;padding:6px 0 6px 8px;font:inherit;font-size:12.5px;font-weight:500;color:#1E1C1B}.fi-x{flex:none;border:0;background:none;padding:6px;font-size:15px;color:#8A847E}
 .fi-in{flex:1;min-width:0;border:0;border-bottom:1px solid rgba(30,28,27,.25);background:none;font:inherit;font-size:16px;padding:6px 0;outline:none}
-.fi-plus{display:block;width:100%;margin-top:10px;border:1px dashed rgba(30,28,27,.25);border-radius:16px;background:none;padding:13px 14px;font:inherit;font-size:13.5px;color:#8A847E;text-align:left}
+.fi-ecrire{display:block;width:100%;margin-top:10px;border:1px dashed rgba(30,28,27,.25);border-radius:16px;background:none;padding:13px 14px;font:inherit;font-size:13.5px;color:#8A847E;text-align:left}
 .fi-lien{display:inline-block;margin-top:10px;border:0;background:none;padding:4px 0;font:inherit;font-size:13px;font-weight:500;text-decoration:underline;text-underline-offset:3px;color:#1E1C1B}
 .fi-fid{background:#fff;border-radius:20px;padding:14px 16px;margin-top:10px;text-align:left}.fi-fid .ht{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}.fi-fid .ht small{font-size:10px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#8A847E}.fi-fid .ht b{font-size:13px;font-weight:400}
 .fi-barre{height:10px;border-radius:5px;background:#EDE7E0;overflow:hidden}.fi-barre i{display:block;height:100%;border-radius:5px;background:#1E1C1B}.fi-fid p{margin:10px 0 0;font-size:12.5px;line-height:1.4;color:#6B625C}
@@ -134,7 +134,9 @@
   const nomTient = () => { const n = document.querySelector(".fc .fi-nom"); if (!n) return; if (document.fonts && document.fonts.status !== "loaded") document.fonts.ready.then(() => { if (n.isConnected) nomTient(); }); let t = 30; n.style.fontSize = ""; n.classList.remove("long");
     while (n.scrollWidth > n.clientWidth + 1 && t > 23) { t--; n.style.fontSize = t + "px"; } if (n.scrollWidth > n.clientWidth + 1) n.classList.add("long"); };
   /* 22/11 (Marie, version D) : le nom sur UNE ligne à gauche (numéro et Insta en dessous), les ronds rangés en carré à droite (2 en haut, 2 en bas) */
-  const tete = c => `<div class="fi-haut fi-d"><div class="fi-g"><h3 class="fi-nom">${esc(nomCli(c))}</h3><small>${esc(c.telephone || "Pas de numéro")}${c.instagram && String(c.prenom || "")[0] !== "@" ? "<br>@" + esc(c.instagram) : ""}</small></div><div class="fi-carre">
+  /* 22/11 : une cliente qui n'a que son Insta (prénom « @… », pas de nom) : « (@manon.nails) » comme dans la liste ; ce qui est enregistré ne change pas */
+  const titreNom = c => String(c.prenom || "")[0] === "@" && !c.nom ? "(@" + String(c.instagram || c.prenom).replace(/^@/, "") + ")" : nomCli(c);
+  const tete = c => `<div class="fi-haut fi-d"><div class="fi-g"><h3 class="fi-nom">${esc(titreNom(c))}</h3><small>${esc(c.telephone || "Pas de numéro")}${c.instagram && String(c.prenom || "")[0] !== "@" ? "<br>@" + esc(c.instagram) : ""}</small></div><div class="fi-carre">
     ${c.telephone ? `<button class="fi-rond" data-href="tel:${tel(c.telephone)}" aria-label="Appeler">${IC.tel}</button><button class="fi-rond" data-href="sms:${tel(c.telephone)}" aria-label="Envoyer un message">${IC.msg}</button>` : ""}
     ${c.instagram ? `<button class="fi-rond" data-href="https://www.instagram.com/${encodeURIComponent(c.instagram)}/" data-neuf aria-label="Son Instagram">${IC.insta}</button>` : ""}
     <button class="fi-rond" data-fi="modifier" aria-label="Modifier la fiche">${IC.crayon}</button></div></div>
@@ -181,7 +183,7 @@
     GROUPES.forEach(([t, qs], i) => { h += `<div class="fi-k"${i ? "" : ' style="margin-top:4px"'}>${t}</div><div class="fi-carte">${qs.map(ligne).join("")}</div>`; });
     const li = o.s.map((x, i) => [x, i]).filter(([x]) => !x.q);
     h += `<div class="fi-k">Autre chose</div>` + (li.length ? `<div class="fi-carte">${li.map(([x, i]) => `<div class="fi-lg"><span class="fi-ic2">${pic("autre")}</span><div class="fi-qq">${esc(x.r)}</div><button class="fi-x" data-fi="oter" data-i="${i}" aria-label="Enlever">×</button></div>`).join("")}</div>` : "");
-    h += SAISIE === "+" ? `<div class="fi-carte" style="margin-top:10px"><div class="fi-lg">${champ("+", "Par exemple : aime les paillettes dorées", "", 40)}</div></div>` : `<button class="fi-plus" data-fi="sais" data-q="+">✎ Écrire autre chose à la main</button>`;
+    h += SAISIE === "+" ? `<div class="fi-carte" style="margin-top:10px"><div class="fi-lg">${champ("+", "Par exemple : aime les paillettes dorées", "", 40)}</div></div>` : `<button class="fi-ecrire" data-fi="sais" data-q="+">✎ Écrire autre chose à la main</button>`;
     h += `<div class="fi-k">Mes notes libres</div><textarea class="msg" id="fi-libre" placeholder="Tout ce que tu veux garder en tête">${esc(o.t)}</textarea></div>`;
     return h; }
   /* 21/11 (Marie) : le crayon puis « × » ramène à la fiche (Fiche / Notes), il ne ferme plus tout */
@@ -232,11 +234,18 @@
   function prend(id, x, y) { const ca = caDe(id); if (!ca) return; R0 = ca.getBoundingClientRect(); TX = 0; TY = 0; OX = x - R0.left; OY = y - R0.top; DRAG = id;
     FANT = ca.cloneNode(true); FANT.className = "fi-ca fi-fant" + (ca.classList.contains("non") ? " non" : ""); FANT.style.cssText = `left:${R0.left}px;top:${R0.top}px;width:${R0.width}px`; document.body.appendChild(FANT);
     FANT.animate([{ transform: "scale(1)" }, { transform: "scale(1.18) rotate(-3deg)" }], { duration: 160, easing: "cubic-bezier(.2,.8,.2,1.3)", fill: "forwards" });
-    try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {} redessineSais(); }
-  function bouge(x, y) { if (!FANT) return; FANT.getAnimations().forEach(a => a.cancel()); TX = x - OX - R0.left; TY = y - OY - R0.top; FANT.style.transform = `translate(${TX}px,${TY}px) scale(1.18) rotate(-3deg)`;
-    const el = document.elementFromPoint(x, y), ca = el && el.closest && el.closest("#fi-sais .fi-ca"); if (!ca || ca.dataset.ca === DRAG || ca.hasAttribute("data-libre")) return;
-    flip(() => { const ids = idsVus().filter(k => !k.startsWith("L")), i = ids.indexOf(ca.dataset.ca); ORD = ids.filter(k => k !== DRAG); ORD.splice(i, 0, DRAG); redessineSais(); }); }
-  function pose() { const f = FANT, id = DRAG; FANT = null; if (!f) { DRAG = null; return; } const cible = caDe(id), r = cible ? cible.getBoundingClientRect() : R0;
+    try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {} redessineSais(); mesure(); LX = x; LY = y; }
+  /* 22/11 : les places sont mesurées une fois (carrés au repos), on vise la place la plus proche du doigt : plus d'« elementFromPoint » sur des carrés qui glissent */
+  let SL = [], LX = 0, LY = 0;
+  const mesure = () => { lesCa().forEach(x => x.getAnimations().forEach(a => a.cancel())); SL = lesCa().filter(x => !x.hasAttribute("data-libre")).map(x => { const r = x.getBoundingClientRect(); return { l: r.left, t: r.top, w: r.width, h: r.height }; }); };
+  function place(x, y) { if (!DRAG || !SL.length) return; let bi = -1, bd = 1e9;
+    SL.forEach((s, i) => { const d = Math.hypot(x - (s.l + s.w / 2), y - (s.t + s.h / 2)); if (d < bd) { bd = d; bi = i; } });
+    if (bi < 0 || bd > 1.3 * Math.max(SL[bi].w, SL[bi].h)) return;
+    const ids = idsVus().filter(k => !k.startsWith("L")), cur = ids.indexOf(DRAG); if (cur < 0 || cur === bi) return;
+    flip(() => { ORD = ids.filter(k => k !== DRAG); ORD.splice(bi, 0, DRAG); redessineSais(); }); }
+  function bouge(x, y) { if (!FANT) return; LX = x; LY = y; FANT.getAnimations().forEach(a => a.cancel()); TX = x - OX - R0.left; TY = y - OY - R0.top; FANT.style.transform = `translate(${TX}px,${TY}px) scale(1.18) rotate(-3deg)`; place(x, y); }
+  function pose() { const f = FANT, id = DRAG; FANT = null; if (!f) { DRAG = null; return; } place(LX, LY);
+    const i = idsVus().filter(k => !k.startsWith("L")).indexOf(id), r = SL[i] ? { left: SL[i].l, top: SL[i].t } : R0;
     f.getAnimations().forEach(x => x.cancel()); f.style.transform = "none"; f.style.left = r.left + "px"; f.style.top = r.top + "px"; const dx = R0.left + TX - r.left, dy = R0.top + TY - r.top;
     f.animate([{ transform: `translate(${dx}px,${dy}px) scale(1.18) rotate(-3deg)` }, { transform: "none" }], { duration: 220, easing: "cubic-bezier(.2,.8,.2,1)" });
     setTimeout(() => { f.remove(); if (!FANT) { DRAG = null; redessineSais(); } }, 240); }
