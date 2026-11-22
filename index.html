@@ -118,6 +118,14 @@ html.plein .ecran{-webkit-user-select:none;user-select:none;-webkit-touch-callou
 @keyframes ouvFin{to{opacity:0;visibility:hidden}}
 @media (prefers-reduced-motion:reduce){.ouv,.ouv *{animation-duration:.01s!important;animation-delay:0s!important}}
 </style>
+<style>/* 22/11 (D80) : le prix final à la caisse */
+#E .k-final{position:relative;width:200px;max-width:100%;margin:4px auto 0}
+#E .k-final input{display:block;box-sizing:border-box;width:100%;height:72px;padding:0 44px 0 20px;border:1px solid rgba(30,28,27,.14);border-radius:16px;background:#fff;color:inherit;font:500 38px Jost,sans-serif!important;text-align:center;outline:0}
+#E .k-final span{position:absolute;right:20px;top:16px;font:400 27px Jost,sans-serif;color:#776D64;pointer-events:none}
+#E .k-plus{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:9px 0 4px}
+#E .k-plus button{height:44px;padding:0 13px;border:1px solid rgba(30,28,27,.12);border-radius:99px;background:#fff;color:inherit;font:inherit;font-size:13px;white-space:nowrap;cursor:pointer}
+#E .k-reste{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;margin:10px 0;padding:10px 13px;border-radius:14px;background:var(--v-rose,#F5E6E4);font-size:13px}
+</style>
 </head>
 <body>
 <div class="rangee"><div class="tel"><div class="ecran" id="E"><div class="charge">LOGINAIL</div></div><div class="ouv" id="ouv" aria-hidden="true"><div><div class="lg"><svg viewBox="0 0 200 200"><rect width="200" height="200" rx="44" fill="#1E1C1B"/><g transform="translate(26 70) scale(.52)"><rect x="0" y="5" width="225" height="120" rx="60" fill="#F3EEE8"/><g class="ongle"><path d="M172 21H215C254 21 282 42 282 65C282 88 254 109 215 109H172A44 44 0 0 1 172 21Z" fill="#F3EEE8"/><path d="M172 28H213C247 28 274 47 274 65C274 83 247 102 213 102H172A37 37 0 0 1 172 28Z" fill="#1E1C1B"/></g></g></svg><span class="et">✦</span></div><div class="mot"><span style="animation-delay:0.42s">L</span><span style="animation-delay:0.49s">o</span><span style="animation-delay:0.56s">g</span><span style="animation-delay:0.63s">i</span><span style="animation-delay:0.70s">n</span><span style="animation-delay:0.77s">a</span><span style="animation-delay:0.84s">i</span><span style="animation-delay:0.91s">l</span></div></div></div></div></div>
@@ -125,13 +133,16 @@ html.plein .ecran{-webkit-user-select:none;user-select:none;-webkit-touch-callou
 <script>{const zc=()=>document.documentElement.style.setProperty("--z",Math.min(1,(innerHeight-40)/866,(innerWidth-30)/412).toFixed(3));zc();addEventListener("resize",zc)}</script>
 <script src="loginail-app2/vendor/supabase.js"></script>
 <script src="loginail-app2/vendor/qrcode.min.js"></script>
-<script src="loginail-app2/demo-salon.js?v=2211nv"></script>
-<script src="loginail-app2/app2.js?v=2211jg2"></script>
+<script src="loginail-app2/demo-salon.js?v=2211d80"></script>
+<script src="loginail-creer/prestations-detail.js?v=2211d80"></script>
+<script src="loginail-app2/app2.js?v=2211jg3"></script>
 <script src="loginail-app2/modules/ronds.js?v=1711sc"></script>
 <script src="loginail-app2/modules/monsite.js?v=2111tu"></script>
 <script src="loginail-app2/modules/photos.js?v=2111tu"></script>
-<script src="loginail-app2/modules/contenu.js?v=2211lu"></script>
+<script src="loginail-app2/modules/presta-fiche.js?v=2211d80"></script>
+<script src="loginail-app2/modules/contenu.js?v=2211d80c"></script>
 <script src="loginail-app2/modules/legal.js?v=2111tu"></script>
+<script src="loginail-app2/modules/importer.js?v=2211imp"></script>
 <script src="loginail-app2/modules/anniv.js?v=2111tu"></script>
 <script src="loginail-app2/modules/fiche.js?v=2211e"></script>
 <script src="loginail-app2/modules/suite.js?v=2211jg2"></script>
@@ -143,12 +154,13 @@ html.plein .ecran{-webkit-user-select:none;user-select:none;-webkit-touch-callou
 <script src="loginail-app2/modules/numeros.js?v=2111num"></script>
 <script src="loginail-app2/modules/attente.js?v=2211pl"></script>
 <script src="loginail-app2/modules/pause.js?v=2111pm"></script>
+<script src="loginail-app2/modules/avant-partage.js?v=2211ap2"></script>
 <script src="loginail-app2/modules/actualise.js?v=2211lu2"></script>
 <script src="loginail-app2/modules/gestes-2111.js?v=2211lu"></script>
 <script src="loginail-app2/modules/liste-unique.js?v=2211lu3"></script>
 <script src="loginail-app2/modules/nouvelle.js?v=2211nv"></script>
 <script src="loginail-app2/modules/prestations.js?v=2211plus"></script>
-<script src="loginail-app2/modules/durees-rdv.js?v=2211d"></script>
+<script src="loginail-app2/modules/durees-rdv.js?v=2211d80"></script>
 <script src="loginail-app2/modules/supprimer-rdv.js?v=2211sr"></script>
 <script src="loginail-app2/modules/retours-2211.js?v=2211pts"></script>
 <script src="loginail-app2/modules/agenda-vues.js?v=2211grille"></script>
