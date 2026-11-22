@@ -35,8 +35,14 @@
 #E .ap-rappel button{flex:none;min-height:44px;padding:0 16px;border:0;border-radius:999px;background:#fff;font:inherit;color:inherit;cursor:pointer}`;
   document.head.appendChild(st);
 
-  let voulu = null, reprise = null, ouvertA = 0;
-  const montre = h => { ouvre(`<div class="ap">${h}</div>`); ouvertA = Date.now(); };
+  let voulu = null, reprise = null, pretA = 0, tour = 0;
+  /* on ne répond qu'à une fenêtre qu'elle a eu le temps de voir : 0,4 s après son affichage, même si le téléphone rame */
+  const montre = h => {
+    ouvre(`<div class="ap">${h}</div>`);
+    const n = ++tour; pretA = Infinity;
+    const vue = () => { if (n === tour && pretA === Infinity) pretA = performance.now() + 400; };
+    requestAnimationFrame(() => setTimeout(vue, 0)); setTimeout(vue, 1000);
+  };
   const question = () => montre(`<h3>Avant de partager</h3><div class="sous">As-tu encore des rendez-vous sur une autre appli ou sur papier ?</div>
 <button class="btn" data-ap="oui">Oui, j’en ai</button><button class="btn ap-2" data-ap="non">Non, je partage</button>`);
   /* iara ne documente pas de réglage pour couper : d'où « ou bloque tes heures libres » */
@@ -62,7 +68,8 @@
       stop();
       const k = r.dataset.ap;
       if (k === "fini") { range("fini"); rendu(); return dit("C’est noté, tu peux partager ton lien ✓"); }
-      if (Date.now() - ouvertA < 400) return;   /* toucher deux fois vite ne répond pas à sa place */
+      const quand = e.timeStamp > 0 ? e.timeStamp : performance.now();
+      if (quand < pretA) { pretA = Math.max(pretA, quand + 400); return; }   /* des touchers qui s'enchaînent ne répondent pas à sa place */
       if (k === "oui") { range("encours"); if (S.onglet === "ag") rendu(); return gestes(); }
       if (k === "non" || k === "fait") { range(k === "non" ? "non" : "fini"); ferme(); return partage(); }
       if (k === "noter") {
