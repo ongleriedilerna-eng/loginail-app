@@ -216,13 +216,14 @@ function calMois() { const v = S.moisVu || (S.moisVu = new Date(S.jour.getFullYe
   return `<div class="calm" style="position:absolute;right:0;top:56px;z-index:30;width:min(310px,calc(100vw - 40px));border-radius:26px;padding:14px 14px 12px;background:rgba(255,255,255,.9);backdrop-filter:blur(20px) saturate(1.3);-webkit-backdrop-filter:blur(20px) saturate(1.3);border:1px solid rgba(255,255,255,.9);box-shadow:0 24px 50px -22px rgba(0,0,0,.5)">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><button data-a="mois-nav" data-n="-1" aria-label="Mois d’avant" style="width:34px;height:34px;border:0;border-radius:50%;background:rgba(255,255,255,.8);font-size:18px;padding:0">‹</button><b style="font-weight:500;font-size:15px;text-transform:capitalize">${MOIS[mo]} ${an}</b><button data-a="mois-nav" data-n="1" aria-label="Mois d’après" style="width:34px;height:34px;border:0;border-radius:50%;background:rgba(255,255,255,.8);font-size:18px;padding:0">›</button></div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center">${["L", "M", "M", "J", "V", "S", "D"].map(l => `<small style="font-size:10.5px;font-weight:500;opacity:.5;padding:4px 0">${l}</small>`).join("")}${c}</div></div>`; }
+const heuresAgenda = () => { const v = /^(\d+)-(\d+)$/.exec(localStorage.getItem("loginail-agenda-heures") || ""); return v && +v[1] >= 5 && +v[2] <= 23 && +v[1] < +v[2] ? [+v[1], +v[2]] : [7, 22]; };   /* 22/11 : ses heures à elle, 7 h → 22 h sinon */
 function vueAgenda() {
   const L = S.lundi, F = plusJours(L, 6), j = S.jour;
   /* 13/11 (Marie) : la journée suit ses horaires (ceux de son site) ; s'il y a un rendez-vous plus tôt ou plus tard, on l'affiche quand même */
   /* 22/11 (Marie) : par défaut l'agenda montre 7h → 22h ; seulement si elle choisit « Mon agenda suit mes horaires », ses horaires à elle */
   const suitH = localStorage.getItem("loginail-agenda-horaires") === "oui", hor = !suitH ? undefined : ((S.site && S.site.donnees && S.site.donnees.horaires) || (brouillon() || {}).horaires || [])[(j.getDay() + 6) % 7], mn = t => +String(t).slice(0, 2) * 60 + +String(t).slice(3, 5);
   const fermeJ = hor === null, duJ = S.rdv.filter(r => memeJour(new Date(r.debut), j) && r.statut !== "annule");
-  /* 13/11 (Marie) : une demi-heure de marge avant et après ses horaires (9h-18h → 8h30-18h30), c'est plus joli */ OUV = hor && hor.d ? Math.floor(mn(hor.d) / 30) * 30 - 30 : 7 * 60; FERM = hor && hor.f ? Math.ceil(mn(hor.f) / 30) * 30 + 30 : 22 * 60;
+  /* 13/11 (Marie) : une demi-heure de marge avant et après ses horaires (9h-18h → 8h30-18h30), c'est plus joli */ OUV = hor && hor.d ? Math.floor(mn(hor.d) / 30) * 30 - 30 : heuresAgenda()[0] * 60; FERM = hor && hor.f ? Math.ceil(mn(hor.f) / 30) * 30 + 30 : heuresAgenda()[1] * 60;
   duJ.forEach(r => { const a = new Date(r.debut), b = new Date(r.fin); if (b - a > 20 * 3600000) return; OUV = Math.min(OUV, Math.floor((a.getHours() * 60 + a.getMinutes()) / 60) * 60); FERM = Math.max(FERM, Math.ceil((b.getHours() * 60 + b.getMinutes()) / 60) * 60); });
   const rond = "width:46px;height:46px;border-radius:50%;border:0;display:grid;place-items:center;padding:0";
   let h = tete("Agenda", `${MOIS[j.getMonth()]} ${j.getFullYear()}`, `<div style="display:flex;gap:8px;position:relative"><button data-a="mois" aria-label="Voir le mois" style="${rond};background:#fff"><svg viewBox="0 0 24 24" width="20" height="20"><rect x="4" y="5.5" width="16" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><button data-a="nouveau" aria-label="Nouveau rendez-vous" style="${rond};background:var(--noir,#1E1C1B);color:#fff;font-size:26px;font-weight:300;line-height:1">+</button>${S.moisOuvert ? calMois() : ""}</div>`);
@@ -426,7 +427,7 @@ function feuillePrestas() {
 }
 /* 22/11 (Marie : « y a des prestations qui durent moins de 30 min ») : 15, 30, 45 min, 1 h, 1 h 30, 2 h, 2 h 30.
    Une durée déjà enregistrée hors de la liste (1 h 15, 3 h…) garde sa pastille : avant, enregistrer la remplaçait par 1 h sans le dire. */
-const DUREES_PRESTA = [15, 30, 45, 60, 90, 120, 150];
+const DUREES_PRESTA = [15, 30, 45, 60, 90, 120, 150, 180];   /* 180 = « 3 h et + » (modules/retours-2211.js) */
 const dureesPour = v => [...new Set(+v > 0 ? [...DUREES_PRESTA, +v] : DUREES_PRESTA)].sort((a, b) => a - b);
 function feuillePresta(id) {
   const p = id ? S.prestations.find(x => x.id === id) || {} : { duree_min: 60 };
