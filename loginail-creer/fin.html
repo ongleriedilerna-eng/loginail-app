@@ -28,7 +28,7 @@ p{margin:12px 0 0;font:300 15px/1.6 Jost,sans-serif;color:var(--muted)}
 .go{display:block;width:100%;border:0;border-radius:999px;padding:18px;background:var(--noir);color:var(--fond);font:500 13px Jost,sans-serif;letter-spacing:.2em;text-align:center;text-decoration:none;cursor:pointer}
 /* écran « Tout est prêt » (D69) */
 @font-face{font-family:'Abril Fatface';src:url(../loginail-site/polices/AbrilFatface-400-latin.woff2) format('woff2')}
-#pret{align-items:center;justify-content:flex-start;padding-top:max(0px,calc((100dvh - 520px)/2));--rose:#B5475E;--rosé:#F7E9EA;--doux:#8A817A;--pop:cubic-bezier(.3,1.5,.5,1)}
+#pret{align-items:center;justify-content:flex-start;padding-top:max(0px,calc((100dvh - 600px)/2));--rose:#B5475E;--rosé:#F7E9EA;--doux:#8A817A;--pop:cubic-bezier(.3,1.5,.5,1)}
 .etape{margin:0 0 14px;font:400 13px Jost,sans-serif;color:var(--doux);animation:monte .5s both}
 #pret h1{white-space:nowrap;font:400 clamp(30px,11vw,48px)/1.02 'Abril Fatface',serif;letter-spacing:-.01em;animation:monte .5s .08s both}
 #pret h1 em{font-style:normal;color:#B03562;position:relative}
@@ -53,18 +53,22 @@ p{margin:12px 0 0;font:300 15px/1.6 Jost,sans-serif;color:var(--muted)}
 .points{position:absolute;left:100%}
 .points b{font-weight:400;color:var(--noir);animation:scint 1s infinite}.points b:nth-child(2){animation-delay:.2s}.points b:nth-child(3){animation-delay:.4s}
 #pret:not(.charge) .points,#pret.charge .fini{display:none}
-#pret.charge .ouvre,#pret.charge .cadeau{visibility:hidden;animation:none}
+#pret.charge .ouvre,#pret.charge .meme,#pret.charge .second,#pret.charge .cadeau{visibility:hidden;animation:none}
+/* D85 : le téléchargement en gros, « continuer » juste dessous */
+.meme{margin-top:9px;font:400 13px/1.35 Jost,sans-serif;color:var(--doux);animation:monte .4s .05s both}
+.second{margin-top:4px;padding:10px;font:400 15px/1.2 Jost,sans-serif;color:var(--noir);text-decoration:underline;text-underline-offset:3px;animation:monte .4s .08s both}
+#pret .cadeau{margin-top:12px}
 .etoile{position:absolute;color:#E99AB6;pointer-events:none;animation:scint 3s ease-in-out infinite}
 @keyframes monte{from{opacity:0;transform:translateY(12px)}}
 @keyframes pose{to{opacity:1;transform:none}}
 @keyframes coche{to{stroke-dashoffset:0}}
 @keyframes scint{0%,100%{opacity:.25;transform:scale(.6)}50%{opacity:1;transform:scale(1.1)}}
-@media (max-height:600px){#pret{padding-top:0}#pret .sous{margin-top:8px}.pastilles{margin-top:12px}.ouvre{margin-top:14px;flex:none}.cadeau{margin-top:12px}}
+@media (max-height:600px){#pret{padding-top:0}#pret .sous{margin-top:8px}.pastilles{margin-top:12px}.ouvre{margin-top:10px;height:52px;flex:none}#pret .cadeau{display:none}}
 @media (prefers-reduced-motion:reduce){#pret *{animation-duration:.01s!important;animation-delay:0s!important;animation-iteration-count:1!important}}
 [hidden]{display:none!important}
 html.cadre{--sat:54px;--sab:20px}
 html.cadre body{display:flex;align-items:center;justify-content:center;min-height:100vh}
-html.cadre #pret{padding-top:177px}
+html.cadre #pret{padding-top:137px}
 html.cadre #tel{width:402px;height:874px;max-width:none;border-radius:55px;margin:0;box-shadow:0 0 0 12px #1b1b1d,0 0 0 14px #3a3a3c,0 40px 80px -30px rgba(30,28,27,.55);zoom:var(--z,1);flex:none}
 .c-barre{position:absolute;top:0;left:0;right:0;height:54px;display:flex;justify-content:space-between;align-items:center;padding:4px 34px 0 46px;font:600 16px -apple-system,system-ui,sans-serif;z-index:95;pointer-events:none}
 .c-barre svg{height:12px;margin-left:6px;fill:currentColor}
@@ -85,7 +89,9 @@ html.cadre #tel{width:402px;height:874px;max-width:none;border-radius:55px;margi
     <h1 id="titre" aria-live="polite"><span id="debut">Presque</span> <em>prêt<span class="st fini">✦</span><span class="points" aria-hidden="true"><b>.</b><b>.</b><b>.</b></span></em><span class="fini">.</span></h1>
     <div class="sous" id="sous">On range tout ce que tu as rempli.</div>
     <div class="pastilles" id="recap"></div>
-    <a class="ouvre" id="ouvrir">Ouvrir mon espace <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h12M9 3l5 5-5 5"/></svg></a>
+    <a class="ouvre" id="telecharger" href="https://apps.apple.com/fr/iphone/search?term=Loginail" target="_blank" rel="noopener">Télécharger mon appli <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v12M3 9l5 5 5-5"/></svg></a>
+    <div class="meme">Connecte-toi avec la même adresse e-mail.</div>
+    <a class="second" id="ouvrir">Continuer sans télécharger</a>
     <div class="cadeau"><i>🎁</i><div><b>1er mois offert</b><span>sans engagement</span></div></div>
   </div>
   <div class="centre" id="perdu" hidden><h1>Ce lien ne marche plus.</h1><p>Il a peut-être déjà servi, ou il a plus d’une heure. Recommence, on t’en envoie un nouveau.</p></div>
