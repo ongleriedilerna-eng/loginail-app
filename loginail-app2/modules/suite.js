@@ -134,20 +134,24 @@
   let avale = 0;
   /* ---------- faire glisser un rendez-vous dans l'agenda (on reste appuyée, puis on monte ou on descend) ---------- */
   let G = null;
-  const debutG = (el, y) => { const r = S.rdv.find(x => x.id === el.dataset.rdv); if (!r || r.statut !== "prevu") return; G = { el, r, y, dy: 0, on: false, t: setTimeout(() => { if (!G) return; G.on = true; el.classList.add("su-tient"); navigator.vibrate?.(12); /* 13/11 (iPhone) : on bloque le défilement de la page pendant qu'on tient le rendez-vous */ const sc = el.closest(".vue"); if (sc) { G.sc = sc; G.ov = sc.style.overflowY; sc.style.overflowY = "hidden"; } }, 380) }; };
+  const debutG = (el, y, x) => { const r = S.rdv.find(x => x.id === el.dataset.rdv); if (!r || r.statut !== "prevu") return; G = { el, r, x, y, dy: 0, on: false, t: setTimeout(() => { if (!G) return; G.on = true; el.classList.add("su-tient"); navigator.vibrate?.(12); /* 13/11 (iPhone) : on bloque le défilement de la page pendant qu'on tient le rendez-vous */ const sc = el.closest(".vue"); if (sc) { G.sc = sc; G.ov = sc.style.overflowY; sc.style.overflowY = "hidden"; } }, 380) }; };
   const bougeG = (y, ev) => { if (!G) return; if (!G.on) { if (Math.abs(y - G.y) > 8) { clearTimeout(G.t); G = null; } return; } ev.preventDefault(); /* 22/11 : le doigt suit l'échelle dessinée (vernis.js : data-k), sinon l'heure enregistrée n'était pas celle montrée */
     G.ech = R * (+((G.el.closest(".pap") || { dataset: {} }).dataset.k) || 1); const pas = G.ech / 2; G.dy = Math.round((y - G.y) / pas) * pas; G.el.style.transform = `translateY(${G.dy}px)`;
     const d = new Date(+new Date(G.r.debut) + Math.round(G.dy / G.ech * 30) * 60000); let b = G.el.querySelector("strong"); if (b) b.textContent = hm(d) + " – " + hm(new Date(+d + (new Date(G.r.fin) - new Date(G.r.debut)))); };
+  /* 22/11 : partir de côté = glisser la journée (jour-glisse.js), pas déplacer le rendez-vous */
+  const coteG = x => { if (G && !G.on && Math.abs(x - G.x) > 6) { clearTimeout(G.t); G = null; } };
+  E.addEventListener("touchmove", e => coteG(e.touches[0].clientX), { capture: true, passive: true });
+  document.addEventListener("mousemove", e => coteG(e.clientX), true);
   const finG = async () => { if (!G) return; clearTimeout(G.t); const g = G; G = null; if (g.sc) g.sc.style.overflowY = g.ov || ""; if (!g.on) return; avale = Date.now(); g.el.classList.remove("su-tient");
     const mn = Math.round(g.dy / (g.ech || R) * 30); if (!mn) { g.el.style.transform = ""; return; } const deb = new Date(+new Date(g.r.debut) + mn * 60000), fin = new Date(+new Date(g.r.fin) + mn * 60000);
     if (!memeJour(deb, new Date(g.r.debut)) || deb.getHours() * 60 + deb.getMinutes() < OUV || !libre(deb, fin, g.r.id)) { rendu(); return dit(libre(deb, fin, g.r.id) ? "Trop tôt ou trop tard" : "Ce créneau est déjà pris"); }
     const { error } = await sb.from("rendez_vous").update({ debut: deb.toISOString(), fin: fin.toISOString() }).eq("id", g.r.id); if (error) { rendu(); return dit("Oups, ça n’a pas marché. Réessaie."); }
     await chargeSemaine(); chargeVisites(); rendu(); dit("Décalé à " + hh(deb) + " ✓"); };
-  E.addEventListener("touchstart", e => { const el = e.target.closest(".pap .pr[data-rdv]"); if (el && e.touches.length === 1) debutG(el, e.touches[0].clientY); }, { passive: true });
+  E.addEventListener("touchstart", e => { const el = e.target.closest(".pap .pr[data-rdv]"); if (el && e.touches.length === 1) debutG(el, e.touches[0].clientY, e.touches[0].clientX); }, { passive: true });
   E.addEventListener("touchmove", e => bougeG(e.touches[0].clientY, e), { passive: false });
   document.addEventListener("touchmove", e => { if (G && G.on && e.cancelable) e.preventDefault(); }, { passive: false });
   E.addEventListener("touchend", finG); E.addEventListener("touchcancel", finG);
-  E.addEventListener("mousedown", e => { const el = e.target.closest(".pap .pr[data-rdv]"); if (el) debutG(el, e.clientY); });
+  E.addEventListener("mousedown", e => { const el = e.target.closest(".pap .pr[data-rdv]"); if (el) debutG(el, e.clientY, e.clientX); });
   document.addEventListener("mousemove", e => { if (G) bougeG(e.clientY, e); }); document.addEventListener("mouseup", finG);
   document.addEventListener("click", e => { if (Date.now() - avale < 500 && e.target.closest && e.target.closest(".pap")) { e.stopPropagation(); e.preventDefault(); } }, true);
   document.addEventListener("contextmenu", e => { if (e.target.closest && e.target.closest(".pap .pr")) e.preventDefault(); });
