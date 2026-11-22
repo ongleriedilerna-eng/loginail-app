@@ -4,7 +4,7 @@
    Chargé APRÈS vernis.js et gestes-2111.js : il se sert de leur dessin (échelle des heures = window.__agAjuste). */
 (function () {
   const ECART = 16, calme = matchMedia("(prefers-reduced-motion:reduce)"), VUE = '.vue.on[data-p="ag"]:not(.jg-voisine)';
-  let D = null, pose = null, avale = 0, aRefaire = false, partiel = false, sur = null, demande = 0;
+  let D = null, pose = null, avale = 0, aRefaire = false, partiel = false, sur = null, demande = 0, ailleurs = null;
   const r0 = rendu;
   /* un rafraîchissement qui arrive pendant le geste attend la fin, sinon la journée disparaît sous le doigt */
   rendu = function () {
@@ -47,15 +47,17 @@
 
   /* toutes les durées = l'heure du doigt (e.timeStamp), jamais celle du calcul : un téléphone qui rame traite les touchers en retard */
   const debut = (x, y, cible, quand) => {
-    D = null; avale = 0;
-    if (S.onglet !== "ag" || E.classList.contains("fe") || S.moisOuvert || !cible.closest) { if (pose) pose(); return; }
+    D = null; avale = 0; ailleurs = null;
+    /* elle touche un bouton pendant que la journée finit de glisser : on ne redessine pas sous son doigt, son toucher serait perdu */
+    const attend = () => { if (pose) { pose.attend(); ailleurs = [x, y]; } };
+    if (S.onglet !== "ag" || E.classList.contains("fe") || S.moisOuvert || !cible.closest) { attend(); return; }
     let v = E.querySelector(VUE); if (!v) return;
     let reste = 0;
     if (pose) {
       const k = [...v.children].find(e => e.classList.contains("k")), p = v.querySelector(".pap");
       const bon = k && p && cible.closest('.vue[data-p="ag"]') && !cible.closest("button") && y >= k.getBoundingClientRect().top;
-      const la = bon ? new DOMMatrix(getComputedStyle(p).transform).m41 : 0, but = pose();
-      if (!bon) return;
+      if (!bon) { attend(); return; }
+      const la = new DOMMatrix(getComputedStyle(p).transform).m41, but = pose();
       reste = la - but; v = E.querySelector(VUE); if (!v) return;
     } else {
       const z = cible.closest(".pap,.k,.blanche");
@@ -84,7 +86,13 @@
     D.pts.push([x, e.timeStamp]); if (D.pts.length > 6) D.pts.shift();
     D.x1 = x; bouge(D.reste + (x - D.x0) / D.ech);
   };
-  const lache = (annule, quand) => {
+  const lache = (annule, quand, x, y) => {
+    if (ailleurs) {
+      const [x0, y0] = ailleurs; ailleurs = null;
+      if (pose && x != null && (Math.abs(x - x0) > 8 || Math.abs(y - y0) > 8)) pose();   /* un autre geste (la semaine) part de la bonne journée */
+      else setTimeout(() => { if (pose && !ailleurs) pose(); }, 350);   /* d'abord son toucher, ensuite le dessin */
+      return;
+    }
     if (!D) return;
     const g = D; D = null; if (!g.on) return;
     avale = Date.now();
@@ -99,9 +107,9 @@
     g.corps.forEach(x => deplace(x, but, trans));
     [1, -1].forEach(s => { if (g.v[s]) deplace(g.v[s].el, but + s * g.pas, trans); });
     let minuteur;
-    pose = sansDessin => {
+    pose = (sansDessin, reste) => {
       clearTimeout(minuteur); pose = null; range();
-      if (!va) {
+      if (!va || reste) {
         g.corps.forEach(x => { x.style.transition = ""; x.style.transform = ""; });
         const p = g.vue.querySelector(".pap"); if (p) S.papY = p.scrollTop;
         if (aRefaire && !sansDessin) rendu();
@@ -112,13 +120,15 @@
       if (autre && !partiel) sur = { jour: S.jour, lundi: S.lundi, rdv: S.rdv };
       S.jour = n.jour; S.lundi = n.lundi;
       if (autre) { S.rdv = n.rdv; partiel = true; }
-      if (!sansDessin) {
+      if (sansDessin) aRefaire = true;
+      else {
         rendu();
         if (autre) E.querySelectorAll(`${VUE} .nav-sem,${VUE} .semaine`).forEach(x => x.classList.add(d > 0 ? "sa-d" : "sa-g"));
       }
       if (autre) recharge();
       return but;
     };
+    pose.attend = () => clearTimeout(minuteur);
     minuteur = setTimeout(() => pose && pose(), ms);
   };
   const recharge = async () => {
@@ -137,15 +147,21 @@
 
   document.addEventListener("touchstart", e => { if (e.touches.length === 1) debut(e.touches[0].clientX, e.touches[0].clientY, e.target, e.timeStamp); else lache(true); }, { capture: true, passive: true });
   document.addEventListener("touchmove", e => suit(e.touches[0].clientX, e.touches[0].clientY, e), { capture: true, passive: false });
-  document.addEventListener("touchend", e => lache(false, e.timeStamp), true);
+  document.addEventListener("touchend", e => lache(false, e.timeStamp, e.changedTouches[0].clientX, e.changedTouches[0].clientY), true);
   document.addEventListener("touchcancel", () => lache(true), true);
   document.addEventListener("pointerdown", e => { if (e.pointerType === "mouse" && !e.button) debut(e.clientX, e.clientY, e.target, e.timeStamp); }, true);
   document.addEventListener("pointermove", e => { if (e.pointerType === "mouse" && e.buttons) suit(e.clientX, e.clientY, e); }, { capture: true, passive: false });
-  document.addEventListener("pointerup", e => { if (e.pointerType === "mouse") lache(false, e.timeStamp); }, true);
+  document.addEventListener("pointerup", e => { if (e.pointerType === "mouse") lache(false, e.timeStamp, e.clientX, e.clientY); }, true);
   /* sur window : avant « toucher une heure = nouveau rendez-vous » */
   window.addEventListener("click", e => {
-    const t = e.target; if (!t.closest || !t.closest('.vue[data-p="ag"]')) return;
-    if (Date.now() - avale < 400) { e.stopPropagation(); e.preventDefault(); return; }
+    const t = e.target; if (!t.closest) return;
+    const agenda = t.closest('.vue[data-p="ag"]');
+    if (agenda && Date.now() - avale < 400) { e.stopPropagation(); e.preventDefault(); return; }
+    if (pose && Date.now() - avale >= 400) {
+      pose(true, !!t.closest("[data-jour]"));   /* une date touchée gagne sur le glissé */
+      setTimeout(() => { if (aRefaire && !pose && !(D && D.on)) rendu(); }, 0);
+    }
+    if (!agenda) return;
     /* semaine pas encore relue : une fiche incomplète (sans acompte) ferait encaisser trop */
     if (partiel && t.closest("[data-rdv]") && +S.lundi !== +(sur && sur.lundi)) { e.stopPropagation(); e.preventDefault(); dit("Un instant, la semaine arrive…"); }
   }, true);
