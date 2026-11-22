@@ -52,8 +52,8 @@ let R = {}; try { R = JSON.parse(localStorage.getItem("loginail-resa")) || {}; }
 const salon = R.salon || "Votre onglerie", prenom = R.prenom || "", heure = R.heure != null ? `${Math.floor(R.heure / 60)}h${String(R.heure % 60).padStart(2, "0")}` : "10h00";
 const jour = R.jourTxt || "jeudi", euros = n => `${String(Math.round((n || 0) * 100) / 100).replace(".", ",")} €`;
 const $ = id => document.getElementById(id);
-$("exp").textContent = salon.toUpperCase().slice(0, 11);   // un SMS affiche au plus 11 lettres comme expéditeur
-$("av").textContent = salon.charAt(0).toUpperCase();
+$("exp").textContent = "Loginail";   // D70 : un seul expéditeur pour tous les salons, le nom du salon est dans le texte
+$("av").textContent = "L";
 const MSG = [
   { quand: "Maintenant", t: `Bonjour ${prenom}, votre rendez-vous chez ${salon} est confirmé : ${R.nom || "votre prestation"}, ${jour} à ${heure}. ${R.rue ? `Adresse : ${R.rue}, ${R.cp} ${R.ville}. ` : ""}Pour annuler ou déplacer : <a data-a="annuler">lien</a>. À bientôt !`, suite: "LA VEILLE DU RENDEZ-VOUS ›" },
   { quand: "La veille, 18h00", t: `Rappel : demain à ${heure}, ${R.nom || "votre prestation"} chez ${salon}. Un empêchement ? <a data-a="annuler">Prévenez ici</a>.`, suite: "APRÈS LE RENDEZ-VOUS ›" },
