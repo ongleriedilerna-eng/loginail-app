@@ -116,6 +116,26 @@ const BID = P.get("b") || (() => { try { return new URL(P.get("r")).searchParams
 let REFUS = /error(_code|_description)?=/.test(location.hash);   /* ancien lien refusé par le serveur */
 const montre = (...ids) => ["range", "pret", "perdu", "ouvrir", "recommencer"].forEach(i => $(i).hidden = !ids.includes(i));
 
+/* 22/11 (D80) : les photos choisies pendant la création vont dans le coffre « photos-sites ». Une photo ratée ne bloque jamais le site. */
+async function rangePhotos(user, d, lues) {
+  const l = d.prestations || [], a = new Map();
+  l.forEach((p, i) => {
+    if (!p.photosPresta) return;
+    const u = [].concat(p.photosPresta);
+    if (/^data:image\/jpeg;base64,/.test(u[0] || "")) a.set(i, u[0]);
+    p.photosPresta = u.filter(x => /^https:\/\//.test(x));   /* jamais une image entière dans les données du site */
+  });
+  (lues || []).forEach(x => { if (l[x.place] && String(l[x.place].nom || "").slice(0, 120) === x.nom) a.set(+x.place, x.photo); });
+  for (const [i, photo] of a) {
+    try {
+      const s = atob(photo.split(",")[1]), o = new Uint8Array(s.length); for (let k = 0; k < s.length; k++) o[k] = s.charCodeAt(k);
+      const ch = `${user.id}/${Date.now()}-${i}.jpg`, seau = coffre.storage.from("photos-sites");
+      const { error } = await seau.upload(ch, new Blob([o], { type: "image/jpeg" }), { contentType: "image/jpeg", cacheControl: "31536000", upsert: false });
+      if (error) throw error;
+      l[i].photosPresta = [seau.getPublicUrl(ch).data.publicUrl];
+    } catch (e) { console.warn(e); }
+  }
+}
 /* range le brouillon dans le coffre (une seule fois : ensuite on l'efface) */
 async function range(user, vu = () => {}, range1 = () => {}) {
   // le plus sûr d'abord : celui gardé dans le coffre (?b=…), puis celui du compte, puis celui de ce téléphone
@@ -123,7 +143,11 @@ async function range(user, vu = () => {}, range1 = () => {}) {
   try { const local = JSON.parse(localStorage.getItem("loginail-brouillon")); if (local) b = local; } catch (e) {}
   if (user.user_metadata?.brouillon) b = { ...(b || {}), ...user.user_metadata.brouillon };
   const bid = BID;
-  if (bid) { const { data } = await coffre.rpc("prendre_brouillon", { bid }); if (data) b = { ...(b || {}), ...data }; }
+  let lues = [];
+  if (bid) {
+    try { const { data } = await coffre.rpc("lire_photos_brouillon", { p_bid: bid }); lues = data || []; } catch (e) { console.warn(e); }   /* avant : prendre_brouillon les efface */
+    const { data } = await coffre.rpc("prendre_brouillon", { bid }); if (data) b = { ...(b || {}), ...data };
+  }
   if (!b) return null;
   vu(b);
   const { error: e1 } = await coffre.from("profils").update({
@@ -153,6 +177,7 @@ async function range(user, vu = () => {}, range1 = () => {}) {
   const { data: deja } = await coffre.from("sites").select("slug").maybeSingle();
   if (!deja) {
     const d = { ...b }; delete d.univers; delete d.exempleFictif; delete d._charmsU;
+    await rangePhotos(user, d, lues);
     const base = String(b.nom || b.prenom || "mon-salon").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 34) || "mon-salon";
     for (let n = 1; n <= 30; n++) {
       const slug = (n === 1 ? base : base + "-" + n).padEnd(3, "0");

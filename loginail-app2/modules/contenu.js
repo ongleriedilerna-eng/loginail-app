@@ -15,13 +15,13 @@
   document.head.appendChild(st);
   /* --- Prestations et prix --- */
   MSF["ms-presta"]=()=>{const l=lit().prestations||[];return croix+`<h3>Prestations et prix</h3><div class="sous">${l.length} prestation${l.length>1?"s":""} · la même liste pour ton agenda et ton site</div>
-    <div class="liste" style="margin-top:12px">${l.map((p,i)=>`<div class="ligne" data-cs-p="${i}"><div class="t">${esc(p.nom)}<span>${duree(+p.duree||60)}</span></div><em>${prix(p.prix)}</em><span class="fl">›</span></div>`).join("")||'<div class="ligne"><div class="t">Aucune prestation pour l’instant</div></div>'}</div>
+    <div class="liste" style="margin-top:12px">${l.map((p,i)=>`<div class="ligne" data-cs-p="${i}"><div class="t">${LOGI_PRESTA.esc(p.nom)}<span>${LOGI_PRESTA.meta({...p,duree:+p.duree||60})}</span></div><span class="fl">›</span></div>`).join("")||'<div class="ligne"><div class="t">Aucune prestation pour l’instant</div></div>'}</div>
     <button class="btn" data-cs-p="-1" style="width:100%;margin-top:14px">Ajouter une prestation</button>`};
-  const pedit=i=>{const p=i>=0?(lit().prestations||[])[i]||{}:{};return croix+`<h3>${i>=0?esc(p.nom):"Nouvelle prestation"}</h3><div class="form" style="margin-top:12px">
+  const pedit=i=>{const p=i>=0?(lit().prestations||[])[i]||{}:{};return croix+`<h3>${i>=0?LOGI_PRESTA.esc(p.nom):"Nouvelle prestation"}</h3><div class="form" style="margin-top:12px">
     <label>Nom<input data-cs-nom value="${esc(p.nom)}" placeholder="Par exemple : Pose américaine"></label>
-    <label>Prix en €<input data-cs-prix value="${p.prix==null?"":String(p.prix).replace(".",",")}" placeholder="Par exemple : 55" inputmode="decimal"></label></div>
+    </div>${__prestaFiche.haut(p,i)}
     <div class="lab" style="margin-top:12px">Durée</div><div class="chips ch-dur" data-cs-dur>${dureesPour(p.duree).map(d=>`<button class="chip${d===(+p.duree||60)?" on":""}" data-cs-d="${d}">${duree(d)}</button>`).join("")}</div>
-    <div class="sous" style="margin-top:12px;font-size:11.5px">Sans prix, elle s’affiche « Sur devis » sur ton site.</div>
+    ${__prestaFiche.bas(p)}
     <button class="btn" data-cs-ok="presta" data-i="${i}" style="width:100%;margin-top:10px">Enregistrer</button>
     ${i>=0?`<button class="cs-sup" data-cs-sup="${i}">Supprimer cette prestation</button>`:""}`};
   /* --- Horaires --- */
@@ -51,6 +51,22 @@
     if(e)e.classList.remove("fe");toast(e,t)};
   /* 22/11 : la liste est unique : Réglages et l'Accueil se mettent à jour derrière la feuille */
   const majListe=()=>{if(S.onglet==="re"||S.onglet==="acc")rendu()};
+  /* 22/11 (D80) : la fiche complète ; les photos partent d'abord, puis la liste est relue (elle a pu changer pendant l'envoi) */
+  async function enregistrePresta(ok,fc,e){
+    if(ok.disabled)return;const nom=fc.querySelector("[data-cs-nom]").value.trim();if(!nom){toast(e,"Écris le nom de la prestation");return}
+    const i=+ok.dataset.i,ancien=i>=0?((lit().prestations||[])[i]||{}).nom:null,dd=fc.querySelector("[data-cs-d].on"),d=dd?+dd.dataset.csD:60;
+    ok.disabled=true;ok.textContent="Un instant…";
+    const r=await __prestaFiche.prepare(),rend=m=>{ok.disabled=false;ok.textContent="Enregistrer";dit(m)};
+    if(r.erreur)return rend(r.erreur);
+    const b=lit();b.prestations=b.prestations||[];
+    if(i>=0&&(!b.prestations[i]||b.prestations[i].nom!==ancien)){r.annule();return rend("Ta liste a changé : rouvre la prestation")}
+    window.__listeUnique?.avant(b);
+    const p=i>=0?b.prestations[i]:{};Object.assign(p,{nom,duree:d},r.champs);if(i<0)b.prestations.push(p);
+    if(!ecrit(b)){r.annule();return rend("Pas de place sur ton téléphone : rien n’est enregistré")}
+    r.menage();apres(null,"");majListe();
+    if(fc.contains(ok))fc.innerHTML=MSF["ms-presta"]();
+    toast(e,"Prestation enregistrée ✓ · ton site est à jour");
+  }
   document.addEventListener("click",ev=>{const t=ev.target;const fc=t.closest(".fc"),e=t.closest(".ecran");
     const op=t.closest("[data-cs-p]");if(op&&fc){ev.stopPropagation();fc.innerHTML=pedit(+op.dataset.csP);return}
     const d=t.closest("[data-cs-d]");if(d){ev.stopPropagation();d.parentElement.querySelectorAll("[data-cs-d]").forEach(x=>x.classList.toggle("on",x===d));return}
@@ -58,12 +74,9 @@
     const sw=t.closest("[data-cs-sw]");if(sw){ev.stopPropagation();const r=sw.closest(".cs-h");const on=!sw.classList.contains("on");sw.classList.toggle("on",on);r.classList.toggle("ferme",!on);
       const f=r.querySelector(".cs-f");if(on&&f)f.remove();if(!on&&!f)sw.insertAdjacentHTML("beforebegin",'<span class="cs-f">Fermé</span>');return}
     const ca=t.closest("[data-cs-cache]");if(ca){ev.stopPropagation();ca.classList.toggle("on");return}
-    const sup=t.closest("[data-cs-sup]");if(sup){ev.stopPropagation();const b=lit();window.__listeUnique?.avant(b);(b.prestations||[]).splice(+sup.dataset.csSup,1);if(!ecrit(b))return;apres(null,"");majListe();if(fc)fc.innerHTML=MSF["ms-presta"]();toast(e,"Prestation supprimée");return}
+    const sup=t.closest("[data-cs-sup]");if(sup){ev.stopPropagation();const b=lit();window.__listeUnique?.avant(b);const parti=(b.prestations||[]).splice(+sup.dataset.csSup,1)[0];if(!ecrit(b))return;if(parti)__prestaFiche.efface(parti.photosPresta);apres(null,"");majListe();if(fc)fc.innerHTML=MSF["ms-presta"]();toast(e,"Prestation supprimée");return}
     const ok=t.closest("[data-cs-ok]");if(!ok||!fc)return;ev.stopPropagation();const k=ok.dataset.csOk,b=lit();
-    if(k==="presta"){const nom=fc.querySelector("[data-cs-nom]").value.trim();if(!nom){toast(e,"Écris le nom de la prestation");return}
-      const px=fc.querySelector("[data-cs-prix]").value.replace(",",".").replace(/[^\d.]/g,"");const dd=fc.querySelector("[data-cs-d].on");const i=+ok.dataset.i;
-      window.__listeUnique?.avant(b);b.prestations=b.prestations||[];const p=i>=0?b.prestations[i]||{}:{};Object.assign(p,{nom,prix:px===""?null:+px,duree:dd?+dd.dataset.csD:null});if(i<0)b.prestations.push(p);else b.prestations[i]=p;
-      if(!ecrit(b))return;apres(null,"");majListe();fc.innerHTML=MSF["ms-presta"]();toast(e,"Prestation enregistrée ✓ · ton site est à jour");return}
+    if(k==="presta"){enregistrePresta(ok,fc,e);return}
     if(k==="horaires"){const P=fc.querySelector("[data-cs-midi]"),pOn=P&&P.classList.contains("on"),pd=pOn&&fc.querySelector("[data-cs-pd]").value,pf=pOn&&fc.querySelector("[data-cs-pf]").value,pause=pd&&pf&&pd<pf;
       b.horaires=[...fc.querySelectorAll("[data-cs-j]")].map(r=>{if(!r.querySelector("[data-cs-sw]").classList.contains("on"))return null;const x={d:r.querySelector("[data-cs-de]").value||"09:00",f:r.querySelector("[data-cs-a]").value||"18:00"};if(pause&&pd>x.d&&pf<x.f){x.pd=pd;x.pf=pf}return x})}
     if(k==="adresse"){fc.querySelectorAll("[data-cs-k]").forEach(i=>b[i.dataset.csK]=i.value.trim());b.acces=b.acces||{};fc.querySelectorAll("[data-cs-a]").forEach(i=>{const v=i.value.trim();if(v)b.acces[i.dataset.csA]=v;else delete b.acces[i.dataset.csA]});

@@ -1706,6 +1706,7 @@ html.iph .bandeau,html.iph .code,html.public .pret,html.public .bandeau{display:
 @keyframes chOmbre{0%,100%{opacity:1;scale:1}50%{opacity:.6;scale:.82}}
 @media (prefers-reduced-motion:reduce){.ch-corps,.ch-ombre i{animation:none}}
 </style>
+<script src="prestations-detail.js?v=2211d80"></script>
 </head>
 <body>
 <div class="bandeau"><b>Votre site est prêt</b>Essayez tout ce que vous voulez : univers, couleur, fond, détails. Puis « C’est parfait ».</div>
@@ -1900,7 +1901,7 @@ else{
   const hEn=x=>{const h=Math.floor(x),m=Math.round((x-h)*60);return `${h}:${String(m).padStart(2,"0")}`};
   const duree=m=>m<60?`${m} min`:`${Math.floor(m/60)} h${m%60?" "+String(m%60).padStart(2,"0"):""}`;
   const euros=p=>p==null||p===""?"Sur devis":`${String(p).replace(".",",")} €`;
-  const items=BR.prestations.map((p,i)=>{["fr","en","it"].forEach(l=>L[l]["p"+i]=p.nom);return {k:"p"+i,p:euros(p.prix),d:p.duree?duree(p.duree):"",ph:p.photo||""}});
+  const items=BR.prestations.map((p,i)=>{["fr","en","it"].forEach(l=>L[l]["p"+i]=p.nom);return {k:"p"+i,i,p:euros(p.prix),d:p.duree?duree(p.duree):"",ph:p.photo||""}});
   const FAMILLES=[["f_pose","Poses","Nail sets","Ricostruzioni"],["f_semi","Semi-permanent","Gel polish","Semipermanente"],["f_remp","Remplissages","Infills","Refill"],["f_depo","Déposes","Removals","Rimozioni"],["f_manu","Manucure & pédicure","Manicure & pedicure","Manicure e pedicure"],["f_art","Nail art","Nail art","Nail art"],["f_autre","Et aussi","Also","Inoltre"]];
   FAMILLES.forEach(([k,fr,en,it])=>{L.fr[k]=fr;L.en[k]=en;L.it[k]=it});
   const famille=n=>{n=n.toLowerCase();
@@ -2006,7 +2007,10 @@ const dispoP=t=>{const c=creneau(t);return c?`<div class="dispo-p" data-res><i><
 function avisListe(t,TI){if(!D.avis.length)return "";return `<div class="sec">${TI(t.avis)}<div class="al-tete r">${D.note?`<b>${D.note}</b>`:""}<span class="et">${etoiles}</span></div>${D.nb?`<div class="al-nb r">${D.nb} ${t.avisG}</div>`:""}<div class="al">${D.avis.map(a=>`<div class="al-i r"><span class="al-r">${((a.n||"").trim()[0]||"★").toUpperCase()}</span><div><b>${a.n}</b><span class="et">${etoiles}</span><p>« ${a.t} »</p></div></div>`).join("")}</div>${t.langav?`<div class="langav vide">${t.langav}</div>`:""}<a class="bouton r" href="${D.fiche}" target="_blank" rel="noopener">★ &nbsp;${t.laisser}</a></div>`}
 /* 06/11 (Marie) : « Première visite ? » : comment ça se passe, en 3 étapes (vrai pour tous les sites Loginail) */
 function VISITE(t){return `<ol class="visite">${[t.vis1,t.vis2,t.vis3].map((x,i)=>`<li class="r"><b>${i+1}</b><span>${x}</span></li>`).join("")}</ol>`}
-function prestaCartes(t){const N=D.nails;let k=0;return D.presta.map(p=>`${D.presta.length>1?`<div class="pc">${t[p.cat]}</div>`:""}<div class="pk">${p.items.map(it=>{const im=it.ph?`<img src="${it.ph}" alt="">`:N.length?`<img src="${P(N[k%N.length])}" alt="">`:"";k++;return `<div class="pk-c r" data-res>${im}<div class="pk-t"><b>${t[it.k]}</b>${it.d?`<small>${it.d}</small>`:""}${it.p?`<span class="pp">${it.p}</span>`:`<span class="pp vide">${t.tarif}</span>`}</div></div>`}).join("")}</div>`).join("")}
+/* 22/11 (Marie, D80) : le nom, puis « durée · prix », le petit texte et sa petite photo (prestations-detail.js) */
+function detailPresta(it,t){const K=window.LOGI_PRESTA,p=K&&it.i!=null&&typeof BR!=="undefined"&&BR&&BR.prestations?BR.prestations[it.i]:null;if(!p)return null;
+  const lg=["en","it","es","de"].find(l=>L[l]===t)||"fr";return `<b>${K.esc(p.nom)}</b><span class="pp">${K.metaHtml(p,lg)}</span>${K.corps(p)}`}
+function prestaCartes(t){const N=D.nails;let k=0;return D.presta.map(p=>`${D.presta.length>1?`<div class="pc">${t[p.cat]}</div>`:""}<div class="pk">${p.items.map(it=>{const im=it.ph?`<img src="${it.ph}" alt="">`:N.length?`<img src="${P(N[k%N.length])}" alt="">`:"";k++;const dt=detailPresta(it,t);if(dt)return `<div class="pk-c r" data-res><div class="pk-t prd-t">${dt}</div></div>`;return `<div class="pk-c r" data-res>${im}<div class="pk-t"><b>${t[it.k]}</b>${it.d?`<small>${it.d}</small>`:""}${it.p?`<span class="pp">${it.p}</span>`:`<span class="pp vide">${t.tarif}</span>`}</div></div>`}).join("")}</div>`).join("")}
 function horairesPastilles(t){const H7=D.horaires,hj=H7[auj],now=new Date(),hn=now.getHours()+now.getMinutes()/60,ouv=!!(hj&&hn>=hj[0]&&hn<hj[1]);
   let proch="";for(let k=1;k<=7;k++){const j=(auj+k)%7;if(H7[j]){proch=`${t.ouvre} ${t.jours[j].toLowerCase()} ${t.hh(H7[j][0])}`;break}}
   const statut=ouv?`${t.ouvertJ} ${t.hh(hj[1])}`:(hj&&hn<hj[0]?`${t.ouvreAuj} ${t.hh(hj[0])}`:`${t.fermeA} · ${proch}`);
@@ -2099,7 +2103,7 @@ function site2(t,v,lang){
   let presta;
   const ligne=(it,img,extra)=>`<div class="mini2" data-n="${t[it.k]}" data-p="${it.p||""}" data-d="${it.d||""}" data-img="${img}"><div class="mi-t"><span>${t[it.k]}</span>${it.d?`<small>${it.d}</small>`:""}</div><div class="mi-d">${prix(it)}${extra}</div></div>`;
   const liste=(guide,extra)=>`<div class="guide g2">${guide}</div>`+D.presta.map((p,ci)=>`<div class="pc">${t[p.cat]}</div>${p.items.map((it,k)=>ligne(it,P(N[(ci*5+k)%N.length]),extra)).join("")}`).join("");
-  if(VAR==="sa") presta=`<div class="guide g2">${t.guide}</div>${D.presta.length>1?`<div class="onglets pf-tabs r">${D.presta.map((p,i)=>`<button class="${i?"":"on"}">${t[p.cat]}</button>`).join("")}<span class="souligne"></span></div>`:""}`+D.presta.map((p,i)=>`<div class="liste ${i?"":"on"}">`+p.items.map(it=>`<div class="pf-l" data-res><div><b>${t[it.k]}</b>${it.d?`<small>${it.d}</small>`:""}</div>${prix(it)}</div>`).join("")+`</div>`).join("");
+  if(VAR==="sa") presta=`<div class="guide g2">${t.guide}</div>${D.presta.length>1?`<div class="onglets pf-tabs r">${D.presta.map((p,i)=>`<button class="${i?"":"on"}">${t[p.cat]}</button>`).join("")}<span class="souligne"></span></div>`:""}`+D.presta.map((p,i)=>`<div class="liste ${i?"":"on"}">`+p.items.map(it=>detailPresta(it,t)?`<div class="pf-l prd-t" data-res>${detailPresta(it,t)}</div>`:`<div class="pf-l" data-res><div><b>${t[it.k]}</b>${it.d?`<small>${it.d}</small>`:""}</div>${prix(it)}</div>`).join("")+`</div>`).join("");
   else if(VAR==="sb") presta=liste(t.touche2,`<i class="mi-ch"></i>`);
   else if(VAR==="sc") presta=liste(t.choisis2,`<i class="mi-ok"></i>`);
   else if(X==="pa") presta=`<div class="guide g2">${t.guide}</div>`+D.presta.map((p,ci)=>`<div class="pc">${t[p.cat]}</div>${p.items.map((it,k)=>`<div class="tl mini"><div class="tl1"><img src="${P(N[(ci*5+k)%N.length])}" alt=""><div class="mi-t"><span>${t[it.k]}</span>${it.d?`<small>${it.d}</small>`:""}</div>${prix(it)}</div><div class="tl2"><button data-res>${t.reserverP}</button></div></div>`).join("")}`).join("");
@@ -2996,7 +3000,7 @@ function apres(ecran){
 document.addEventListener("scroll",e=>{if(e.target.classList?.contains("defile")&&e.target.scrollTop>60)document.querySelectorAll(".pret").forEach(p=>p.classList.add("vu"))},true);
 document.querySelectorAll("[data-pf] .ecran").forEach(e=>{try{apres(e)}catch(x){}});
 </script>
-<script src="../loginail-site/options-site.js"></script><script src="resa-simu.js"></script><script src="legal-site.js"></script><script src="menu-carre.js?v=3"></script><script src="menu-coffin.js?v=3"></script>
+<script src="../loginail-site/options-site.js"></script><script src="resa-simu.js?v=2211d80"></script><script src="legal-site.js"></script><script src="menu-carre.js?v=3"></script><script src="menu-coffin.js?v=3"></script>
 <script>
 /* 09/11 (Marie) : les charms posés avec le présentoir (BR.stickers : n, x en % de la largeur, y en px, taille s, rotation r, largeur w du téléphone) ; ils flottent doucement */
 (function(){try{if(typeof BR==="undefined"||!BR||!Array.isArray(BR.stickers)||!BR.stickers.length)return;

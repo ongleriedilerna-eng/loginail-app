@@ -336,7 +336,7 @@ function feuilleRdv(id) {
     ${t ? `<div class="ronds"><button data-href="tel:${esc(t)}" aria-label="Appeler">${I.tel}</button><button data-href="sms:${esc(t)}" aria-label="Message">${I.msg}</button></div>` : ""}</div>
     ${r.source === "en_ligne" ? `<div class="sous" style="text-align:left;margin:10px 0 0">Réservé en ligne${r.acompte ? " · acompte de " + euros(r.acompte) + (r.acompte_paye ? " payé" : " (à régler au salon)") : ""}</div>` : ""}
     ${CAISSE() && r.cliente_id && r.statut !== "annule" && r.statut !== "absente" ? (ticketDe(r) ? `<div class="sous" style="text-align:left;margin:12px 0 0">Encaissé ✓ · ticket n° ${esc(ticketDe(r).numero)}</div><button class="btn clair" data-a="qr-voir" data-t="${ticketDe(r).id}" style="margin-top:10px">Revoir son ticket</button>`
-      : `<button class="btn" data-a="encaisser" data-id="${r.id}" style="margin-top:16px">Encaisser · ${euros(resteDe(r))}</button>`) : ""}
+      : `<button class="btn" data-a="encaisser" data-id="${r.id}" style="margin-top:16px">Encaisser${prixBouge(r) ? "" : " · " + euros(resteDe(r))}</button>`) : ""}
     ${r.statut === "prevu" ? `<button class="btn${CAISSE() && r.cliente_id ? " clair" : ""}" data-a="statut" data-s="fini" data-id="${r.id}" style="margin-top:${CAISSE() && r.cliente_id ? 8 : 16}px">C’est fini</button>
     <div class="petits"><button data-a="decaler" data-id="${r.id}">Décaler</button><button data-a="statut" data-s="absente" data-id="${r.id}">Pas venue</button><button data-a="statut" data-s="annule" data-id="${r.id}">Annuler le rendez-vous</button></div>`
     : `<div class="sous" style="margin-top:14px">${{ fini: "Rendez-vous fini", absente: "Pas venue", annule: "Annulé" }[r.statut]}</div><div class="petits">${r.statut === "annule" ? `<button data-a="rdv-suppr" data-id="${r.id}">Supprimer le créneau</button>` : `<button data-a="statut" data-s="prevu" data-id="${r.id}">Remettre comme prévu</button>`}</div>`}`);
@@ -443,24 +443,47 @@ const totalMois = () => duMois().reduce((a, t) => a + (+t.total || 0), 0);
 const legal = () => { const D = (S.site && S.site.donnees) || {}, L = D.legal || {};
   return { salon: L.entreprise || D.nom || S.profil.nom_salon || "", nomComplet: L.nomComplet || "", adresse: L.adresse || [D.rue, [D.cp, D.ville].filter(Boolean).join(" ")].filter(Boolean).join(", "), siret: L.siret || "", tvaNon: L.tvaNon !== false }; };
 let K = {};
+/* 22/11 (Marie, D80) : avec « à partir de » ou « sur devis », le vrai prix se décide au salon */
+const prixBouge = r => { if (prixDe(r.prix) == null) return true; const t = String(titreRdv(r) || "").split(" + ");
+  return prestasDuSite().some(p => t.includes(p.nom) && LOGI_PRESTA.type(p) !== "fixe"); };
+const finalDe = () => { const s = String($("#k-prix", E)?.value || "").replace(/[\s€]/g, "").replace(",", "."); return /^\d+(\.\d{1,2})?$/.test(s) ? +s : null; };
+const aPayer = (r, f) => Math.round(Math.max(0, (f || 0) - (r.acompte_paye ? +r.acompte || 0 : 0)) * 100) / 100;
+const ecritEuros = n => euros(n) || "0 €";
+function majFinal() {
+  const r = K.r, f = finalDe(); if (!r || !$("#k-prix", E)) return;
+  E.querySelectorAll("[data-k-total]").forEach(x => { x.textContent = ecritEuros(f || 0); });
+  E.querySelectorAll("[data-k-reste]").forEach(x => { x.textContent = ecritEuros(aPayer(r, f)); });
+  $('[data-a="encaisser-ok"]', E).textContent = f == null ? "Écris le prix final" : "Encaisser " + ecritEuros(aPayer(r, f));
+}
+document.addEventListener("input", e => { if (e.target.id === "k-prix") majFinal(); });
+document.addEventListener("click", e => { const b = e.target.closest?.("[data-kp]"); if (!b || !K.r) return; e.stopPropagation();
+  const i = $("#k-prix", E); if (!i) return;
+  i.value = b.dataset.kp === "depart" ? String(prixDe(K.r.prix) ?? "").replace(".", ",") : String(Math.round(((finalDe() || 0) + +b.dataset.kp) * 100) / 100).replace(".", ",");
+  majFinal(); }, true);
 function feuilleEncaisser(id) {
   const r = S.rdv.find(x => x.id === id); if (!r) return; K = { r, moyen: "especes", envoi: "qr" };
   const reste = resteDe(r), d = new Date(r.debut), lg = legal();
-  ouvre(`<h3>Encaisser</h3><div class="sous">${esc(nomRdv(r))} · ${esc(titreRdv(r))} · reste ${euros(reste)}</div>
+  ouvre(`<h3>Encaisser</h3><div class="sous">${esc(nomRdv(r))} · ${esc(titreRdv(r))}</div>
+    <div class="lab2" style="text-align:center"><label for="k-prix">Prix final</label></div>
+    <div class="k-final"><input id="k-prix" inputmode="decimal" autocomplete="off" value="${String(prixDe(r.prix) ?? "").replace(".", ",")}" placeholder="0"><span>€</span></div>
+    <div class="k-plus">${[5, 10, 15].map(n => `<button type="button" data-kp="${n}">+ ${n} €</button>`).join("")}${prixDe(r.prix) == null ? "" : '<button type="button" data-kp="depart">Prix de départ</button>'}</div>
+    ${r.acompte_paye && +r.acompte ? `<div class="k-reste"><span>Acompte déjà payé : ${euros(+r.acompte)}</span><span>Reste : <b data-k-reste>${ecritEuros(reste)}</b></span></div>` : ""}
     <div class="lab2" style="text-align:center">Elle paie</div><div class="pc-g" style="justify-content:center">${MOYENS.map(m => `<button class="chip${m[0] === "especes" ? " on" : ""}" data-km="${m[0]}">${m[1]}</button>`).join("")}</div>
     <div class="lab2">Son ticket <button data-a="voir-ticket" style="float:right;border:0;background:none;font:inherit;font-size:11px;letter-spacing:0;text-transform:none;text-decoration:underline;cursor:pointer;color:var(--noir)">Voir son ticket ›</button></div>
     <div class="nt-papier" id="k-pap" hidden><div class="nt-h"><div><b>${esc(lg.salon)}</b><span>${esc(lg.adresse)}</span></div><div class="nt-n">Ticket n° (à l’encaissement)<span>${d.toLocaleDateString("fr-FR")}</span></div></div>
-      <div class="nt-cl">Pour : ${esc(nomRdv(r))}</div><div class="nt-l"><span>${esc(titreRdv(r) || "Prestation")} · 1</span><b>${euros(+r.prix || 0)}</b></div><div class="nt-l nt-t"><span>Total</span><b>${euros(+r.prix || 0)}</b></div>
-      ${r.acompte_paye && +r.acompte ? `<div class="nt-l nt-g"><span>Acompte déjà payé</span><b>− ${euros(+r.acompte)}</b></div>` : ""}<div class="nt-l nt-g"><span>Payé au salon</span><b>${euros(reste)}</b></div>
+      <div class="nt-cl">Pour : ${esc(nomRdv(r))}</div><div class="nt-l"><span>${esc(titreRdv(r) || "Prestation")} · 1</span><b data-k-total>${ecritEuros(+r.prix || 0)}</b></div><div class="nt-l nt-t"><span>Total</span><b data-k-total>${ecritEuros(+r.prix || 0)}</b></div>
+      ${r.acompte_paye && +r.acompte ? `<div class="nt-l nt-g"><span>Acompte déjà payé</span><b>− ${euros(+r.acompte)}</b></div>` : ""}<div class="nt-l nt-g"><span>Payé au salon</span><b data-k-reste>${ecritEuros(reste)}</b></div>
       <div class="nt-pied">${lg.tvaNon ? "TVA non applicable, art. 293 B du CGI · " : ""}${lg.siret ? "SIRET " + esc(lg.siret) : '<span style="color:#A04A4A">SIRET à compléter dans Mon site</span>'}</div></div>
-    <button class="btn" data-a="encaisser-ok" style="margin-top:16px">Encaisser</button>
+    <button class="btn" data-a="encaisser-ok" style="margin-top:16px">${prixDe(r.prix) == null ? "Écris le prix final" : "Encaisser " + ecritEuros(reste)}</button>
     <div style="text-align:center;font-size:12.5px;color:#776D64;margin-top:10px;line-height:1.45">Ensuite, elle scanne le QR code : son ticket arrive sur son téléphone.</div>`);
 }
-async function encaisser() {
-  const r = K.r, reste = resteDe(r), lg = legal(), d = new Date(r.debut);
+async function encaisser(total) {
+  const r = K.r, reste = aPayer(r, total), lg = legal(), d = new Date(r.debut);
+  /* le rendez-vous prend le prix final : le bilan et la fiche de la cliente disent comme le ticket */
+  if (prixDe(r.prix) !== total) { const { error } = await sb.from("rendez_vous").update({ prix: total }).eq("id", r.id); if (error) return oups(error); r.prix = total; }
   const { data: numero, error: e1 } = await sb.rpc("prochain_numero"); if (e1) return oups(e1);
-  const details = Object.assign(lg, { cliente: nomRdv(r), date_presta: d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }), lignes: [{ nom: titreRdv(r) || "Prestation", prix: +r.prix || 0, qte: 1 }] });
-  const { data: t, error } = await sb.from("tickets").insert({ rendez_vous_id: r.id, numero, total: +r.prix || 0, acompte_deduit: r.acompte_paye ? +r.acompte || 0 : 0, paye_au_salon: reste, moyen: K.moyen, envoye_par: K.envoi, details }).select().single();
+  const details = Object.assign(lg, { cliente: nomRdv(r), date_presta: d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }), lignes: [{ nom: titreRdv(r) || "Prestation", prix: total, qte: 1 }] });
+  const { data: t, error } = await sb.from("tickets").insert({ rendez_vous_id: r.id, numero, total, acompte_deduit: r.acompte_paye ? +r.acompte || 0 : 0, paye_au_salon: reste, moyen: K.moyen, envoye_par: K.envoi, details }).select().single();
   if (error) return oups(error);
   if (r.statut === "prevu") await sb.from("rendez_vous").update({ statut: "fini" }).eq("id", r.id);
   await chargeSemaine(); chargeVisites(); rendu();
@@ -615,7 +638,8 @@ E.addEventListener("click", async ev => {
       S.prestations = S.prestations.filter(p => p.id !== a.dataset.id); feuillePrestas(); rendu(); }
     else if (k === "encaisser") feuilleEncaisser(a.dataset.id);
     else if (k === "voir-ticket") { const p = $("#k-pap", E); p.hidden = !p.hidden; a.textContent = p.hidden ? "Voir son ticket ›" : "Cacher le ticket ‹"; }
-    else if (k === "encaisser-ok") { a.disabled = true; a.textContent = "Un instant…"; await encaisser(); }
+    else if (k === "encaisser-ok") { const f = finalDe(); if (f == null) { $("#k-prix", E)?.focus(); return dit("Écris le prix final"); }
+      a.disabled = true; a.textContent = "Un instant…"; await encaisser(f); if (a.isConnected && $("#k-prix", E)) { a.disabled = false; majFinal(); } }
     else if (k === "qr-voir") { const t = (S.tickets || []).find(x => x.id === a.dataset.t); if (t) montreQR(t); }
     else if (k === "caisse") feuilleCaisse();
     else if (k === "caisse-sw") { const on = !CAISSE(); const { data, error } = await sb.from("profils").update({ caisse_active: on }).eq("id", S.user.id).select().single(); if (error) return oups(error); S.profil = data; feuilleCaisse(); rendu(); dit(on ? "Caisse activée" : "Caisse arrêtée · tes tickets sont gardés"); }
@@ -628,7 +652,7 @@ E.addEventListener("click", async ev => {
     else if (k === "export") await exporteDonnees();
     else if (k === "suppr") feuilleSuppr();
     else if (k === "suppr-ok") { if (($("#suppr-ok", E).value || "").trim().toUpperCase() !== "SUPPRIMER") return dit("Écris SUPPRIMER pour confirmer");
-      a.disabled = true; a.textContent = "Suppression…"; const { error } = await sb.rpc("supprimer_mon_compte"); if (error) { a.disabled = false; a.textContent = "Supprimer définitivement"; return oups(error); }
+      a.disabled = true; a.textContent = "Suppression…"; await window.__prestaFiche?.effaceTout(); const { error } = await sb.rpc("supprimer_mon_compte"); if (error) { a.disabled = false; a.textContent = "Supprimer définitivement"; return oups(error); }
       try { localStorage.removeItem("loginail-brouillon"); } catch (e) {} await sb.auth.signOut(); S.user = null; ecranConnexion(); }
     else if (k === "aide") window.open("https://wa.me/33745266189?text=" + encodeURIComponent("Bonjour Loginail, j’ai besoin d’aide : "), "_blank", "noopener");   /* 12/11 (Marie) : WhatsApp, son numéro pour commencer */
     else if (k === "lien") window.open("https://loginail.fr/mentions-legales.html?appli=1", "_blank", "noopener");
