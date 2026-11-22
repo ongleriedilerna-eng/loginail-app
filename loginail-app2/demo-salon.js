@@ -92,6 +92,8 @@
     storage: { from: () => ({
       upload: async (p, b) => { FICH[p] = await new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(b); }); return { data: { path: p }, error: null }; },
       createSignedUrls: async ps => ({ data: ps.map(p => ({ path: p, signedUrl: FICH[p] || null })), error: null }),
+      getPublicUrl: p => ({ data: { publicUrl: FICH[p] || "" } }),
+      list: async () => ({ data: [], error: null }),
       createSignedUrl: async p => ({ data: { signedUrl: FICH[p] || null }, error: null }),
       remove: async ps => { ps.forEach(p => delete FICH[p]); return { data: null, error: null }; } }) },
     functions: { invoke: async () => ({ data: { demo: true }, error: null }) },
