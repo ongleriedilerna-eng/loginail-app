@@ -554,7 +554,7 @@ E.addEventListener("change", ev => { if (ev.target.id !== "ph-in") return; const
   E.addEventListener("pointerdown", ev => { if (ev.target.closest(".idx")) { ev.preventDefault(); vers(ev); } });
   E.addEventListener("pointermove", ev => { if (ev.target.closest(".idx") && (ev.buttons || ev.pointerType === "touch")) vers(ev); }); }
 { let fy = null, fx = 0;
-  E.addEventListener("touchstart", ev => { const f = ev.target.closest(".feuille"); fy = f && E.classList.contains("fe") && f.scrollTop <= 0 && !ev.target.closest("input,textarea,select,.idx") ? ev.touches[0].clientY : null; fx = ev.touches[0].clientX; }, { passive: true });
+  E.addEventListener("touchstart", ev => { const f = ev.target.closest(".feuille"); fy = f && E.classList.contains("fe") && f.scrollTop <= 0 && !ev.target.closest("input,textarea,select,.idx,.md-liste") ? ev.touches[0].clientY : null; fx = ev.touches[0].clientX; }, { passive: true });
   E.addEventListener("touchmove", ev => { if (fy == null) return; const dy = ev.touches[0].clientY - fy, dx = Math.abs(ev.touches[0].clientX - fx); if (dy > 90 && dy > dx * 1.5) { fy = null; ferme(); } else if (dy < -10) fy = null; }, { passive: true }); }
 /* 21/11 : une seule mise à jour par image, même si elle tape vite ; la case n'est plus refaite (voir garde) */
 let _rc = 0; E.addEventListener("input", ev => { if (ev.target.id === "cherche") { S.cherche = ev.target.value; if (_rc) return; _rc = requestAnimationFrame(() => { _rc = 0; rendu(); const i = $("#cherche", E); if (i && document.activeElement !== i) { const pos = i.value.length; i.focus(); i.setSelectionRange(pos, pos); } }); } });
