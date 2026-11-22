@@ -422,28 +422,37 @@
   st.textContent = `.rp-t{width:100%;min-height:96px;box-sizing:border-box;border:1px solid rgba(30,28,27,.15);border-radius:16px;padding:12px 14px;font:inherit;font-size:16px;line-height:1.45;background:#fff;resize:none;-webkit-appearance:none}
 .rp-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.rp-tags button{border:1px solid rgba(30,28,27,.15);background:#fff;border-radius:99px;padding:6px 11px;font:inherit;font-size:12.5px;color:inherit}
 .rp-apercu{background:#E9F3EC;border-radius:18px 18px 18px 6px;padding:11px 14px;font-size:14px;line-height:1.45;text-align:left}
+#E .rp-apercu{overflow-wrap:anywhere}
 .rp-n{font-size:12px;text-align:right;margin-top:4px;opacity:.6}.rp-n.trop{color:#B3261E;opacity:1;font-weight:500}
 .rp-alerte{background:#FFF4E5;color:#7A4E00;border-radius:14px;padding:10px 12px;font-size:13px;text-align:left;margin-top:10px}
 .acc-caisse{display:flex;align-items:center;gap:12px;background:#fff;border-radius:20px;padding:14px 34px 14px 14px;margin:0 0 10px;position:relative}
 .acc-caisse .t{flex:1;font-size:14px;line-height:1.3}.acc-caisse .t span{display:block;font-size:12px;opacity:.6;margin-top:2px}
 .acc-caisse .x{position:absolute;top:4px;right:6px;border:0;background:none;font-size:17px;opacity:.4;padding:4px 6px;color:inherit}`;
   document.head.appendChild(st);
-  const DEF = "Bonjour {prénom} ! RDV demain {heure}, {adresse}. Tél {tél}.";
+  const DEF = "Bonjour {prénom} ! RDV demain {heure} chez {salon}, {adresse}. Tél {tél}.", DEF0 = "Bonjour {prénom} ! RDV demain {heure}, {adresse}. Tél {tél}.";
   const adr = () => [S.profil.adresse, [S.profil.code_postal, S.profil.ville].filter(Boolean).join(" ")].filter(Boolean).join(" ");
-  const rempli = m => m.replace(/\{pr[ée]nom\}/gi, "Jade").replace(/\{heure\}/gi, "9h00").replace(/\{adresse\}/gi, adr() || "[ton adresse]").replace(/\{t[ée]l\}/gi, S.profil.telephone || "[ton numéro]").replace(/\s+/g, " ").trim();
-  const feuille = (val) => { const m = val != null ? val : (S.profil.msg_rappel || DEF), ex = rempli(m), n = [...ex].length, manque = [!adr() && "ton adresse", !S.profil.telephone && "ton numéro"].filter(Boolean);
+  /* 22/11 : le SMS part au nom de « Loginail » : le nom du salon doit rester dans le texte (même règle dans la fonction « sms ») */
+  const GSM = "@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà^{}\\[~]|€";
+  const net = t => { let o = ""; for (const c of String(t || "").replace(/[’‘`´]/g, "'").replace(/[«»“”]/g, '"').replace(/[–—]/g, "-").replace(/…/g, "...").replace(/\s+/g, " ")) { if (GSM.includes(c)) { o += c; continue; } const d = c.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); if ([...d].every(x => GSM.includes(x))) o += d; } return o.trim(); };
+  const long = t => [...t].reduce((n, c) => n + ("^{}\\[~]|€".includes(c) ? 2 : 1), 0);
+  const salonSms = () => net(S.profil.nom_salon);
+  const rempli = m => { const s = salonSms(), r = corps(m);
+    return r && s && !/\{salon\}/i.test(m) && !net(r).toLowerCase().includes(s.toLowerCase()) && long(`${r} - ${s}`) <= 160 ? `${r} - ${s}` : r; };
+  const sansNom = m => { const s = salonSms(); return !!s && !!m.trim() && !net(rempli(m)).toLowerCase().includes(s.toLowerCase()); };
+  const corps = m => m.replace(/\{salon\}/gi, () => salonSms() || "[ton salon]").replace(/\{pr[ée]nom\}/gi, "Jade").replace(/\{heure\}/gi, "9h00").replace(/\{adresse\}/gi, adr() || "[ton adresse]").replace(/\{t[ée]l\}/gi, S.profil.telephone || "[ton numéro]").replace(/\s+/g, " ").trim();
+  const feuille = (val) => { const m = val != null ? val : (S.profil.msg_rappel || DEF), ex = rempli(m), n = long(ex), manque = [!adr() && "ton adresse", !S.profil.telephone && "ton numéro"].filter(Boolean);
     ouvre(`<h3>Rappel la veille</h3><div class="sous">La veille au soir, chaque cliente qui a rendez-vous le lendemain reçoit ce SMS. C’est automatique.</div>
       <div class="lab2">Ton message</div><textarea class="rp-t" id="rp-m" maxlength="200">${esc(m)}</textarea>
-      <div class="rp-tags">${["{prénom}", "{heure}", "{adresse}", "{tél}"].map(t => `<button type="button" data-su="rp-tag" data-t="${t}">+ ${t.slice(1, -1)}</button>`).join("")}</div>
-      <div class="sous" style="font-size:12px;text-align:left;margin-top:6px">Les mots entre { } changent pour chaque cliente : son prénom, l’heure de son rendez-vous, ton adresse, ton numéro.</div>
+      <div class="rp-tags">${["{prénom}", "{heure}", "{salon}", "{adresse}", "{tél}"].map(t => `<button type="button" data-su="rp-tag" data-t="${t}">+ ${t.slice(1, -1)}</button>`).join("")}</div>
+      <div class="sous" style="font-size:12px;text-align:left;margin-top:6px">Les mots entre { } changent pour chaque cliente : son prénom, l’heure de son rendez-vous, le nom de ton salon, ton adresse, ton numéro. Si tu oublies le nom de ton salon, il s’ajoute à la fin.</div><div class="rp-alerte" id="rp-nom"${sansNom(m) ? "" : " hidden"}>Pas de place pour le nom de ton salon : raccourcis, sinon ta cliente ne saura pas qui lui écrit.</div>
       <div class="lab2">Exemple : ce que reçoit Jade</div><div class="rp-apercu" id="rp-ap">${esc(ex)}</div><div class="rp-n${n > 160 ? " trop" : ""}" id="rp-n">${n} / 160 caractères${n > 160 ? " · trop long : raccourcis" : ""}</div>
       ${manque.length ? `<div class="rp-alerte">Il manque ${manque.join(" et ")} : ajoute-${manque.length > 1 ? "les" : "la"} dans Réglages › Mon salon, sinon tes clientes ne sauront pas où venir.</div>` : ""}
       <button class="btn" data-su="rp-ok" style="margin-top:14px"${n > 160 ? " disabled" : ""}>Enregistrer</button>
       <button class="lien-t" data-su="rp-def" style="display:block;margin:10px auto 0">Remettre le message de Loginail</button>
       <button class="btn clair" data-a="sms-test" style="margin-top:16px">M’envoyer un essai</button>
       <div class="sous" style="margin-top:8px;font-size:12px">L’essai arrive seulement sur <b>ton</b> téléphone${S.profil.telephone ? " (" + esc(S.profil.telephone) + ")" : ""}, pour voir le SMS. Tes clientes, elles, reçoivent le vrai rappel la veille de leur rendez-vous. 3 essais par jour au plus.</div>`); };
-  const maj = () => { const t = E.querySelector("#rp-m"); if (!t) return; const ex = rempli(t.value), n = [...ex].length, ap = E.querySelector("#rp-ap"), nn = E.querySelector("#rp-n"), ok = E.querySelector('[data-su="rp-ok"]');
-    ap.textContent = ex; nn.textContent = n + " / 160 caractères" + (n > 160 ? " · trop long : raccourcis" : ""); nn.classList.toggle("trop", n > 160); if (ok) ok.disabled = n > 160 || !t.value.trim(); };
+  const maj = () => { const t = E.querySelector("#rp-m"); if (!t) return; const ex = rempli(t.value), n = long(ex), ap = E.querySelector("#rp-ap"), nn = E.querySelector("#rp-n"), ok = E.querySelector('[data-su="rp-ok"]');
+    ap.textContent = ex; nn.textContent = n + " / 160 caractères" + (n > 160 ? " · trop long : raccourcis" : ""); nn.classList.toggle("trop", n > 160); if (ok) ok.disabled = n > 160 || !t.value.trim(); const z = E.querySelector("#rp-nom"); if (z) z.hidden = !sansNom(t.value); };
   document.addEventListener("input", e => { if (e.target.id === "rp-m") maj(); });
   /* l'accueil : « Ma caisse » tant qu'elle n'a pas choisi */
   const choisi = () => { try { return localStorage.getItem("loginail-caisse-choisi") === "1"; } catch (e) { return true; } };
@@ -455,7 +464,7 @@
     const tg = t.closest('[data-su="rp-tag"]'); if (tg) { e.stopPropagation(); const ta = E.querySelector("#rp-m"); const i = ta.selectionStart ?? ta.value.length; ta.value = ta.value.slice(0, i) + tg.dataset.t + ta.value.slice(ta.selectionEnd ?? i); maj(); return; }
     if (t.closest('[data-su="rp-def"]')) { e.stopPropagation(); return feuille(DEF); }
     const ok = t.closest('[data-su="rp-ok"]'); if (ok) { e.stopPropagation(); const v = E.querySelector("#rp-m").value.replace(/\s+/g, " ").trim(); ok.disabled = true;
-      const { data, error } = await sb.from("profils").update({ msg_rappel: v === DEF ? null : v }).eq("id", S.user.id).select().single();
+      const { data, error } = await sb.from("profils").update({ msg_rappel: v === DEF || v === DEF0 ? null : v }).eq("id", S.user.id).select().single();
       if (error) { ok.disabled = false; return dit("Oups, ça n’a pas marché. Réessaie."); } S.profil = data; ferme(); return dit("Ton rappel est enregistré ✓"); }
     if (t.closest('[data-su="acc-caisse"]')) { e.stopPropagation(); e.preventDefault(); const on = !S.profil.caisse_active;
       const { data, error } = await sb.from("profils").update({ caisse_active: on }).eq("id", S.user.id).select().single(); if (error) return dit("Oups, ça n’a pas marché. Réessaie.");

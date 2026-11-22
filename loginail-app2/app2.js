@@ -656,7 +656,7 @@ E.addEventListener("click", async ev => {
     else if (k === "export") await exporteDonnees();
     else if (k === "suppr") feuilleSuppr();
     else if (k === "suppr-ok") { if (($("#suppr-ok", E).value || "").trim().toUpperCase() !== "SUPPRIMER") return dit("Écris SUPPRIMER pour confirmer");
-      a.disabled = true; a.textContent = "Suppression…"; await window.__prestaFiche?.effaceTout(); const { error } = await sb.rpc("supprimer_mon_compte"); if (error) { a.disabled = false; a.textContent = "Supprimer définitivement"; return oups(error); }
+      a.disabled = true; a.textContent = "Suppression…"; if (window.__prestaFiche && !(await window.__prestaFiche.effaceTout())) { a.disabled = false; a.textContent = "Supprimer définitivement"; return dit("Tes photos n’ont pas toutes pu être effacées : réessaie avec une bonne connexion."); } const { error } = await sb.rpc("supprimer_mon_compte"); if (error) { a.disabled = false; a.textContent = "Supprimer définitivement"; return oups(error); }
       try { localStorage.removeItem("loginail-brouillon"); } catch (e) {} await sb.auth.signOut(); S.user = null; ecranConnexion(); }
     else if (k === "aide") window.open("https://wa.me/33745266189?text=" + encodeURIComponent("Bonjour Loginail, j’ai besoin d’aide : "), "_blank", "noopener");   /* 12/11 (Marie) : WhatsApp, son numéro pour commencer */
     else if (k === "lien") window.open("https://loginail.fr/mentions-legales.html?appli=1", "_blank", "noopener");
