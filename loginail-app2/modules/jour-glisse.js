@@ -45,7 +45,8 @@
     [1, -1].forEach(s => { const n = D.v[s]; if (!n) return; n.el.style.visibility = s === d ? "" : "hidden"; deplace(n.el, dx + s * D.pas); });
   };
 
-  const debut = (x, y, cible) => {
+  /* toutes les durées = l'heure du doigt (e.timeStamp), jamais celle du calcul : un téléphone qui rame traite les touchers en retard */
+  const debut = (x, y, cible, quand) => {
     D = null; avale = 0;
     if (S.onglet !== "ag" || E.classList.contains("fe") || S.moisOuvert || !cible.closest) { if (pose) pose(); return; }
     let v = E.querySelector(VUE); if (!v) return;
@@ -60,12 +61,12 @@
       const z = cible.closest(".pap,.k,.blanche");
       if (!z || z.parentElement !== v || v.querySelector(".semaine.glisse")) return;
     }
-    D = { x0: x, x1: x, t0: performance.now(), y, reste, vue: v, on: false, dx: 0, ech: 1, v: {}, pts: [[x, performance.now()]] };
+    D = { x0: x, x1: x, t0: quand, y, reste, vue: v, on: false, dx: 0, ech: 1, v: {}, pts: [[x, quand]] };
     if (reste) { demarre(); bouge(reste); }
     /* la journée touchée vient d'être redessinée : ses touchers n'arrivent plus à la page, on les écoute sur elle */
     if (!cible.isConnected) {
       cible.addEventListener("touchmove", e => suit(e.touches[0].clientX, e.touches[0].clientY, e), { passive: false });
-      cible.addEventListener("touchend", () => lache(false), { once: true });
+      cible.addEventListener("touchend", e => lache(false, e.timeStamp), { once: true });
       cible.addEventListener("touchcancel", () => lache(true), { once: true });
     }
   };
@@ -80,20 +81,19 @@
       demarre();
     }
     if (e.cancelable) e.preventDefault();
-    D.pts.push([x, e.timeStamp || performance.now()]); if (D.pts.length > 6) D.pts.shift();
+    D.pts.push([x, e.timeStamp]); if (D.pts.length > 6) D.pts.shift();
     D.x1 = x; bouge(D.reste + (x - D.x0) / D.ech);
   };
-  const lache = annule => {
+  const lache = (annule, quand) => {
     if (!D) return;
     const g = D; D = null; if (!g.on) return;
     avale = Date.now();
-    const t = performance.now(), pts = g.pts.filter(p => t - p[1] < 110), a = pts[0], b = pts[pts.length - 1];
-    const vit = a && b && b[1] > a[1] ? (b[0] - a[0]) / g.ech / (b[1] - a[1]) : 0, loin = Math.abs(g.dx);
-    /* rattrapée en route + nouveau coup de pouce = un jour de plus, même si elle n'était pas encore arrivée */
-    const elan = !annule && g.reste && Math.abs(g.x1 - g.x0) > 40 && Math.abs(vit) > .4, d = (elan ? vit : g.dx) < 0 ? 1 : -1;
-    if (elan && !g.v[d]) { g.v[d] = voisine(g.vue, d); deplace(g.v[d].el, g.dx + d * g.pas); g.v[d].el.offsetWidth; }
-    if (elan) [1, -1].forEach(s => { if (g.v[s]) g.v[s].el.style.visibility = ""; });
-    const va = !annule && !!g.v[d] && (elan || (loin > g.pas * .3 ? vit * d < .3 : loin > 18 && (-vit * d > .4 || (vit * d <= 0 && t - g.t0 < 250))));   /* même coup rapide que la semaine */
+    const t = quand == null ? g.pts[g.pts.length - 1][1] : quand, pts = g.pts.filter(p => t - p[1] < 110), a = pts[0], b = pts[pts.length - 1];
+    const vit = a && b && b[1] > a[1] ? (b[0] - a[0]) / g.ech / (b[1] - a[1]) : 0, doigt = (g.x1 - g.x0) / g.ech, d = doigt < 0 ? 1 : -1, loin = Math.abs(doigt);
+    /* on décide sur le trajet du pouce, même si elle a rattrapé la journée en route : chaque coup de pouce = un jour */
+    const va = !annule && (loin > Math.min(72, g.pas * .22) ? vit * d < .3 : loin > 18 && (-vit * d > .4 || (vit * d <= 0 && t - g.t0 < 250)));   /* même coup rapide que la semaine */
+    if (va && !g.v[d]) { g.v[d] = voisine(g.vue, d); deplace(g.v[d].el, g.dx + d * g.pas); g.v[d].el.offsetWidth; }
+    if (va) [1, -1].forEach(s => { if (g.v[s]) g.v[s].el.style.visibility = ""; });
     const but = va ? -d * g.pas : 0, ms = calme.matches ? 1 : Math.max(150, Math.min(320, Math.abs(but - g.dx) / Math.max(Math.abs(vit), .9) * 2.4));
     const trans = `transform ${ms}ms cubic-bezier(.22,.8,.28,1)`;
     g.corps.forEach(x => deplace(x, but, trans));
@@ -135,13 +135,13 @@
     if (+S.lundi === lundi) rendu();
   };
 
-  document.addEventListener("touchstart", e => { if (e.touches.length === 1) debut(e.touches[0].clientX, e.touches[0].clientY, e.target); else lache(true); }, { capture: true, passive: true });
+  document.addEventListener("touchstart", e => { if (e.touches.length === 1) debut(e.touches[0].clientX, e.touches[0].clientY, e.target, e.timeStamp); else lache(true); }, { capture: true, passive: true });
   document.addEventListener("touchmove", e => suit(e.touches[0].clientX, e.touches[0].clientY, e), { capture: true, passive: false });
-  document.addEventListener("touchend", () => lache(false), true);
+  document.addEventListener("touchend", e => lache(false, e.timeStamp), true);
   document.addEventListener("touchcancel", () => lache(true), true);
-  document.addEventListener("pointerdown", e => { if (e.pointerType === "mouse" && !e.button) debut(e.clientX, e.clientY, e.target); }, true);
+  document.addEventListener("pointerdown", e => { if (e.pointerType === "mouse" && !e.button) debut(e.clientX, e.clientY, e.target, e.timeStamp); }, true);
   document.addEventListener("pointermove", e => { if (e.pointerType === "mouse" && e.buttons) suit(e.clientX, e.clientY, e); }, { capture: true, passive: false });
-  document.addEventListener("pointerup", e => { if (e.pointerType === "mouse") lache(false); }, true);
+  document.addEventListener("pointerup", e => { if (e.pointerType === "mouse") lache(false, e.timeStamp); }, true);
   /* sur window : avant « toucher une heure = nouveau rendez-vous » */
   window.addEventListener("click", e => {
     const t = e.target; if (!t.closest || !t.closest('.vue[data-p="ag"]')) return;
