@@ -3,7 +3,7 @@
    Non = ça partage, plus jamais demandé. Oui = couper l'ancienne réservation puis recopier, avec un rappel dans l'agenda jusqu'à « J'ai fini ».
    C'est un rappel, pas un verrou : son site prend des réservations dès sa création.
    Sa réponse est rangée dans son COMPTE (user_metadata.avant_partage) + dans le téléphone (si le réseau manque).
-   À charger en dernier : le bandeau se pose sur l'agenda déjà dessiné par les autres modules. */
+   À charger après vernis.js : le bandeau se pose sous le titre de la journée, agenda-vues.js le garde en semaine et en mois. */
 (function () {
   const PARTAGES = '[data-v-partage],[data-a="bio"],[data-dsp="ouvre"]';
   const RANG = { encours: 1, non: 2, fini: 2 };
