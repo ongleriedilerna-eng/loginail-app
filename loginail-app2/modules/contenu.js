@@ -4,7 +4,6 @@
   const ecrit=b=>{try{localStorage.setItem("loginail-brouillon",JSON.stringify(b));return true}catch(_){return false}};
   const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
   const JOURS=["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
-  const DUR=[[30,"30 min"],[45,"45 min"],[60,"1 h"],[90,"1 h 30"],[120,"2 h"],[150,"2 h 30"],[180,"3 h"]];
   const duree=m=>m<60?`${m} min`:`${Math.floor(m/60)} h${m%60?" "+String(m%60).padStart(2,"0"):""}`;
   const prix=p=>p==null||p===""?"Sur devis":`${String(p).replace(".",",")} €`;
   const st=document.createElement("style");st.textContent=`
@@ -21,7 +20,7 @@
   const pedit=i=>{const p=i>=0?(lit().prestations||[])[i]||{}:{};return croix+`<h3>${i>=0?esc(p.nom):"Nouvelle prestation"}</h3><div class="form" style="margin-top:12px">
     <label>Nom<input data-cs-nom value="${esc(p.nom)}" placeholder="Par exemple : Pose américaine"></label>
     <label>Prix en €<input data-cs-prix value="${p.prix==null?"":String(p.prix).replace(".",",")}" placeholder="Par exemple : 55" inputmode="decimal"></label></div>
-    <div class="lab" style="margin-top:12px">Durée</div><div class="chips" data-cs-dur>${DUR.map(d=>`<button class="chip${d[0]===p.duree?" on":""}" data-cs-d="${d[0]}">${d[1]}</button>`).join("")}</div>
+    <div class="lab" style="margin-top:12px">Durée</div><div class="chips ch-dur" data-cs-dur>${dureesPour(p.duree).map(d=>`<button class="chip${d===+p.duree?" on":""}" data-cs-d="${d}">${duree(d)}</button>`).join("")}</div>
     <div class="sous" style="margin-top:12px;font-size:11.5px">Sans prix, elle s’affiche « Sur devis » sur ton site.</div>
     <button class="btn" data-cs-ok="presta" data-i="${i}" style="width:100%;margin-top:10px">Enregistrer</button>
     ${i>=0?`<button class="cs-sup" data-cs-sup="${i}">Supprimer cette prestation</button>`:""}`};

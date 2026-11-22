@@ -206,7 +206,7 @@ function vueAgenda() {
   let g = '<div class="pap">';
   for (let m = OUV; m < FERM; m += 30) g += `<div class="pl${m % 60 ? "" : " plein"}" data-a="creneau" data-m="${m}">${m % 60 ? "" : `<span>${m / 60}h</span>`}</div>`;
   duJour.forEach(r => { const d = new Date(r.debut), f = new Date(r.fin), m0 = d.getHours() * 60 + d.getMinutes(), m1 = f.getHours() * 60 + f.getMinutes();
-    const top = Math.max(0, (m0 - OUV) / 30 * R), haut = Math.max(R, (Math.min(m1, FERM) - Math.max(m0, OUV)) / 30 * R);
+    const top = Math.max(0, (m0 - OUV) / 30 * R), haut = Math.max(R / 2, (Math.min(m1, FERM) - Math.max(m0, OUV)) / 30 * R);
     g += `<div class="pr${r.source === "en_ligne" ? " ligne-en" : ""}${r.statut === "annule" ? " barre" : ""}" data-rdv="${r.id}" style="top:${top}px;height:${haut}px"><b><strong>${hm(d)} – ${hm(f)}</strong> ${esc(nomRdv(r))}${r.source === "en_ligne" ? '<em class="en-ligne">Réservé en ligne</em>' : ""}</b><span>${esc(titreRdv(r))}${r.acompte ? " · acompte " + euros(r.acompte) : ""}</span></div>`; });
   h += g + "</div>";
   return h;
@@ -394,10 +394,14 @@ function feuillePrestas() {
   ouvre(`<h3>Mes prestations</h3><div class="liste" style="margin-top:12px">${S.prestations.map(p => `<div class="ligne" data-a="presta" data-id="${p.id}"><div class="t">${esc(p.nom)}<span>${duree(p.duree_min)}</span></div><em>${euros(p.prix)}</em><span class="fl">›</span></div>`).join("") || '<div class="ligne"><div class="t">Aucune prestation</div></div>'}</div>
     <button class="btn" data-a="presta" data-id="">Ajouter une prestation</button>`);
 }
+/* 22/11 (Marie : « y a des prestations qui durent moins de 30 min ») : 15, 30, 45 min, 1 h, 1 h 30, 2 h, 2 h 30.
+   Une durée déjà enregistrée hors de la liste (1 h 15, 3 h…) garde sa pastille : avant, enregistrer la remplaçait par 1 h sans le dire. */
+const DUREES_PRESTA = [15, 30, 45, 60, 90, 120, 150];
+const dureesPour = v => [...new Set(+v > 0 ? [...DUREES_PRESTA, +v] : DUREES_PRESTA)].sort((a, b) => a - b);
 function feuillePresta(id) {
   const p = id ? S.prestations.find(x => x.id === id) || {} : { duree_min: 60 };
   ouvre(`<h3>${id ? esc(p.nom) : "Nouvelle prestation"}</h3><div class="form" style="margin-top:12px"><label>Nom<input id="p-n" value="${esc(p.nom)}"></label><label>Prix en €<input id="p-p" value="${p.prix ?? ""}" inputmode="decimal"></label></div>
-    <div class="lab2">Durée</div><div class="chips">${[30, 45, 60, 90, 120, 150, 180].map(d => `<button class="chip${d === p.duree_min ? " on" : ""}" data-nd="${d}">${duree(d)}</button>`).join("")}</div>
+    <div class="lab2">Durée</div><div class="chips ch-dur">${dureesPour(p.duree_min).map(d => `<button class="chip${d === p.duree_min ? " on" : ""}" data-nd="${d}">${duree(d)}</button>`).join("")}</div>
     <button class="btn" data-a="presta-ok" data-id="${id || ""}" style="margin-top:14px">Enregistrer</button>${id ? `<div class="petits"><button data-a="presta-suppr" data-id="${id}">Supprimer</button></div>` : ""}`);
 }
 

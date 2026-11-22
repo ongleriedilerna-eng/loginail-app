@@ -16,7 +16,7 @@
   /* 1 · nouveau rendez-vous : on peut toucher plusieurs prestations */
   let SEL = [];
   const majTot = () => { const z = document.querySelector(".fc .rv-tot"); if (!z) return; const t = somme(SEL); z.innerHTML = SEL.length ? `<span>${SEL.length > 1 ? SEL.length + " prestations · " : ""}${duree(t.duree)}</span><b>${euros(t.prix)}</b>` : ""; };
-  new MutationObserver(() => { const c = document.querySelector(".fc .chips"); if (!c || c.dataset.multi) return; c.dataset.multi = "1"; SEL = []; c.insertAdjacentHTML("afterend", '<div class="rv-tot"></div>');
+  new MutationObserver(() => { const c = document.querySelector(".fc .chips"); if (!c || c.dataset.multi || !c.querySelector("[data-np]")) return;   /* 22/11 : seulement les prestations, pas les pastilles de durée */ c.dataset.multi = "1"; SEL = []; c.insertAdjacentHTML("afterend", '<div class="rv-tot"></div>');
     const lab = c.previousElementSibling; if (lab && lab.classList.contains("lab2")) lab.innerHTML = 'Prestations <small style="text-transform:none;letter-spacing:0;opacity:.6">' + (c.classList.contains("n-glisse") ? "une ou plusieurs · glisse pour voir les autres" : "touches-en une ou plusieurs") + '</small>'; }).observe(document.body, { childList: true, subtree: true });
   document.addEventListener("click", e => { const b = e.target.closest && e.target.closest(".fc .chips[data-multi] [data-np]"); if (!b) return; e.stopPropagation(); const i = +b.dataset.np, k = SEL.indexOf(i);
     if (k >= 0) SEL.splice(k, 1); else SEL.push(i); b.classList.toggle("on", k < 0);

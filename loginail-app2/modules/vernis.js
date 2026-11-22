@@ -326,10 +326,13 @@
      Une heure fait entre 40 px (minimum lisible) et 60 px ; 9 h – 18 h tient sans glisser sur un iPhone. Un rendez-vous court tient sur une ligne
      (heure de début · prestation), et un espace en bas pour que le « + » ne cache jamais le dernier rendez-vous. */
   const ajuste = p => { if (p.dataset.k) return; const n = p.querySelectorAll(".pl").length / 2 || 1, place = p.clientHeight - 50;
-    const k = Math.max(40 / 60, Math.min(1, place / (n * 60))); p.dataset.k = k.toFixed(3); p.style.setProperty("--plh", (R * k).toFixed(2) + "px");
+    /* 22/11 : un jour avec un rendez-vous de moins de 30 min, une heure fait 72 px (15 min = une ligne lisible) */
+    const prs = [...p.querySelectorAll(".pr")], debuts = prs.filter(x => !x.classList.contains("barre")).map(x => parseFloat(x.style.top)), court = prs.some(x => parseFloat(x.style.height) < R - .1);
+    const k = court ? 72 / 60 : Math.max(40 / 60, Math.min(1, place / (n * 60))); p.dataset.k = k.toFixed(3); p.style.setProperty("--plh", (R * k).toFixed(2) + "px");
     p.querySelectorAll(".pr,.v-now").forEach(x => { const t0 = parseFloat(x.style.top), h0 = parseFloat(x.style.height);
       if (!isNaN(t0)) x.style.top = (t0 * k).toFixed(1) + "px";
-      if (!isNaN(h0)) { const h = Math.max(h0 * k, 24); x.style.height = h.toFixed(1) + "px";
+      if (!isNaN(h0)) { const libre = Math.min(Infinity, ...debuts.filter(v => v > t0 + .1).map(v => (v - t0) * k));   /* 22/11 : jamais agrandi par-dessus le suivant */
+        const h = Math.max(h0 * k, Math.min(24, libre)); x.classList.toggle("v-mini", h < 22); x.style.height = h.toFixed(1) + "px";
         if (x.classList.contains("pr") && h < 42) { x.classList.add("v-une"); const st = x.querySelector("strong"); if (st) st.textContent = st.textContent.replace(/^\s*(\d{1,2}:\d{2})\s*[–—-]\s*\d{1,2}:\d{2}/, "$1"); } } }); };
   const heures = () => { const p = E.querySelector('.vue.on[data-p="ag"] .pap'); if (!p) return; ajuste(p);
     if (S.papY == null) { const n = p.querySelector(".v-now"), r = p.querySelector(".pr"); S.papY = Math.max(0, (n ? n.offsetTop - 90 : r ? r.offsetTop - 30 : 0)); }
@@ -512,6 +515,10 @@
 #E .vue[data-p="ag"] .pap .pr b{font-size:13px}#E .vue[data-p="ag"] .pap .pr span{font-size:11.5px}
 #E .vue[data-p="ag"] .pap .pr.v-une{display:flex;flex-direction:row;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;padding-top:1px;padding-bottom:1px}
 #E .vue[data-p="ag"] .pap .pr.v-une b{flex:none}#E .vue[data-p="ag"] .pap .pr.v-une>span{overflow:hidden;text-overflow:ellipsis;min-width:0}
+#E .vue[data-p="ag"] .pap .pr.v-mini{padding-top:0;padding-bottom:0;border-radius:7px;line-height:1;box-sizing:border-box}
+#E .vue[data-p="ag"] .pap .pr.v-mini b{font-size:12px;line-height:1}#E .vue[data-p="ag"] .pap .pr.v-mini>span{font-size:11px;line-height:1}
+#E .fc .chips.ch-dur{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important}
+#E .fc .chips.ch-dur .chip{align-items:center;text-align:center;padding:9px 2px;white-space:nowrap}
 #E .vue[data-p="ag"] .tete h1{font-size:30px}
 #E .vue[data-p="ag"] .tete small{font-size:12px}
 #E .vue[data-p="ag"] .v-haut{padding-bottom:10px}
