@@ -1,5 +1,7 @@
 /* ===== 22/11 (Marie : « b la grille jadore », point 8, D92) =====
    Flèche sur « Agenda » → Jour / Semaine / Mois. Maquette : maquettes/agenda-vues-2211/b.html.
+   22/11 (Marie : « il n'y a que le prénom ») : chaque case de la semaine dit l'heure, le prénom et la pose.
+   Pour que ça tienne, les heures chargées sont plus hautes que les heures vides (voir repartit) ; on ne descend que si la semaine est trop pleine.
    La semaine et le mois n'ont pas de .pap : glisser la journée et déplacer un rendez-vous restent des gestes du mode Jour. */
 (function () {
   const CLE = "loginail-agenda-vue", MODES = [["jour", "Jour"], ["semaine", "Semaine"], ["mois", "Mois"]];
@@ -23,6 +25,9 @@
 #E .av-z.av-g-1{animation:av-g-1 .22s ease-out both}
 #E .av-g{display:grid;grid-template-columns:26px repeat(7,minmax(0,1fr));grid-template-rows:44px minmax(0,1fr);padding:0 3px 5px 0}
 #E .av-g .av-tj{height:44px;min-width:0;padding:4px 0;border:0;background:none;color:inherit;font:inherit;font-size:10.5px;line-height:1.15;cursor:pointer}
+#E .av-g.defile{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;padding-bottom:84px}
+#E .av-g.defile::-webkit-scrollbar{display:none}
+#E .av-g.defile>.av-tj,#E .av-g.defile>em{position:sticky;top:0;z-index:3;background:#fff}
 #E .av-tj b{display:block;font-weight:500;font-size:14px}
 #E .av-tj.auj b{color:var(--v-acc,#B5475E)}
 #E .av-col,#E .av-hh{position:relative;min-width:0}
@@ -31,11 +36,15 @@
 #E .av-hh i{position:absolute;right:3px;font:400 10px Jost,sans-serif;color:#7A716B;transform:translateY(-50%)}
 #E .av-col u{position:absolute;left:0;right:0;height:1px;background:rgba(30,28,27,.05);pointer-events:none}
 #E .av-col s{position:absolute;left:0;right:0;height:2px;background:var(--v-acc,#B5475E);pointer-events:none;z-index:2}
-#E .av-b{position:absolute;box-sizing:border-box;min-height:12px;margin:0;overflow:hidden;padding:0 2px;border:0;border-radius:6px;background:#EFCFD3;color:inherit;font:400 10px/1.1 Jost,sans-serif;text-align:left;white-space:nowrap;text-overflow:ellipsis;cursor:pointer}
-#E .av-b.long{font-size:8.5px;padding:0 1px;letter-spacing:-.01em}
-#E .av-b.tres{font-size:7.8px;padding:0}
+#E .av-b{position:absolute;box-sizing:border-box;min-height:12px;margin:0;overflow:hidden;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:1px 1px 0 2px;border:0;border-radius:6px;background:#EFCFD3;color:inherit;font:400 9px/10px Jost,sans-serif;text-align:left;cursor:pointer}
+#E .av-b>span{display:block;flex:none;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;letter-spacing:-.01em}
+#E .av-b>.av-h{text-overflow:clip}
+#E .av-b>.av-n{font-weight:500;font-size:9.6px}
+#E .av-b>.av-p{font-size:8.8px}
 #E .av-b.bloc{background:#E6E0DA}
-#E .av-b.fini{opacity:.6}
+#E .av-b.fini{background:#F8EBED;color:#51474A}
+#E .av-b.bloc.fini{background:#EEEAE6}
+#E .av-b.etroit{padding:1px 0 0 1px}
 #E .av-b.abs{background:repeating-linear-gradient(135deg,#F1ECE6 0 5px,#E9E2DA 5px 10px)}
 #E .av-m{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);padding:8px}
 #E .av-m>small{display:grid;place-items:center;font-size:11px;color:#7A716B}
@@ -45,7 +54,7 @@
 #E .av-jours{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}
 #E .av-jours button{min-height:60px;border:0;border-radius:16px;background:#fff;color:inherit;font:inherit;font-size:12.5px;cursor:pointer}
 #E .av-jours b{display:block;font-size:19px;font-weight:500}
-@media (max-width:350px){#E .av-tete h1{font-size:25px}#E .av-tete .su-auj2{padding:0 8px!important;font-size:12px!important;height:36px}#E .av-tete .v-ronds{gap:4px}#E .av-tete .v-rondb{width:36px;height:36px;min-width:36px}#E .av-g{grid-template-columns:18px repeat(7,minmax(0,1fr));padding-right:1px}#E .av-hh i{right:2px;font-size:9px}#E .av-b{padding:0 1px;font-size:8.6px;letter-spacing:-.01em}#E .av-b.long{font-size:7.6px}#E .av-b.tres{font-size:6.8px;padding:0}}
+@media (max-width:350px){#E .av-tete h1{font-size:25px}#E .av-tete .su-auj2{padding:0 8px!important;font-size:12px!important;height:36px}#E .av-tete .v-ronds{gap:4px}#E .av-tete .v-rondb{width:36px;height:36px;min-width:36px}#E .av-g{grid-template-columns:18px repeat(7,minmax(0,1fr));padding-right:1px}#E .av-hh i{right:2px;font-size:9px}#E .av-b{padding:1px 0 0 1px;font-size:8px;line-height:9px}#E .av-b>.av-n{font-size:8.4px}#E .av-b>.av-p{font-size:7.8px}}
 @keyframes av-menu{from{opacity:.2;transform:translateY(-4px)}}
 @keyframes av-arrive{from{opacity:.2;transform:translateY(-4px)}}
 @keyframes av-g1{from{opacity:.2;transform:translateX(34px)}}
@@ -56,6 +65,16 @@
   const min = d => d.getHours() * 60 + d.getMinutes();
   const qui = r => (r.clientes ? (r.clientes.prenom || nomCli(r.clientes)) : r.titre) || "Bloqué";
   const iso = d => esc(d.toISOString());
+
+  /* la case est étroite : le mot qui compte passe en premier (« Pose gel - Remplissage » → « Rempli. gel ») */
+  const pose = t => String(t).split(" + ").map(p => p
+    .replace(/\s*\([^)]*\)/g, "")
+    .replace(/^pose\s+(.+?)\s*[-–—:]\s*(remplissage|première pose)$/i, "$2 $1")
+    .replace(/première pose/i, "1re pose")
+    .replace(/remplissage/i, "Rempli.")
+    .replace(/^beauté des /i, "Beauté ")
+    .replace(/semi[\s-]+permanente?/i, "Semi")
+    .trim()).join(" + ");
 
   /* ---------- la semaine ---------- */
   function grille() {
@@ -84,10 +103,10 @@
     });
     const pc = m => ((Math.max(A, Math.min(B, m)) - A) / (B - A) * 100).toFixed(3) + "%", H = [], now = new Date(), mn0 = min(now);
     for (let m = A + 60; m < B; m += 60) H.push(m);
-    const traits = H.map(m => `<u style="top:${pc(m)}"></u>`).join("");
-    return `<div class="av-z av-g${entre}" data-av-z><em></em>${J.map((j, i) => `<button class="av-tj${memeJour(j, now) ? " auj" : ""}" data-av-j="${iso(j)}" aria-label="${JOURS[i]} ${j.getDate()} : ouvrir la journée">${COURT[i].toLowerCase()}.<b>${j.getDate()}</b></button>`).join("")}<div class="av-hh">${H.map(m => `<i style="top:${pc(m)}">${m / 60}</i>`).join("")}</div>${J.map((j, i) => `<div class="av-col${HOR[i] === null ? " ferme" : ""}" data-av-j="${iso(j)}">${traits}${memeJour(j, now) && mn0 > A && mn0 < B ? `<s style="top:${pc(mn0)}"></s>` : ""}${R7[i].map(x => {
-      const nom = String(qui(x.r)), cl = (x.r.cliente_id ? "" : " bloc") + (x.r.statut === "fini" ? " fini" : x.r.statut === "absente" ? " abs" : "") + (nom.length > 9 || x.n > 1 ? " long tres" : nom.length > 7 ? " long" : "");
-      return `<button class="av-b${cl}" data-rdv="${esc(x.r.id)}" aria-label="${esc(`${nom}, ${hm(new Date(x.r.debut))} – ${hm(new Date(x.r.fin))}`)}" style="top:${pc(x.a)};height:calc(${((Math.min(B, x.b) - Math.max(A, x.a)) / (B - A) * 100).toFixed(3)}% - 1px);left:calc(${(x.col / x.n * 100).toFixed(2)}% + 1px);width:calc(${(100 / x.n).toFixed(2)}% - 2px)">${esc(nom)}</button>`; }).join("")}</div>`).join("")}</div>`;
+    const traits = H.map(m => `<u data-m="${m}" style="top:${pc(m)}"></u>`).join("");
+    return `<div class="av-z av-g${entre}" data-av-z data-debut="${A}" data-fin="${B}"><em></em>${J.map((j, i) => `<button class="av-tj${memeJour(j, now) ? " auj" : ""}" data-av-j="${iso(j)}" aria-label="${JOURS[i]} ${j.getDate()} : ouvrir la journée">${COURT[i].toLowerCase()}.<b>${j.getDate()}</b></button>`).join("")}<div class="av-hh">${H.map(m => `<i data-m="${m}" style="top:${pc(m)}">${m / 60}</i>`).join("")}</div>${J.map((j, i) => `<div class="av-col${HOR[i] === null ? " ferme" : ""}" data-av-j="${iso(j)}">${traits}${memeJour(j, now) && mn0 > A && mn0 < B ? `<s data-m="${mn0}" style="top:${pc(mn0)}"></s>` : ""}${R7[i].map(x => {
+      const nom = String(qui(x.r)), quoi = x.r.cliente_id ? titreRdv(x.r) : "", deb = new Date(x.r.debut), cl = (x.r.cliente_id ? "" : " bloc") + (x.r.statut === "fini" ? " fini" : x.r.statut === "absente" ? " abs" : "") + (x.n > 1 ? " etroit" : "");
+      return `<button class="av-b${cl}" data-rdv="${esc(x.r.id)}" data-de="${Math.max(A, x.a)}" data-a-min="${Math.min(B, x.b)}"${x.entier ? " data-entier" : ""} aria-label="${esc(`${nom}, ${hm(deb)} – ${hm(new Date(x.r.fin))}${quoi ? ", " + quoi : ""}`)}" style="top:${pc(x.a)};height:calc(${((Math.min(B, x.b) - Math.max(A, x.a)) / (B - A) * 100).toFixed(3)}% - 1px);left:calc(${(x.col / x.n * 100).toFixed(2)}% + 1px);width:calc(${(100 / x.n).toFixed(2)}% - 2px)">${x.entier ? "" : `<span class="av-h">${hm(deb)}</span>`}<span class="av-n${x.r.cliente_id ? "" : " av-p"}">${esc(nom)}</span>${quoi ? `<span class="av-p">${esc(pose(quoi))}</span>` : ""}</button>`; }).join("")}</div>`).join("")}</div>`;
   }
 
   /* ---------- le mois ---------- */
@@ -147,12 +166,64 @@
     return f.innerHTML;
   };
 
+  /* Chaque minute reçoit au moins ce qu'il faut à ses rendez-vous pour leurs lignes ; le reste de la place se partage entre toutes.
+     L'échelle est la même dans les 7 colonnes : deux rendez-vous à la même heure restent face à face. */
+  /* au dixième de point : scrollWidth arrondit, et « 10:00 » finissait en « 10:… » */
+  const mesure = document.createRange();
+  const tropLarge = t => { mesure.selectNodeContents(t); return mesure.getBoundingClientRect().width > t.getBoundingClientRect().width + .02; };
+  const vu = { semaine: 0, haut: 0 };
+  document.addEventListener("scroll", e => {
+    const z = e.target;
+    if (z.classList && z.classList.contains("av-g")) { vu.semaine = +S.lundi; vu.haut = z.scrollTop; }
+  }, true);
+  function repartit(z, dispo) {
+    const cases = [...z.querySelectorAll(".av-b")], cle = [dispo, z.clientWidth].join();
+    if (z.dataset.cale === cle) return;
+    z.dataset.cale = cle;
+    const A = +z.dataset.debut, B = +z.dataset.fin, n = B - A, AUTOUR = 51;   /* les dates (44) + le bas (5) + les bords (2) */
+    const lg = cases.length ? parseFloat(getComputedStyle(cases[0]).lineHeight) : 10, faut = new Array(n).fill(11 / 60);   /* 11 par heure : le chiffre de l'heure se lit */
+    cases.forEach(c => {
+      const a = +c.dataset.de - A, b = +c.dataset.aMin - A;
+      if (c.hasAttribute("data-entier") || b <= a) return;
+      const parMin = (c.children.length * lg + 3) / (b - a);
+      for (let i = a; i < b; i++) faut[i] = Math.max(faut[i], parMin);
+    });
+    const mini = faut.reduce((s, v) => s + v, 0), place = Math.max(dispo - AUTOUR, mini), total = c => faut.reduce((s, v) => s + Math.max(v, c), 0);
+    let bas = 0, haut = place / n;
+    for (let i = 0; i < 24; i++) { const c = (bas + haut) / 2; if (total(c) > place) haut = c; else bas = c; }
+    const Y = [0]; faut.forEach(v => Y.push(Y[Y.length - 1] + Math.max(v, bas)));
+    const y = m => Y[Math.max(0, Math.min(n, Math.round(m) - A))];
+    /* l'écran Agenda ne descend pas : si la semaine est trop pleine, c'est la grille qui défile, sous ses dates */
+    const deborde = mini > dispo - AUTOUR + .5;
+    z.style.height = dispo + "px";
+    z.classList.toggle("defile", deborde);
+    z.style.gridTemplateRows = deborde ? `44px ${Math.ceil(place)}px` : "";
+    z.querySelectorAll("[data-m]").forEach(t => { t.style.top = y(+t.dataset.m) + "px"; });
+    cases.forEach(c => {
+      const a = y(+c.dataset.de), h = y(+c.dataset.aMin) - a - 1;
+      c.style.top = a + "px"; c.style.height = h + "px";
+      const p = c.querySelector(".av-p");
+      if (p) {
+        const lignes = Math.max(1, Math.floor((h - 1) / lg + .01) - c.children.length + 1);
+        p.style.maxHeight = lignes * lg + "px"; p.style.whiteSpace = lignes > 1 ? "normal" : "nowrap";
+      }   /* jamais une ligne coupée en deux */
+      [...c.children].forEach(t => {   /* un mot trop large rapetisse un peu, puis finit par « … » */
+        t.style.fontSize = "";
+        let f = parseFloat(getComputedStyle(t).fontSize); const petit = !c.classList.contains("etroit") ? 7 : t.classList.contains("av-h") ? 5.8 : 6.4;
+        while (f > petit && tropLarge(t)) { f = Math.max(petit, f - .3); t.style.fontSize = f + "px"; }
+      });
+    });
+    if (deborde && vu.semaine === +S.lundi) z.scrollTop = vu.haut;   /* l'écran se redessine : elle reste où elle était */
+  }
+  if (document.fonts) document.fonts.addEventListener("loadingdone", () => { E.querySelectorAll("[data-cale]").forEach(z => z.removeAttribute("data-cale")); cale(); });
+
   /* la zone prend la place qui reste au-dessus de la barre du bas */
   function cale() {
     const z = E.querySelector(".vue.on [data-av-z]"); if (!z) return;
     const e = E.getBoundingClientRect(), ech = e.width / E.offsetWidth || 1, o = E.querySelector(".ong"), ro = o && o.getBoundingClientRect();
     let haut = 0; for (let x = z; x && x !== E; x = x.offsetParent) haut += x.offsetTop;   /* sans l'animation d'arrivée */
-    const bas = ro && ro.height ? (ro.top - e.top) / ech : E.offsetHeight, v = Math.max(180, Math.round(bas - haut - 12)) + "px";
+    const bas = ro && ro.height ? (ro.top - e.top) / ech : E.offsetHeight, dispo = Math.max(180, Math.round(bas - haut - 12)), v = dispo + "px";
+    if (z.hasAttribute("data-debut")) return repartit(z, dispo);
     if (z.style.height !== v) z.style.height = v;
   }
   new MutationObserver(() => {
