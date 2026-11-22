@@ -42,7 +42,20 @@
       return !!(data && data.length);
     } catch (e) { return false; }
   };
-  const question = (z, r, cas, attente) => {
+  /* 22/11 : « rappel_envoye » veut dire « traité », pas « arrivé » : la vérité est dans le journal des SMS (facultatif, comme la liste) */
+  const motRappel = async r => {
+    if (!r.rappel_envoye || new Date(r.debut) <= new Date()) return "";
+    try {
+      const { data, error } = await sb.from("sms_envois").select("*").eq("rdv_id", r.id).order("envoye_le");   /* le dernier = le 2e essai s'il y en a eu un */
+      if (error || !data) throw error;
+      if (!data.length) return "Aucun SMS de rappel n’est parti : préviens-la toi-même.";
+      const x = data[data.length - 1], e = x.etat || (x.ok ? "envoye" : "echec");
+      if (e === "echec" || e === "sans_numero") return "Le SMS de rappel n’est pas arrivé : préviens-la toi-même.";
+      if (e === "incertain") return "Le SMS de rappel n’est pas confirmé : préviens-la toi-même.";
+    } catch (e) {}
+    return "Le SMS de rappel est déjà parti : préviens-la toi-même.";
+  };
+  const question = (z, r, cas, attente, rappel) => {
     const c = (S.clientes || []).find(x => x.id === r.cliente_id), p = esc(String((c && c.prenom) || "").trim()), elle = p || "Ta cliente";
     const de = !p ? "de cette cliente" : /^[aeiouyhàâéèêëîïôöùûü]/i.test(p) ? `d’${p}` : `de ${p}`;
     const d = new Date(r.debut), futur = d > new Date();
@@ -52,7 +65,7 @@
     if (cas === "oui") {
       titre = `Supprimer le rendez-vous ${de}&nbsp;?`;
       info = "Il disparaît de ton agenda et de sa fiche.";
-      if (futur) info += fort(r.rappel_envoye ? "Le SMS de rappel est déjà parti : préviens-la toi-même." : `${elle} ne reçoit aucun message.`);
+      if (futur) info += fort(rappel || `${elle} ne reçoit aucun message.`);
       if (attente) info += "<br>Ta liste d’attente sera prévenue qu’une place se libère.";
       oui = `<button class="an-oui" data-sr="oui" data-id="${esc(r.id)}">Oui, supprimer</button>`;
     } else if (cas === "en-ligne" || cas === "acompte") {
@@ -101,7 +114,8 @@
       const cas = regle(lu);
       if (k === "demande" || cas !== "oui") {
         const attente = cas === "oui" && await attendue(r);
-        if (la()) question(z, r, cas, attente);
+        const rappel = cas === "oui" ? await motRappel(r) : "";
+        if (la()) question(z, r, cas, attente, rappel);
         return;
       }
       /* seulement s'il n'a pas changé depuis la lecture (annulé par la cliente, déplacé sur un autre appareil) */
