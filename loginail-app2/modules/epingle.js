@@ -2,12 +2,59 @@
    Les clientes épinglées s'affichent en haut de la liste, dans « Épinglées » (elles restent aussi à leur place).
    L'épingle est gardée dans le compte (comme l'ordre des carrés de la fiche) : même liste sur tous ses appareils. ===== */
 (function () {
-  const cle = () => "loginail-epingle-" + ((S.user && S.user.id) || "x");
-  const lit = () => { const m = S.user && S.user.user_metadata && S.user.user_metadata.clientes_epinglees; if (Array.isArray(m)) return m;
-    try { const l = JSON.parse(localStorage.getItem(cle()) || "null"); if (Array.isArray(l)) return l; } catch (e) {} return []; };
-  const ecrit = l => { try { localStorage.setItem(cle(), JSON.stringify(l)); } catch (e) {}
-    if (S.user) S.user.user_metadata = Object.assign({}, S.user.user_metadata, { clientes_epinglees: l });
-    try { if (S.user && S.user.id !== "demo" && window.sb) sb.auth.updateUser({ data: { clientes_epinglees: l } }); } catch (e) {} };
+  /* 22/11 (Marie : « Oui, corrige ») : l'enregistrement dans le compte ne partait jamais (window.sb n'existe pas, sb est un const).
+     - le téléphone garde les CHANGEMENTS pas encore envoyés ({ id: épinglée ou non }), jamais une liste entière qui écraserait celle d'un autre téléphone ;
+     - avant d'écrire, on relit le compte et on y applique ces changements ;
+     - les épingles d'avant la correction, jamais envoyées, montent toutes seules à la 1re ouverture ;
+     - 50 au plus dans le compte : cette liste voyage dans chaque demande au serveur, trop longue elle bloquerait l'appli. */
+  const MAX = 50, MEM = {};
+  const demo = () => !!window.SB_DEMO;
+  const cle = () => "loginail-epingle-" + ((S.user && S.user.id) || "x"), cleA = () => cle() + "-attente";
+  const prend = k => { if (k in MEM) return MEM[k]; try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } };
+  const garde = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); delete MEM[k]; } catch (e) { MEM[k] = v; } };
+  const duTel = () => { const l = prend(cle()); return Array.isArray(l) ? l : []; };
+  const duCompte = u => { const l = u && u.user_metadata && u.user_metadata.clientes_epinglees; return Array.isArray(l) ? l : []; };
+  const attente = () => { const a = prend(cleA()); return a ? a : Object.fromEntries(duTel().slice().reverse().map(id => [id, true])); };
+  const applique = (l, a) => Object.keys(a).filter(id => a[id] && !l.includes(id)).reverse().concat(l.filter(id => a[id] !== false));
+  const lit = () => !S.user ? [] : demo() ? duTel() : applique(duCompte(S.user), attente());
+
+  let enCours = false, encore = false;
+  async function accorde() {
+    if (!S.user || demo()) return;
+    if (enCours) { encore = true; return; }
+    enCours = true;
+    const qui = S.user.id, pareil = () => !!S.user && S.user.id === qui;
+    try {
+      const { data, error } = await sb.auth.getUser();
+      if (error || !data || !data.user || data.user.id !== qui || !pareil()) return;
+      const base = duCompte(data.user), envoi = attente(), tout = applique(base, envoi);
+      /* trop d'épingles : celles qui dépassent restent dans ce téléphone */
+      let place = Math.max(0, MAX - base.filter(id => envoi[id] !== false).length);
+      const pris = {};
+      Object.keys(envoi).reverse().forEach(id => { if (envoi[id] === false || base.includes(id)) pris[id] = envoi[id]; else if (place > 0) { place--; pris[id] = true; } });
+      const l = tout.filter(id => base.includes(id) || pris[id]);
+      if (l.join() !== base.join()) {
+        const r = await sb.auth.updateUser({ data: { clientes_epinglees: l } });
+        if (r.error) return;
+      }
+      if (!pareil()) return;
+      const avant = lit().join(), reste = attente();   /* elle a pu épingler pendant l'envoi */
+      Object.keys(pris).forEach(id => { if (reste[id] === pris[id]) delete reste[id]; });
+      S.user.user_metadata = Object.assign({}, S.user.user_metadata, { clientes_epinglees: l });
+      garde(cleA(), reste); garde(cle(), applique(l, reste));
+      if (lit().join() !== avant && S.onglet === "cl" && !E.classList.contains("fe") && !document.querySelector(".ep-menu")) rendu();
+    } catch (e) { console.warn(e); }   /* sans réseau : ça repartira à la prochaine ouverture */
+    finally { enCours = false; if (encore) { encore = false; accorde(); } }
+  }
+  const change = (id, on) => {
+    if (demo()) { const l = duTel().filter(x => x !== id); garde(cle(), on ? [id].concat(l) : l); return; }
+    const a = attente(); delete a[id]; a[id] = on;
+    garde(cleA(), a); garde(cle(), applique(duCompte(S.user), a));
+    accorde();
+  };
+  document.addEventListener("loginail-pret", accorde);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && S.pret) accorde(); });
+  addEventListener("online", () => { if (S.pret) accorde(); });
   const PIN = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6l-1 5 3 3v2H7v-2l3-3z"/><path d="M12 14v6"/></svg>';
   const IC = { crayon: '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-4L16 5l3 3L8 19z"/></svg>',
     poubelle: '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M9 7V5h6v2M7 7l1 13h8l1-13"/></svg>' };
@@ -63,7 +110,7 @@
   document.addEventListener("click", e => { const t = e.target; if (!t.closest) return;
     if (t.closest(".ep-voile")) { e.stopPropagation(); ferme(); return; }
     const b = t.closest("[data-ep]"); if (!b) return; e.stopPropagation(); const id = b.dataset.id, k = b.dataset.ep; ferme();
-    if (k === "pin") { const l = lit(), on = l.includes(id); ecrit(on ? l.filter(x => x !== id) : [id].concat(l)); rendu(); dit(on ? "Cliente désépinglée" : "Épinglée en haut de ta liste ✓"); }
+    if (k === "pin") { const l = lit(), on = l.includes(id); if (!on && l.length >= MAX) return dit(MAX + " épingles au plus : enlèves-en une d’abord"); change(id, !on); rendu(); dit(on ? "Cliente désépinglée" : "Épinglée en haut de ta liste ✓"); }
     else if (k === "modif" || k === "suppr") { feuilleCliente(id); setTimeout(() => { const m = document.querySelector('.fc [data-fi="modifier"]'); if (m) m.click();
       if (k === "suppr") setTimeout(() => { const s = document.querySelector('.fc [data-sup="1"]'); if (s) s.click(); }, 80); }, 60); } }, true);
 })();
