@@ -247,6 +247,9 @@ async function toutPret(prenom) {
   await file; await pause(200);
   $("debut").textContent = "Tout est";
   $("sous").textContent = prenom ? `Bienvenue ${prenom} : tout ce que tu as rempli y est déjà.` : "Tout ce que tu as rempli y est déjà.";
+  /* nom très long + vraie adresse : si la carte cadeau ne tient pas, on la retire (comme sur les tout petits téléphones, D85) */
+  const cadeau = $("pret").querySelector(".cadeau");
+  if (cadeau.offsetTop + cadeau.offsetHeight + 6 > $("tel").clientHeight) cadeau.style.display = "none";
   $("pret").classList.remove("charge");
 }
 async function depart() {
