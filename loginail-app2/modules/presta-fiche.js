@@ -125,15 +125,35 @@
     return { champs: { prix, typePrix: f.type === "devis" ? null : f.type, detail, photosPresta: urls },
       menage: () => efface(f.avant.filter(u => !urls.includes(u))), annule: () => efface(envoyees) };
   }
-  /* supprimer son compte : ses photos publiques partent avec */
+  /* supprimer son compte : toutes ses photos partent avec (RGPD) — celles du site, et celles de ses clientes
+     rangées dans photos-clientes/<elle>/<cliente>/ (les lignes partent toutes seules, pas les fichiers) */
+  async function effaceClientes() {
+    const seau = sb.storage.from("photos-clientes"), moi = S.user.id, dossiers = [];
+    for (let de = 0; de < 10000; de += 100) {
+      const { data, error } = await seau.list(moi, { limit: 100, offset: de }); if (error) throw error;
+      (data || []).forEach(x => dossiers.push(x));
+      if (!data || data.length < 100) break;
+    }
+    for (const d of dossiers) {
+      const base = `${moi}/${d.name}`;
+      if (d.id) { const { error } = await seau.remove([base]); if (error) throw error; continue; }   /* un fichier */
+      for (let n = 0; n < 100; n++) {
+        const { data, error } = await seau.list(base, { limit: 100 }); if (error) throw error;
+        if (!data || !data.length) break;
+        const r = await seau.remove(data.map(x => `${base}/${x.name}`)); if (r.error) throw r.error;
+      }
+    }
+  }
   async function effaceTout() {
+    try { await effaceClientes(); } catch (e) { console.warn(e); return false; }
     try {
       const seau = sb.storage.from(SEAU);
       for (let n = 0; n < 10; n++) {
-        const { data, error } = await seau.list(S.user.id, { limit: 100 }); if (error || !data || !data.length) return;
-        await seau.remove(data.map(x => `${S.user.id}/${x.name}`));
+        const { data, error } = await seau.list(S.user.id, { limit: 100 }); if (error) return false; if (!data || !data.length) return true;
+        const r = await seau.remove(data.map(x => `${S.user.id}/${x.name}`)); if (r.error) return false;
       }
-    } catch (e) { console.warn(e); }
+      return true;
+    } catch (e) { console.warn(e); return false; }
   }
   window.__prestaFiche = { haut, bas, prepare, efface, effaceTout };
 })();
