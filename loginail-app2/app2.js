@@ -167,6 +167,7 @@ async function chargeSemaine() {
   const de = S.lundi, a = plusJours(S.lundi, 7);
   const { data, error } = await sb.from("rendez_vous").select("*, clientes(id,prenom,nom,telephone), prestations(id,nom)")
     .gte("debut", de.toISOString()).lt("debut", a.toISOString()).order("debut");
+  if (+de !== +S.lundi) return;   /* 22/11 : la réponse d'une semaine déjà quittée n'écrase pas celle affichée */
   if (error) throw error; S.rdv = (data || []).filter(r => !SUPP[r.id]); if (Object.keys(SUPP).length) suppPasse();
   /* 16/11 : la cloche de l'accueil (réservations en ligne et annulations des clientes depuis hier), quelle que soit la semaine du rendez-vous */
   try { const hier = new Date(Date.now() - 864e5).toISOString(), sel = "*, clientes(id,prenom,nom,telephone), prestations(id,nom)";

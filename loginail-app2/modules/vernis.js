@@ -334,6 +334,7 @@
       if (!isNaN(h0)) { const libre = Math.min(Infinity, ...debuts.filter(v => v > t0 + .1).map(v => (v - t0) * k));   /* 22/11 : jamais agrandi par-dessus le suivant */
         const h = Math.max(h0 * k, Math.min(24, libre)); x.classList.toggle("v-mini", h < 22); x.style.height = h.toFixed(1) + "px";
         if (x.classList.contains("pr") && h < 42) { x.classList.add("v-une"); const st = x.querySelector("strong"); if (st) st.textContent = st.textContent.replace(/^\s*(\d{1,2}:\d{2})\s*[–—-]\s*\d{1,2}:\d{2}/, "$1"); } } }); };
+  window.__agAjuste = ajuste;   /* pour la journée voisine (jour-glisse.js) */
   const heures = () => { const p = E.querySelector('.vue.on[data-p="ag"] .pap'); if (!p) return; ajuste(p);
     if (S.papY == null) { const n = p.querySelector(".v-now"), r = p.querySelector(".pr"); S.papY = Math.max(0, (n ? n.offsetTop - 90 : r ? r.offsetTop - 30 : 0)); }
     p.scrollTop = S.papY; };
