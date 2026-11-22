@@ -1,0 +1,100 @@
+/* ===== 22/11 (Marie) : « une barre de recherche », puis « tout simplement trois petits traits pour trier en tout, presta, nail art » =====
+   Dans les deux listes : Mon site › Prestations et prix, et Réglages › Mes prestations.
+   On ne refait jamais la liste : on cache les lignes, donc la case garde le clavier et chaque ligne garde son numéro. */
+(function () {
+  /* la même règle que « Nail art » sur le site des salons (loginail-creer/pret.html, famille) : si elle change là-bas, la changer ici */
+  const ART = /nail ?art|déco|strass|paillette|french|baby ?boomer/;
+  const FILTRES = [["tout", "Tout"], ["presta", "Prestas"], ["art", "Nail art"]];
+  const LISTE = '.btn[data-cs-p="-1"],.btn[data-a="presta"][data-id=""]', LIGNE = '.ligne[data-cs-p],.ligne[data-a="presta"]';
+  /* sans accents, sans majuscules, tirets = espaces */
+  const plat = s => String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/œ/g, "oe").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+
+  const st = document.createElement("style");
+  st.textContent = `#E .feuille:has(.pr-haut){height:100%}
+#E .pr-haut{position:sticky;top:-12px;z-index:2;margin:4px -24px 0;padding:12px 24px 10px;background:var(--v-c,var(--creme))}
+#E .pr-haut+.liste{margin-top:2px!important}
+#E .pr-rang{position:relative;display:flex;align-items:center;gap:8px}
+#E .pr-haut .cherche{flex:1;min-width:0;height:42px;margin:0}
+#E .pr-rang .v-rondb{position:relative;width:40px;height:40px}
+#E .pr-rang .v-rondb::after{content:"";position:absolute;inset:-3px}
+#E .pr-haut input{flex:1;min-width:0;height:100%;border:0;outline:0;background:none;padding:0;font:inherit;font-size:16px;color:var(--noir);-webkit-appearance:none}
+#E .pr-haut input::-webkit-search-cancel-button{display:none}
+#E .pr-menu{position:absolute;right:0;top:50px;z-index:20;min-width:200px;padding:6px;background:#fff;border-radius:18px;box-shadow:0 18px 40px -16px rgba(0,0,0,.45);transform-origin:top right;animation:pr-menu .16s ease-out both}
+#E .pr-menu button{display:flex;justify-content:space-between;align-items:center;width:100%;min-height:45px;border:0;background:none;border-radius:12px;padding:12px 14px;font:inherit;font-size:14.5px;color:inherit;text-align:left;cursor:pointer}
+#E .pr-menu button.on{background:rgba(30,28,27,.06)}
+#E .pr-menu button.on span::after{content:"✓"}
+@keyframes pr-menu{from{opacity:0;transform:scale(.94)}}
+@media (prefers-reduced-motion:reduce){#E .pr-menu{animation:none}}
+#E .feuille .ligne.pr-non,#E .pr-haut [hidden],#E .pr-rien[hidden],#E .liste.pr-non{display:none!important}
+#E .feuille .ligne.pr-fin{border-bottom:0}
+#E .feuille .ligne .t{min-width:0;overflow-wrap:anywhere}
+#E .feuille .ligne em{flex:none;white-space:nowrap}
+#E .pr-rien{padding:26px 8px 10px;text-align:center;font-size:14px;line-height:1.45;color:var(--gris);overflow-wrap:anywhere}
+#E .pr-rien button{display:block;min-height:44px;margin:4px auto 0;border:0;background:none;font:inherit;text-decoration:underline;color:var(--noir);cursor:pointer}`;
+  document.head.appendChild(st);
+
+  let q = "", choix = "tout", y = 0;
+  const remet = () => { q = ""; choix = "tout"; y = 0; };
+  const feuille = () => E.querySelector(".feuille");
+
+  function trie() {
+    const fc = E.querySelector(".feuille .fc"), haut = fc && fc.querySelector(".pr-haut"); if (!haut) return;
+    const mots = plat(q).split(" ").filter(Boolean), lignes = [...fc.querySelectorAll(LIGNE)];
+    let vues = 0, ailleurs = 0, fin = null;
+    lignes.forEach(l => {
+      const t = l.querySelector(".t"), nom = t && t.firstChild && t.firstChild.nodeType === 3 ? t.firstChild.textContent : "";
+      const p = plat(nom), colle = p.replace(/ /g, ""), trouve = mots.every(m => p.includes(m) || colle.includes(m));
+      const garde = trouve && (choix === "tout" || choix === (ART.test(nom.toLowerCase()) ? "art" : "presta"));
+      l.classList.toggle("pr-non", !garde); l.classList.remove("pr-fin");
+      if (garde) { vues++; fin = l; } else if (trouve) ailleurs++;
+    });
+    if (fin) fin.classList.add("pr-fin");
+    haut.querySelector("[data-pr-x]").hidden = !q;
+    haut.querySelectorAll("[data-pr-f]").forEach(b => { const on = b.dataset.prF === choix; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
+    /* le rond devient foncé quand la liste est triée, comme dans Clientes */
+    haut.querySelector("[data-pr-tri]").classList.toggle("plein", choix !== "tout");
+    haut.nextElementSibling.classList.toggle("pr-non", !vues);
+    const rien = fc.querySelector(".pr-rien"); rien.hidden = !!vues; if (vues) return;
+    const ou = choix === "art" ? " dans Nail art" : choix === "presta" ? " dans Prestas" : "";
+    rien.textContent = mots.length ? `Rien pour « ${q.trim()} »${ou}.` : choix === "art" ? "Pas encore de nail art dans ta liste." : `Rien${ou}.`;
+    if (mots.length && ailleurs) { const b = document.createElement("button"); b.dataset.prF = "tout"; b.textContent = ailleurs > 1 ? `Voir les ${ailleurs} dans Tout` : "La voir dans Tout"; rien.appendChild(b); }
+  }
+
+  function menu(ouvert) {
+    const m = E.querySelector(".pr-menu"); if (!m) return;
+    m.hidden = !ouvert; m.previousElementSibling.setAttribute("aria-expanded", ouvert);
+  }
+
+  function pose() {
+    const fc = E.querySelector(".feuille .fc"); if (!fc || fc.querySelector(".pr-haut") || !fc.querySelector(LISTE) || !fc.querySelector(LIGNE)) return;
+    const liste = fc.querySelector(".liste");
+    /* « Mon site » refait la feuille sans sa croix après un enregistrement : on la remet */
+    if (!fc.querySelector(".fe-x")) fc.insertAdjacentHTML("afterbegin", '<button class="fe-x" data-a="fermer" aria-label="Fermer">×</button>');
+    liste.insertAdjacentHTML("beforebegin", `<div class="pr-haut"><div class="pr-rang"><label class="cherche">${I.lo}<input data-pr-q type="search" enterkeyhint="search" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Rechercher une prestation" placeholder="Rechercher une prestation"><button type="button" class="cherche-x" data-pr-x aria-label="Effacer la recherche" hidden><svg viewBox="0 0 24 24" width="9" height="9"><path d="M7 7l10 10M17 7L7 17"/></svg></button></label><button type="button" class="v-rondb" data-pr-tri aria-label="Trier mes prestations" aria-expanded="false"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 7h16M7 12h10M10 17h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button><div class="pr-menu tris" hidden>${FILTRES.map(f => `<button type="button" data-pr-f="${f[0]}">${f[1]}<span></span></button>`).join("")}</div></div></div>`);
+    liste.insertAdjacentHTML("afterend", '<div class="pr-rien" role="status" hidden></div>');
+    fc.querySelector("[data-pr-q]").value = q; trie();
+    feuille().scrollTop = y;   /* après une modification, elle retrouve sa place dans la liste */
+  }
+  new MutationObserver(pose).observe(E, { childList: true, subtree: true });
+
+  /* sur window : passe avant contenu.js, qui remplace la feuille au toucher */
+  addEventListener("click", e => {
+    const t = e.target; if (!t.closest) return;
+    /* menu ouvert : toucher à côté le referme, sans ouvrir la ligne qui est dessous */
+    const m = E.classList.contains("fe") && E.querySelector(".pr-menu:not([hidden])");
+    if (m && !t.closest(".pr-menu")) { e.preventDefault(); e.stopPropagation(); menu(false); return; }
+    if (t.closest("[data-pr-tri]")) { e.preventDefault(); e.stopPropagation(); menu(true); return; }
+    const f = t.closest(".feuille"); if (!f) { if (t.closest("[data-a]")) remet(); return; }
+    const b = t.closest("[data-pr-f]"), x = t.closest("[data-pr-x]");
+    if (b || x) {
+      e.preventDefault(); e.stopPropagation();
+      if (b) { choix = b.dataset.prF; menu(false); } else { q = ""; const i = f.querySelector("[data-pr-q]"); i.value = ""; i.focus({ preventScroll: true }); }
+      y = 0; trie(); f.scrollTop = 0; return;
+    }
+    if (!f.querySelector(".pr-haut")) return;
+    if (t.closest(LISTE)) { remet(); f.scrollTop = 0; }   /* une nouvelle prestation doit se voir au retour */
+    else if (t.closest(LIGNE)) { y = f.scrollTop; f.scrollTop = 0; }
+  }, true);
+  document.addEventListener("input", e => { if (!e.target.matches("[data-pr-q]")) return; q = e.target.value; y = 0; trie(); feuille().scrollTop = 0; });
+  document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches("[data-pr-q]")) { e.preventDefault(); e.target.blur(); } });
+})();
