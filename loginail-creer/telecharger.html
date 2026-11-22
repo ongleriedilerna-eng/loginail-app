@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Loginail · Télécharger mon appli</title>
+<meta name="theme-color" content="#F6F3EF">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link href="polices.css" rel="stylesheet">
+<style>
+@font-face{font-family:'Abril Fatface';src:url(../loginail-site/polices/AbrilFatface-400-latin.woff2) format('woff2')}
+body{margin:0;height:100vh;height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#F6F3EF;color:#1E1C1B;font-family:Jost,sans-serif}
+h1{margin:0;font:400 clamp(30px,11vw,48px)/1.05 'Abril Fatface',serif}
+h1 em{font-style:normal;color:#B03562}
+a{margin-top:18px;padding:10px;color:inherit;font-size:15px;text-underline-offset:3px}
+</style>
+</head>
+<body>
+<h1>Ton <em>appli</em>…</h1>
+<a id="lien" href="https://apps.apple.com/fr/iphone/search?term=Loginail">Ouvrir l’App Store</a>
+<script>
+/* D85 (Marie : « j'ai pas à le recoder ») : ce lien se règle TOUT SEUL.
+   On demande à Apple si fr.loginail.app est publiée : oui → sa fiche ; pas encore, ou Apple muet → recherche « Loginail ».
+   Rien à changer le jour de la sortie. Apple n'est appelé que quand elle touche « Télécharger mon appli ». */
+(() => {
+  const APPLI = "fr.loginail.app", lien = document.getElementById("lien");
+  let parti = false;
+  const va = fiche => {
+    if (parti) return;
+    parti = true;
+    if (fiche) lien.href = fiche;
+    location.replace(lien.href);
+  };
+  setTimeout(() => va(), 2500);
+  fetch(`https://itunes.apple.com/lookup?bundleId=${APPLI}&country=fr&_=${Date.now()}`)
+    .then(r => r.json())
+    .then(j => {
+      const a = (j.results || []).find(x => x.bundleId === APPLI);
+      va(a && /^https:\/\/apps\.apple\.com\//.test(a.trackViewUrl) ? a.trackViewUrl : null);
+    })
+    .catch(() => va());
+})();
+</script>
+</body>
+</html>
