@@ -53,19 +53,19 @@
   const majListe=()=>{if(S.onglet==="re"||S.onglet==="acc")rendu()};
   /* 22/11 (D80) : la fiche complète ; les photos partent d'abord, puis la liste est relue (elle a pu changer pendant l'envoi) */
   async function enregistrePresta(ok,fc,e){
-    if(ok.disabled)return;const nom=fc.querySelector("[data-cs-nom]").value.trim();if(!nom){toast(e,"Écris le nom de la prestation");return}
+    if(ok.disabled)return false;const nom=fc.querySelector("[data-cs-nom]").value.trim();if(!nom){toast(e,"Écris le nom de la prestation");return false}
     const i=+ok.dataset.i,ancien=i>=0?((lit().prestations||[])[i]||{}).nom:null,dd=fc.querySelector("[data-cs-d].on"),d=dd?+dd.dataset.csD:60;
     ok.disabled=true;ok.textContent="Un instant…";
     const r=await __prestaFiche.prepare(),rend=m=>{ok.disabled=false;ok.textContent="Enregistrer";dit(m)};
-    if(r.erreur)return rend(r.erreur);
+    if(r.erreur){rend(r.erreur);return false}
     const b=lit();b.prestations=b.prestations||[];
-    if(i>=0&&(!b.prestations[i]||b.prestations[i].nom!==ancien)){r.annule();return rend("Ta liste a changé : rouvre la prestation")}
+    if(i>=0&&(!b.prestations[i]||b.prestations[i].nom!==ancien)){r.annule();rend("Ta liste a changé : rouvre la prestation");return false}
     window.__listeUnique?.avant(b);
     const p=i>=0?b.prestations[i]:{};Object.assign(p,{nom,duree:d},r.champs);if(i<0)b.prestations.push(p);
-    if(!ecrit(b)){r.annule();return rend("Pas de place sur ton téléphone : rien n’est enregistré")}
+    if(!ecrit(b)){r.annule();rend("Pas de place sur ton téléphone : rien n’est enregistré");return false}
     r.menage();apres(null,"");majListe();
     if(fc.contains(ok))fc.innerHTML=MSF["ms-presta"]();
-    toast(e,"Prestation enregistrée ✓ · ton site est à jour");
+    toast(e,"Prestation enregistrée ✓ · ton site est à jour");return true;
   }
   document.addEventListener("click",ev=>{const t=ev.target;const fc=t.closest(".fc"),e=t.closest(".ecran");
     const op=t.closest("[data-cs-p]");if(op&&fc){ev.stopPropagation();fc.innerHTML=pedit(+op.dataset.csP);return}
@@ -76,7 +76,7 @@
     const ca=t.closest("[data-cs-cache]");if(ca){ev.stopPropagation();ca.classList.toggle("on");return}
     const sup=t.closest("[data-cs-sup]");if(sup){ev.stopPropagation();const b=lit();window.__listeUnique?.avant(b);const parti=(b.prestations||[]).splice(+sup.dataset.csSup,1)[0];if(!ecrit(b))return;if(parti)__prestaFiche.efface(parti.photosPresta);apres(null,"");majListe();if(fc)fc.innerHTML=MSF["ms-presta"]();toast(e,"Prestation supprimée");return}
     const ok=t.closest("[data-cs-ok]");if(!ok||!fc)return;ev.stopPropagation();const k=ok.dataset.csOk,b=lit();
-    if(k==="presta"){enregistrePresta(ok,fc,e);return}
+    if(k==="presta"){ok.__envoi=enregistrePresta(ok,fc,e);return}   /* durees-rdv.js attend cette promesse */
     if(k==="horaires"){const P=fc.querySelector("[data-cs-midi]"),pOn=P&&P.classList.contains("on"),pd=pOn&&fc.querySelector("[data-cs-pd]").value,pf=pOn&&fc.querySelector("[data-cs-pf]").value,pause=pd&&pf&&pd<pf;
       b.horaires=[...fc.querySelectorAll("[data-cs-j]")].map(r=>{if(!r.querySelector("[data-cs-sw]").classList.contains("on"))return null;const x={d:r.querySelector("[data-cs-de]").value||"09:00",f:r.querySelector("[data-cs-a]").value||"18:00"};if(pause&&pd>x.d&&pf<x.f){x.pd=pd;x.pf=pf}return x})}
     if(k==="adresse"){fc.querySelectorAll("[data-cs-k]").forEach(i=>b[i.dataset.csK]=i.value.trim());b.acces=b.acces||{};fc.querySelectorAll("[data-cs-a]").forEach(i=>{const v=i.value.trim();if(v)b.acces[i.dataset.csA]=v;else delete b.acces[i.dataset.csA]});

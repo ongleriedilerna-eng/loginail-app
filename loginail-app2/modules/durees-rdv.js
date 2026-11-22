@@ -94,7 +94,8 @@
     if (b.dataset.csOk) {
       const i = +b.dataset.i, z = b.closest(".fc"), nom = nomDe(z && z.querySelector("[data-cs-nom]")?.value);
       if (i < 0 || !nom) return;
-      setTimeout(() => verifie([{ nom, avant: avant[i]?.nom }], n));
+      /* D80 : la fiche envoie d'abord les photos ; on attend que ce soit vraiment enregistré */
+      setTimeout(async () => { if (b.__envoi && !(await b.__envoi)) return; verifie([{ nom, avant: avant[i]?.nom }], n); });
     } else if (b.dataset.lu) {
       setTimeout(() => verifie(photo().filter((p, i) => avant[i] && avant[i].duree !== p.duree), n));
     } else {
