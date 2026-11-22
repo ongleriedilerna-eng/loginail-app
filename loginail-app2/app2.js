@@ -48,7 +48,10 @@ const envoieSite = () => { clearTimeout(_tp); return _envoi = _envoi.then(async 
   if (error) { _aEnvoyer = qui; console.error(error); dit("Pas enregistré en ligne, réessaie"); } else if (S.site) S.site.donnees = d;
 }).catch(e => console.error(e)); };
 const pousseSite = () => { if (!S.user || !S.site) return; _aEnvoyer = S.user.id; _version++; clearTimeout(_tp); _tp = setTimeout(envoieSite, 700); };
-addEventListener("online", () => envoieSite()); /* l'agenda papier : 8 h → 20 h, 30 px par demi-heure */
+addEventListener("online", () => envoieSite());
+/* elle quitte l'appli juste après un changement : on envoie tout de suite, sans attendre les 700 ms */
+document.addEventListener("visibilitychange", () => { if (document.hidden && _aEnvoyer) envoieSite(); });
+addEventListener("pagehide", () => { if (_aEnvoyer) envoieSite(); }); /* l'agenda papier : 8 h → 20 h, 30 px par demi-heure */
 
 /* ---------- le squelette (comme la démo) ---------- */
 function squelette() {
