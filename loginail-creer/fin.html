@@ -34,10 +34,12 @@ p{margin:12px 0 0;font:300 15px/1.6 Jost,sans-serif;color:var(--muted)}
 #pret h1 em{font-style:normal;color:#B03562;position:relative}
 #pret h1 .st{position:absolute;right:-.42em;top:-.08em;font-size:.36em;color:#E99AB6;animation:scint 2.6s ease-in-out infinite}
 .sous{margin:14px auto 0;min-height:3em;max-width:30ch;font:400 16px/1.5 Jost,sans-serif;color:#5F5751;animation:monte .5s .16s both}
-.pastilles{margin-top:24px;min-height:92px;align-content:flex-start;display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.pastilles{margin-top:24px;min-height:142px;align-self:stretch;align-content:flex-start;display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
 .pastille{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px 0 10px;border-radius:999px;background:#fff;border:1px solid rgba(30,28,27,.1);font:400 15px Jost,sans-serif;
   color:var(--doux);opacity:0;transform:scale(.85);animation:pose .3s var(--pop) forwards;transition:color .2s}
 .pastille.ok{color:var(--noir)}
+.rang-site{flex:0 0 100%;min-width:0;display:flex;justify-content:center}   /* sa ligne à elle : la vraie adresse arrive sans rien pousser */
+.rang-site .pastille{max-width:100%;white-space:nowrap}
 .pastille i{width:22px;height:22px;border-radius:50%;background:var(--rosé);display:grid;place-items:center;flex:none}
 .pastille i svg{width:12px;height:12px;stroke:var(--rose);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:20;stroke-dashoffset:20}
 .pastille.ok i svg{animation:coche .3s ease-out forwards}
@@ -176,8 +178,18 @@ function recap(b) {
   [["nom", b.nom], ["prestations", n && `${n} prestation${n > 1 ? "s" : ""}`], ["jours", jours && `${jours} jour${jours > 1 ? "s" : ""} d’ouverture`], ["site", "Ton site"]]
     .filter(([, t]) => t).forEach(([cle, t], i) => {
       const p = document.createElement("span"); p.className = "pastille"; p.dataset.cle = cle; p.innerHTML = COCHE;
-      p.append(t); p.style.animationDelay = i * .05 + "s"; $("recap").append(p);
+      const texte = document.createElement("span"); texte.className = "texte"; texte.textContent = t;
+      p.append(texte); p.style.animationDelay = i * .05 + "s";
+      if (cle === "site") { const l = document.createElement("div"); l.className = "rang-site"; l.append(p); $("recap").append(l); } else $("recap").append(p);
     });
+}
+/* 22/11 : on n'annonce l'adresse qu'ici, une fois créée : celle lue dans le coffre (dilerna, dilerna-2…), jamais devinée.
+   Trop longue : l'écriture rapetisse, on ne coupe jamais la fin (c'est le « -2 » qui compte). */
+function montreAdresse(slug) {
+  const p = $("recap").querySelector('[data-cle="site"]');
+  if (!p || !slug) return;
+  const t = p.querySelector(".texte"); t.textContent = "loginail.fr/" + slug;
+  for (let px = 15; px >= 9; px -= .5) { t.style.fontSize = px + "px"; if (p.scrollWidth <= p.clientWidth) break; }
 }
 /* lien refusé : on ne range JAMAIS dans le compte déjà ouvert sur l'appareil (ce n'est pas forcément le sien) */
 async function refuse() {
@@ -220,6 +232,8 @@ async function depart() {
     const b = await range(session.user, recap, coche);
     const { data: p } = await coffre.from("profils").select("prenom").eq("id", session.user.id).single();
     if (!b) recap({});
+    const { data: site } = await coffre.from("sites").select("slug").eq("pro_id", session.user.id).maybeSingle();
+    montreAdresse(site?.slug);
     await toutPret(p?.prenom);
   } catch (e) {
     montre("range");
