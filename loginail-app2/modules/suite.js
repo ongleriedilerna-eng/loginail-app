@@ -172,7 +172,7 @@
     ouvre(`<h3>${hM(m)}</h3><div class="sous" style="text-transform:capitalize">${JOURS[(j.getDay() + 6) % 7]} ${j.getDate()} ${MOIS[j.getMonth()]}</div>
       <button class="btn" data-s5="rdv" style="margin-top:16px">Nouveau rendez-vous</button><button class="btn clair" data-s5="bloquer" style="margin-top:8px">Bloquer ce créneau</button>`); };
   const feuilleBloquer = () => ouvre(`<h3>Bloquer à partir de ${hM(BL.m)}</h3><div class="sous">Personne ne pourra réserver sur ce créneau.</div>
-      <div class="su-puces">${[[30, "30 min"], [60, "1 h"], [120, "2 h"], [240, "4 h"]].map(x => `<button data-s5="bl-d" data-d="${x[0]}" class="${BL.d === x[0] && !BL.libre ? "on" : ""}">${x[1]}</button>`).join("")}<button data-s5="bl-libre" class="${BL.libre ? "on" : ""}">Autre…</button></div>
+      <div class="su-puces">${[[30, "30 min"], [60, "1 h"], [90, "1 h 30"], [120, "2 h"]].map(x => `<button data-s5="bl-d" data-d="${x[0]}" class="${BL.d === x[0] && !BL.libre ? "on" : ""}">${x[1]}</button>`).join("")}<button data-s5="bl-libre" class="${BL.libre ? "on" : ""}">Autre…</button></div>
       ${BL.libre ? `<div class="lab2">Jusqu’à</div><input class="champ" id="bl-fin" type="time" step="300" value="${hM(Math.min(23 * 60 + 55, BL.m + BL.d)).replace("h", ":").padStart(5, "0")}" style="font-size:16px;width:100%;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block">` : ""}
       <div class="lab2">Pourquoi ? <small style="text-transform:none;letter-spacing:0;opacity:.6">facultatif</small></div><input class="champ" id="bl-n" maxlength="40" placeholder="Pause, médecin, formation…" value="${esc(BL.n || "")}" style="font-size:16px;width:100%;box-sizing:border-box">
       <button class="btn" data-s5="bl-ok" style="margin-top:16px">Bloquer</button>`);
@@ -347,12 +347,12 @@
     const cl = loin ? (avant ? "" : " arrive") : " part";
     return h.replace('<button data-a="mois"', `<button data-su="auj" aria-label="Revenir à aujourd’hui" class="su-auj2${cl}"${loin ? "" : ' tabindex="-1" aria-hidden="true"'}><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Aujourd’hui</button><button data-a="mois"`); };
   const re0 = VUES.re; VUES.re = () => { const h = re0(), on = localStorage.getItem("loginail-agenda-horaires") === "oui";
-    const l = `<div class="ligne"><div class="t">Mon agenda suit mes horaires<span>${on ? "L’agenda montre seulement tes heures d’ouverture" : "L’agenda montre toute la journée, de 7h à 22h"}</span></div><button class="sw${on ? " on" : ""}" data-su="ag-hor" aria-label="Mon agenda suit mes horaires"></button></div>`;
+    const l = `<div class="ligne"><div class="t">Veux-tu que ton agenda suive tes horaires ?<span>${on ? "Oui : comme sur ton site" : "Non : mes heures à moi"}</span></div><button class="sw${on ? " on" : ""}" data-su="ag-hor" aria-label="Mon agenda suit mes horaires"></button></div>`;
     for (const rep of ['<div class="k">Mes réservations</div><div class="liste">', '<div class="k">Mon salon</div><div class="liste">', '<div class="k">Mes données</div><div class="liste">']) if (h.includes(rep)) return h.replace(rep, rep + l);
     return h; };
   document.addEventListener("click", async e => { const t = e.target; if (!t.closest) return;
     if (t.closest('[data-su="auj"]')) { e.stopPropagation(); e.preventDefault(); const d = auj(); S.jour = d; S.lundi = plusJours(d, -((d.getDay() + 6) % 7)); await chargeSemaine(); rendu(); return; }
-    if (t.closest('[data-su="ag-hor"]')) { e.stopPropagation(); e.preventDefault(); const on = localStorage.getItem("loginail-agenda-horaires") === "oui"; localStorage.setItem("loginail-agenda-horaires", on ? "non" : "oui"); rendu(); dit(on ? "L’agenda montre toute la journée" : "L’agenda suit tes horaires"); } }, true);
+    if (t.closest('[data-su="ag-hor"]')) { e.stopPropagation(); e.preventDefault(); const on = localStorage.getItem("loginail-agenda-horaires") === "oui"; localStorage.setItem("loginail-agenda-horaires", on ? "non" : "oui"); rendu(); dit(on ? "L’agenda montre tes heures à toi" : "L’agenda suit tes horaires"); } }, true);
 })();
 
 /* ===== 13/11 (Marie, essai iPhone 3) : heures bien centrées · cliente qu'on retrouve en tapant la 1re lettre · accueil : 5 rendez-vous puis « voir les autres »,
