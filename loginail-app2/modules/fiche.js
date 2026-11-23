@@ -196,6 +196,7 @@
 
   document.addEventListener("click", e => { const a = e.target.closest && e.target.closest(".fc [data-rdv], .fc [data-a='decaler']"); if (!a || !RDV) return; const id = a.dataset.rdv || a.dataset.id; if (S.rdv.some(x => x.id === id)) return;
     const r = RDV.find(x => x.id === id), c = S.clientes.find(x => x.id === ID); if (r) S.rdv.push(Object.assign({}, r, { clientes: c ? { id: c.id, prenom: c.prenom, nom: c.nom, telephone: c.telephone } : null })); }, true);
+  window.__ficheId = () => ID;   /* 24/11 : la fiche ouverte (modules/temps-plus.js) */
   const formulaire = feuilleCliente;   /* le formulaire d'origine (nom, téléphone, anniversaire) */
   feuilleCliente = function (id) { if (!id) return formulaire(id); ID = id; ONG = "fiche"; RDV = null; TOUT = false; SAISIE = null; OUV = null; RANGE = false; TOUS = false; DRAG = null; ORD = null; VUS = new Set(); montre(); chargeRdv(); };
 
