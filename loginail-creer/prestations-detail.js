@@ -63,7 +63,40 @@
     if (a(/vernis/)) return "Une couleur de votre choix, posée avec soin sur vos ongles naturels.";
     return "";
   }
-  /* « en général c'est à partir de » (Marie) : proposé partout, sauf déposes et soins, qui ont un prix fixe */
+  /* 23/11 (Marie, D108) : « ✦ Écris-le pour moi » puis « ✦ Une autre idée » : 3 textes par type, au « vous » (c'est la cliente qui lit).
+     Le 1er est celui de propose() ; un nom que rien ne reconnaît reçoit 3 textes simples. Toujours 140 signes au plus. */
+  const AUTRES = {
+    "On retire votre ancienne pose, puis on en refait une nouvelle.": ["Votre ancienne pose part en douceur, et une nouvelle prend sa place.", "Dépose et nouvelle pose dans le même rendez-vous, avec la couleur de votre choix."],
+    "On retire votre semi renforcé en douceur, sans refaire de pose.": ["Votre semi renforcé part en douceur, sans abîmer l’ongle.", "Pour faire une pause : on retire le semi renforcé, sans rien remettre."],
+    "On retire votre vernis semi-permanent en douceur, sans en remettre.": ["Votre semi-permanent part en douceur, sans abîmer l’ongle.", "Pour faire une pause : on retire le vernis, et vos ongles respirent."],
+    "On retire le gel, sans refaire de pose. Vous repartez avec vos ongles naturels.": ["Votre gainage part en douceur, sans abîmer l’ongle.", "Pour faire une pause : on retire le gel, sans rien remettre."],
+    "On retire vos capsules en douceur, sans refaire de pose.": ["Vos capsules partent en douceur, sans abîmer l’ongle.", "Pour retrouver vos ongles naturels : on retire tout, en douceur."],
+    "On retire votre pose en douceur, sans en refaire une.": ["Votre pose part en douceur, sans abîmer l’ongle.", "Pour faire une pause : on retire tout, sans rien remettre."],
+    "Vous avez déjà un gainage : on comble la repousse et on remet le gel à niveau.": ["Votre gainage remis à neuf : la repousse comblée, une nouvelle couleur si vous voulez.", "L’entretien de votre gainage, pour des ongles toujours nets."],
+    "Vous avez déjà un semi renforcé : on comble la repousse et on refait le vernis.": ["Votre semi renforcé remis à neuf, avec la couleur de votre choix.", "L’entretien de votre semi renforcé, pour des ongles toujours nets."],
+    "Vous avez déjà une pose : on comble la repousse et on la remet à neuf.": ["Votre pose remise à neuf : la repousse comblée, une nouvelle couleur si vous voulez.", "L’entretien de votre pose, pour des ongles toujours nets."],
+    "Vous me laissez imaginer vos ongles de A à Z, selon vos goûts.": ["Vous me faites confiance : je crée vos ongles rien que pour vous.", "Dites-moi vos envies, je m’occupe du reste."],
+    "On refait un ongle cassé ou abîmé, assorti au reste de votre pose.": ["Un ongle cassé ? On le répare pour qu’il soit comme les autres.", "La réparation d’un ongle, assortie à votre pose."],
+    "Un gel souple sous le vernis semi-permanent, pour des ongles naturels plus solides.": ["Un semi-permanent avec une base qui renforce vos ongles naturels.", "Pour des ongles fins ou cassants : la couleur, en plus solide."],
+    "Un vernis séché sous lampe sur les ongles de pieds, qui tient plusieurs semaines.": ["Une jolie couleur sur vos pieds, qui tient plusieurs semaines.", "Des pieds impeccables, sans vernis qui s’écaille."],
+    "Un vernis séché sous lampe sur vos ongles naturels, qui tient plusieurs semaines. Sans rallongement.": ["Une couleur qui tient plusieurs semaines, sur vos ongles naturels.", "Des ongles impeccables plusieurs semaines, sans vernis qui s’écaille."],
+    "Une couche de gel sur vos ongles naturels, pour les solidifier sans les rallonger.": ["Du gel sur vos ongles naturels, pour qu’ils soient plus solides au quotidien.", "Vos ongles naturels renforcés, avec la couleur de votre choix."],
+    "Des capsules souples qui couvrent tout l’ongle, pour le rallonger et lui donner la forme de votre choix.": ["Des ongles longs tout de suite : longueur et forme au choix.", "Une pose avec capsules, pour des ongles longs, fins et solides."],
+    "Un rallongement sculpté à la main sur un gabarit, à la forme et à la longueur de votre choix.": ["Des ongles rallongés et sculptés à la main, fins et solides.", "Longueur et forme au choix, sculptées sur mesure."],
+    "Une matière solide modelée sur l’ongle, pour le renforcer ou le rallonger.": ["Des ongles solides, renforcés ou rallongés, à la forme de votre choix.", "Une pose qui tient, pour des ongles résistants au quotidien."],
+    "Un dégradé doux du rose au blanc, pour un effet naturel et chic.": ["Le dégradé rose et blanc, naturel et élégant.", "Un effet naturel, du rose au blanc, tout en douceur."],
+    "Une pose avec le bout de l’ongle dessiné en blanc ou en couleur.": ["La french : le bout de l’ongle en blanc ou en couleur, pour un effet net.", "Un classique élégant : le bout de l’ongle dessiné."],
+    "Le bout de l’ongle dessiné en blanc ou en couleur, en plus de votre pose.": ["La french en plus de votre pose, en blanc ou en couleur.", "Un classique élégant : le bout de l’ongle dessiné."],
+    "Un décor en plus de votre pose : dessins, strass, charms… Le prix dépend du modèle.": ["Dessins, strass ou charms : on décore vos ongles selon vos envies.", "Un décor en plus, pour des ongles uniques. Le prix dépend du modèle."],
+    "On rallonge vos ongles, à la forme et à la longueur de votre choix.": ["Des ongles longs tout de suite, à la forme de votre choix.", "Longueur et forme au choix, pour des ongles qui vous ressemblent."],
+    "Du gel posé sur l’ongle, pour le renforcer ou le rallonger, avec la couleur de votre choix.": ["Une pose en gel, solide et brillante, avec la couleur de votre choix.", "Des ongles renforcés ou rallongés au gel, qui tiennent plusieurs semaines."],
+    "Le soin de vos pieds : ongles mis en forme et cuticules soignées.": ["Des pieds tout doux : ongles limés et cuticules soignées.", "Un moment pour vos pieds, pour qu’ils soient nets et soignés."],
+    "Le soin de vos mains : ongles mis en forme et cuticules soignées.": ["Des mains soignées : ongles limés et cuticules nettes.", "Un moment pour vos mains, pour des ongles nets et soignés."],
+    "Une couleur de votre choix, posée avec soin sur vos ongles naturels.": ["Un vernis classique, posé avec soin, dans la couleur de votre choix.", "Une jolie couleur sur vos ongles naturels."]
+  };
+  const SIMPLES = ["Un moment pour vous, réalisé avec soin.", "Une prestation faite avec soin, à votre rythme.", "Dites-moi vos envies au début du rendez-vous, je m’occupe du reste."];
+  const proposeTous = nom => { const p = propose(nom); return p ? [p, ...(AUTRES[p] || [])].filter(t => t.length <= MAX) : SIMPLES.slice(); };
+  /* « en général c'est à partir de » (Marie): proposé partout, sauf déposes et soins, qui ont un prix fixe */
   const typeConseille = nom => { const n = plat(nom);
     return (/depose|retrait/.test(n) && !/ repose/.test(n.replace("sans repose", ""))) || /manucure|beaute des|soin des/.test(n) ? "fixe" : "des"; };
 
@@ -137,5 +170,5 @@ html body .prd-f img+img{transform:rotate(7deg) translate(3px,-1px);z-index:-1}
     const f = (e.key === "Enter" || e.key === " ") && e.target.closest && e.target.closest(".prd-f"); if (f) { e.preventDefault(); e.stopPropagation(); montre(f); }
   }, true);
 
-  window.LOGI_PRESTA = { MAX, MAX_PHOTOS, esc, type, prix, duree, meta, metaHtml, photos, corps, note, propose, typeConseille, reduit, enBlob, mots };
+  window.LOGI_PRESTA = { MAX, MAX_PHOTOS, esc, type, prix, duree, meta, metaHtml, photos, corps, note, propose, proposeTous, typeConseille, reduit, enBlob, mots };
 })();
