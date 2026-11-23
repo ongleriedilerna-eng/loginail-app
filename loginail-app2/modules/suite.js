@@ -411,10 +411,15 @@
     if (!q) { z.innerHTML = ""; return; }
     /* 22/11 (Marie, iPhone : « une lettre au pif, ça m'a ouvert la page en super grand ») : avec UNE lettre, seulement les prénoms ;
        4 lignes au plus, petites, dans une boîte qui défile : la fenêtre ne grandit plus d'un coup */
-    const l = S.clientes.filter(c => { const n = sansAcc(nomCli(c)); return q.length < 2 ? sansAcc(String(c.prenom || "").replace(/^@+/, "")).startsWith(q) : n.startsWith(q) || sansAcc(c.prenom).startsWith(q) || sansAcc(c.nom).startsWith(q); })
-      .sort((a, b) => (sansAcc(b.prenom).startsWith(q) - sansAcc(a.prenom).startsWith(q)) || nomCli(a).localeCompare(nomCli(b), "fr"));
+    /* 23/11 (Marie : « quand j'ai que l'Insta, la recherche marche pas avec les premières lettres ») : une cliente venue par Insta
+       s'appelle « @lea.nails » ; on oublie le « @ » des deux côtés et on cherche aussi dans son Instagram (« lea », « nails ») */
+    const sa = t => sansAcc(t).replace(/^@+/, ""), qq = q.replace(/^@+/, "");
+    if (!qq) { z.innerHTML = ""; return; }
+    const mots = c => { const ig = sa(c.instagram); return [sa(c.prenom), sa(c.nom), sa(nomCli(c)), ig, ...ig.split(/[^a-z0-9]+/)].filter(Boolean); };
+    const l = S.clientes.filter(c => qq.length < 2 ? [sa(c.prenom), sa(c.instagram)].some(m => m && m.startsWith(qq)) : mots(c).some(m => m.startsWith(qq)))
+      .sort((a, b) => (sa(b.prenom).startsWith(qq) - sa(a.prenom).startsWith(qq)) || sa(nomCli(a)).localeCompare(sa(nomCli(b)), "fr"));
     if (l.length === 1 && sansAcc(nomCli(l[0])) === q) { z.innerHTML = ""; return; }
-    z.innerHTML = l.slice(0, 4).map(c => `<button type="button" data-su="n-pick" data-n="${esc(nomCli(c))}"><i>${esc(((c.prenom || "")[0] || "") + ((c.nom || "")[0] || "")).toUpperCase()}</i>${esc(nomCli(c))}${c.telephone ? `<span>${esc(c.telephone)}</span>` : ""}</button>`).join("")
+    z.innerHTML = l.slice(0, 4).map(c => `<button type="button" data-su="n-pick" data-n="${esc(nomCli(c))}"><i>${esc(((String(c.prenom || "").replace(/^@+/, ""))[0] || "") + ((c.nom || "")[0] || "")).toUpperCase()}</i>${esc(nomCli(c))}${c.telephone ? `<span>${esc(c.telephone)}</span>` : ""}</button>`).join("")
       + (l.length > 4 ? `<div class="sous" style="font-size:12px;margin:2px 0 0">+ ${l.length - 4} autre${l.length - 4 > 1 ? "s" : ""} : tape la suite du prénom</div>` : "")
       + (!l.length ? `<div class="sous" style="font-size:12.5px;text-align:left">Aucune cliente à ce nom : elle sera créée.</div>` : ""); };
   document.addEventListener("input", e => { if (e.target.id === "n-cli") propose(); });
