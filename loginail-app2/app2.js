@@ -184,7 +184,7 @@ const listeUnique = () => !!(S.site && S.site.donnees && S.site.donnees.nom);
 const prestasDuSite = () => { if (!listeUnique()) return []; const b = brouillon(); return (b && b.nom ? b : S.site.donnees).prestations || []; };
 const prestasDispo = () => { const l = prestasDuSite();
   if (!listeUnique()) return S.prestations.map(p => ({ id: p.id, nom: p.nom, duree: p.duree_min, prix: prixDe(p.prix) }));
-  return l.map(p => ({ id: (S.prestations.find(x => x.nom === p.nom) || {}).id || null, nom: p.nom, duree: +p.duree || 60, prix: prixDe(p.prix) })); };
+  return l.map(p => ({ id: (S.prestations.find(x => x.nom === p.nom) || {}).id || null, nom: p.nom, duree: +p.duree || 60, prix: prixDe(p.prix), famille: p.famille, emo: p.emo, parOngle: p.parOngle, typePrix: p.typePrix })); };
 const titreRdv = r => (r.clientes && r.titre) || r.prestations?.nom || "";   /* 13/11 : titre = « Pose gel + Nail art » quand il y a plusieurs prestations */
 const nomRdv = r => r.clientes ? nomCli(r.clientes) : (r.titre || "Bloqué");
 
@@ -498,9 +498,10 @@ function feuilleEncaisser(id) {
 async function encaisser(total) {
   const r = K.r, reste = aPayer(r, total), lg = legal(), d = new Date(r.debut);
   /* le rendez-vous prend le prix final : le bilan et la fiche de la cliente disent comme le ticket */
-  if (prixDe(r.prix) !== total) { const { error } = await sb.from("rendez_vous").update({ prix: total }).eq("id", r.id); if (error) return oups(error); r.prix = total; }
+  /* 23/11 (D109) : les petits plus ajoutés à la fin du rendez-vous changent aussi son titre (modules/prestations-rdv.js) */
+  if (prixDe(r.prix) !== total || r._neuf) { const { error } = await sb.from("rendez_vous").update(r._neuf ? { prix: total, titre: r.titre } : { prix: total }).eq("id", r.id); if (error) return oups(error); r.prix = total; delete r._neuf; r._d109 = null; }
   const { data: numero, error: e1 } = await sb.rpc("prochain_numero"); if (e1) return oups(e1);
-  const details = Object.assign(lg, { cliente: nomRdv(r), date_presta: d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }), lignes: [{ nom: titreRdv(r) || "Prestation", prix: total, qte: 1 }] });
+  const details = Object.assign(lg, { cliente: nomRdv(r), date_presta: d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }), lignes: window.__lignesTicket ? __lignesTicket(r, total) : [{ nom: titreRdv(r) || "Prestation", prix: total, qte: 1 }] });
   const { data: t, error } = await sb.from("tickets").insert({ rendez_vous_id: r.id, numero, total, acompte_deduit: r.acompte_paye ? +r.acompte || 0 : 0, paye_au_salon: reste, moyen: K.moyen, envoye_par: K.envoi, details }).select().single();
   if (error) return oups(error);
   if (r.statut === "prevu") await sb.from("rendez_vous").update({ statut: "fini" }).eq("id", r.id);

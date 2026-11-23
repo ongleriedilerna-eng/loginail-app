@@ -4,8 +4,10 @@
    22/11 (Marie) : « Ajouter » est sous la recherche, plus tout en bas ; si elle tape un nom qu'elle n'a pas, il le reprend dans la fiche. */
 (function () {
   /* la même règle que « Nail art » sur le site des salons (loginail-creer/pret.html, famille) : si elle change là-bas, la changer ici */
-  const ART = /nail ?art|déco|strass|paillette|french|baby ?boomer/;
-  const FILTRES = [["tout", "Tout"], ["presta", "Prestas"], ["art", "Nail art"]];
+  /* 23/11 (D109) : deux familles, « Prestations » et « Petits plus » : la famille enregistrée, sinon la règle du nom (LOGI_PRESTA.estPlus) */
+  const LP = window.LOGI_PRESTA;
+  const FILTRES = [["tout", "Tout"], ["presta", "Prestations"], ["art", "Petits plus"]];
+  const famDe = (l, nom) => { const z = l.closest("[data-cs-sec]"); if (z) return z.dataset.csSec === "plus" ? "art" : "presta"; return LP.estPlus({ nom }) ? "art" : "presta"; };
   const LISTE = '.btn[data-cs-p="-1"],.btn[data-a="presta"][data-id=""]', LIGNE = '.ligne[data-cs-p],.ligne[data-a="presta"]';
   /* sans accents, sans majuscules, tirets = espaces */
   const plat = s => String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/œ/g, "oe").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
@@ -27,7 +29,7 @@
 #E .pr-menu button.on span::after{content:"✓"}
 @keyframes pr-menu{from{opacity:0;transform:scale(.94)}}
 @media (prefers-reduced-motion:reduce){#E .pr-menu{animation:none}}
-#E .feuille .ligne.pr-non,#E .pr-haut [hidden],#E .pr-rien[hidden],#E .liste.pr-non{display:none!important}
+#E .feuille .ligne.pr-non,#E .pr-haut [hidden],#E .pr-rien[hidden],#E .liste.pr-non,#E .cs-sec.pr-non,#E .cs-pill[hidden]{display:none!important}
 #E .feuille .ligne.pr-fin{border-bottom:0}
 #E .feuille .ligne .t{min-width:0;overflow-wrap:anywhere}
 #E .feuille .ligne em{flex:none;white-space:nowrap}
@@ -52,7 +54,7 @@
     lignes.forEach(l => {
       const t = l.querySelector(".t"), nom = t && t.firstChild && t.firstChild.nodeType === 3 ? t.firstChild.textContent : "";
       const p = plat(nom), colle = p.replace(/ /g, ""), trouve = mots.every(m => p.includes(m) || colle.includes(m));
-      const garde = trouve && (choix === "tout" || choix === (ART.test(nom.toLowerCase()) ? "art" : "presta"));
+      const garde = trouve && (choix === "tout" || choix === famDe(l, nom));
       l.classList.toggle("pr-non", !garde); l.classList.remove("pr-fin");
       if (garde) { vues++; fin = l; } else if (trouve) ailleurs++;
     });
@@ -63,10 +65,19 @@
     haut.querySelectorAll("[data-pr-f]").forEach(b => { const on = b.dataset.prF === choix; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
     /* le rond devient foncé quand la liste est triée, comme dans Clientes */
     haut.querySelector("[data-pr-tri]").classList.toggle("plein", choix !== "tout");
-    haut.nextElementSibling.classList.toggle("pr-non", !vues);
+    const secs = [...fc.querySelectorAll("[data-cs-sec]")];
+    if (!secs.length) haut.nextElementSibling.classList.toggle("pr-non", !vues);
+    else {
+      /* une section sans ligne à montrer se cache ; « Déjà écrits pour toi » suit aussi la recherche */
+      let pills = 0;
+      fc.querySelectorAll("[data-cs-pret]").forEach(b => { const p = plat(b.dataset.nom), c = p.replace(/ /g, ""), ok = choix !== "presta" && mots.every(m => p.includes(m) || c.includes(m)); b.hidden = !ok; if (ok) pills++; });
+      secs.forEach(z => { const k = z.dataset.csSec;
+        z.classList.toggle("pr-non", k === "prets" ? !pills : (choix !== "tout" || mots.length) ? !z.querySelector(".ligne[data-cs-p]:not(.pr-non)") : false); });
+      vues += pills;
+    }
     const rien = fc.querySelector(".pr-rien"); rien.hidden = !!vues; if (vues) return;
-    const ou = choix === "art" ? " dans Nail art" : choix === "presta" ? " dans Prestas" : "";
-    rien.textContent = mots.length ? `Rien pour « ${q.trim()} »${ou}.` : choix === "art" ? "Pas encore de nail art dans ta liste." : `Rien${ou}.`;
+    const ou = choix === "art" ? " dans Petits plus" : choix === "presta" ? " dans Prestations" : "";
+    rien.textContent = mots.length ? `Rien pour « ${q.trim()} »${ou}.` : choix === "art" ? "Pas encore de petit plus dans ta liste." : `Rien${ou}.`;
     if (mots.length && ailleurs) { const b = document.createElement("button"); b.dataset.prF = "tout"; b.textContent = ailleurs > 1 ? `Voir les ${ailleurs} dans Tout` : "La voir dans Tout"; rien.appendChild(b); }
   }
 
@@ -77,11 +88,11 @@
 
   function pose() {
     const fc = E.querySelector(".feuille .fc"); if (!fc || fc.querySelector(".pr-haut") || !fc.querySelector(LISTE) || !fc.querySelector(LIGNE)) return;
-    const liste = fc.querySelector(".liste");
+    const liste = fc.querySelector(".cs-sec") || fc.querySelector(".liste");
     /* « Mon site » refait la feuille sans sa croix après un enregistrement : on la remet */
     if (!fc.querySelector(".fe-x")) fc.insertAdjacentHTML("afterbegin", '<button class="fe-x" data-a="fermer" aria-label="Fermer">×</button>');
     liste.insertAdjacentHTML("beforebegin", `<div class="pr-haut"><div class="pr-rang"><label class="cherche">${I.lo}<input data-pr-q type="search" autocapitalize="sentences" enterkeyhint="search" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Rechercher une prestation" placeholder="Rechercher une prestation"><button type="button" class="cherche-x" data-pr-x aria-label="Effacer la recherche" hidden><svg viewBox="0 0 24 24" width="9" height="9"><path d="M7 7l10 10M17 7L7 17"/></svg></button></label><button type="button" class="v-rondb" data-pr-tri aria-label="Trier mes prestations" aria-expanded="false"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 7h16M7 12h10M10 17h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button><div class="pr-menu tris" hidden>${FILTRES.map(f => `<button type="button" data-pr-f="${f[0]}">${f[1]}<span></span></button>`).join("")}</div></div></div>`);
-    liste.insertAdjacentHTML("afterend", '<div class="pr-rien" role="status" hidden></div>');
+    ([...fc.querySelectorAll(".cs-sec")].pop() || liste).insertAdjacentHTML("afterend", '<div class="pr-rien" role="status" hidden></div>');
     const plus = fc.querySelector(LISTE); plus.classList.add("pr-plus"); fc.querySelector(".pr-haut").appendChild(plus);
     fc.querySelector("[data-pr-q]").value = q; trie();
     feuille().scrollTop = y;   /* après une modification, elle retrouve sa place dans la liste */
@@ -109,6 +120,7 @@
       if (nom) setTimeout(() => { const i = f.querySelector("[data-cs-nom],#p-n"); if (i && !i.value) { i.value = nom; i.dispatchEvent(new Event("input", { bubbles: true })); } });
     }
     else if (t.closest(LIGNE)) { y = f.scrollTop; f.scrollTop = 0; }
+    else if (t.closest("[data-cs-pret]")) { remet(); f.scrollTop = 0; }
   }, true);
   document.addEventListener("input", e => { if (!e.target.matches("[data-pr-q]")) return; q = e.target.value; y = 0; trie(); feuille().scrollTop = 0; });
   document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches("[data-pr-q]")) { e.preventDefault(); e.target.blur(); } });

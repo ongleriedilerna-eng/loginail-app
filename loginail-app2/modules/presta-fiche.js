@@ -66,7 +66,8 @@
 
   function haut(p, i) {
     const nouvelle = i < 0;
-    F = { i, nom: p.nom, type: nouvelle ? "des" : K.type(p), choisi: !nouvelle, texteTouche: !nouvelle, avant: K.photos(p), photos: K.photos(p).map(url => ({ url })) };
+    F = { i, nom: p.nom, type: nouvelle ? p.typePrix || "des" : K.type(p), choisi: !nouvelle || !!p.typePrix,   /* 23/11 : un petit plus « Déjà écrit » arrive en prix fixe */
+      texteTouche: !nouvelle, avant: K.photos(p), photos: K.photos(p).map(url => ({ url })) };
     const t = (id, mot) => `<button type="button" data-pf-t="${id}" class="${F.type === id ? "on" : ""}" aria-pressed="${F.type === id}">${mot}</button>`;
     return `<div class="pf-lab"><span>Ton prix</span></div><div class="pf-ligne"><div class="pf-types">${t("des", "À partir de")}${t("fixe", "Fixe")}${t("devis", "Sur devis")}</div>
       <label class="pf-prix"${F.type === "devis" ? " hidden" : ""}><input data-cs-prix value="${p.prix == null ? "" : K.esc(String(p.prix).replace(".", ","))}" placeholder="55" inputmode="decimal" aria-label="Prix en euros"><span>€</span></label></div>`;

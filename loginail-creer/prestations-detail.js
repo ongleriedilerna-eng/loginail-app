@@ -28,7 +28,7 @@
   const note = p => type(p) === "fixe" ? "" : "Le prix final dépend du modèle. Il vous est confirmé avant de commencer.";
 
   /* ---------- les textes proposés : écrits à l'avance, sans IA, rien ne sort du téléphone ---------- */
-  const plat = s => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[-–—_/]+/g, " ").replace(/\s+/g, " ").trim();
+  const plat = s => String(s || "").toLowerCase().replace(/œ/g, "oe").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[-–—_/]+/g, " ").replace(/\s+/g, " ").trim();
   function propose(nom) {
     const n = plat(nom), a = r => r.test(n);
     const pieds = a(/\bpieds?\b|pedicure/), depose = a(/depose|retrait/) && !a(/sans depose/);
@@ -98,7 +98,30 @@
   const proposeTous = nom => { const p = propose(nom); return p ? [p, ...(AUTRES[p] || [])].filter(t => t.length <= MAX) : SIMPLES.slice(); };
   /* « en général c'est à partir de » (Marie): proposé partout, sauf déposes et soins, qui ont un prix fixe */
   const typeConseille = nom => { const n = plat(nom);
-    return (/depose|retrait/.test(n) && !/ repose/.test(n.replace("sans repose", ""))) || /manucure|beaute des|soin des/.test(n) ? "fixe" : "des"; };
+    return (/depose|retrait/.test(n) && !/ repose/.test(n.replace("sans repose", ""))) || /manucure|beaute des|soin des/.test(n) || estPlusNom(nom) ? "fixe" : "des"; };
+
+  /* ---------- 23/11 (Marie, D109-D110) : deux familles, les « prestations » (poses, déposes, soins) et les « petits plus » ----------
+     Rangé tout seul d'après le nom, la pro peut changer. Dans sites.donnees.prestations : famille "plus" ou "presta", emo, parOngle.
+     Sans famille enregistrée (salons déjà en ligne) : la règle du nom. La même règle sert à l'appli et au site des clientes. */
+  const ART = /nail ?art|deco|strass|paillette|french|baby ?boomer|chrome|miroir|cat ?eye|oeil de chat|cass|effet|sticker|bijou|perle|foil|ombre|marbre|aquarelle|\b3 ?d\b|^allongement|forme|stiletto|amande|ballerine|aurora|glazed|donut|stamping|\bneon\b|renfort|builder/;
+  /* une pose ou un soin reste une prestation, même avec « french » ou « effet » dans son nom (« Semi french », « Pose gel effet miroir ») */
+  const BASE = /\bpose|gainage|semi|remplissage|capsule|chablon|manucure|pedicure|beaute des|soin|vernis|polygel|acryl|resine|extension|rallong|biab|entretien|retouche|retrait/;
+  const estPlusNom = nom => { const n = plat(nom); return !!n && ART.test(n) && !BASE.test(n); };
+  /* les petits plus « Déjà écrits pour toi » : [nom, émoticône, minutes, par ongle, mots reconnus] — validés par Marie le 23/11 */
+  const PRETS = [["Chrome", "🪞", 10, 0, /chrome|miroir/], ["Strass et bijoux", "💎", 5, 1, /strass|bijou|perle/], ["French", "🤍", 15, 0, /french/], ["Nail art", "🎨", 10, 1, /nail ?art|deco/],
+    ["Baby boomer", "🌸", 15, 0, /baby ?boomer/], ["Cat eyes", "🐈", 10, 0, /cat ?eye|oeil de chat/], ["Paillettes", "🌟", 5, 0, /paillette/], ["Ongle cassé", "🩹", 10, 1, /cass|reparation/],
+    ["Sticker", "🦋", 5, 1, /sticker/], ["Foil", "🍂", 10, 0, /foil/], ["Ombré", "🌅", 15, 0, /ombre/], ["Marbré", "🤍", 15, 0, /marbre/], ["Aquarelle", "🖌", 15, 0, /aquarelle/],
+    ["Gel 3D", "🌷", 15, 1, /\b3 ?d\b/], ["Effet velours", "🧸", 10, 0, /velours/], ["Effet sucre", "🍭", 10, 0, /sucre/], ["Allongement", "📏", 15, 0, /allongement/],
+    ["Forme spéciale", "💅", 10, 0, /forme|stiletto|amande|ballerine/], ["Aurora", "🦄", 10, 0, /aurora/], ["Glazed donut", "🍩", 10, 0, /glazed|donut/], ["Stamping", "🖋️", 10, 0, /stamping/],
+    ["Néon", "💡", 5, 0, /\bneon\b/], ["Renfort", "🛡️", 10, 0, /renfort|builder/]]
+    .map(([nom, emo, duree, ongle, re]) => ({ nom, emo, duree, parOngle: !!ongle, re }));
+  const pretDe = nom => { const n = plat(nom); return n ? PRETS.find(x => plat(x.nom) === n) || PRETS.find(x => x.re.test(n)) : null; };
+  const estPlus = p => !!p && (p.famille === "plus" || (p.famille !== "presta" && estPlusNom(p.nom)));
+  const estDepose = p => { const n = plat(p && p.nom); return /depose|retrait/.test(n) && !/ repose/.test(n.replace("sans repose", "")); };
+  const emo = p => (p && p.emo) || (pretDe(p && p.nom) || {}).emo || "✦";
+  const parOngle = p => !!p && (p.parOngle != null ? !!p.parOngle : /par ongle|\/ ?ongle/.test(plat(p.nom)) || !!(estPlusNom(p.nom) && (pretDe(p.nom) || {}).parOngle));
+  /* « Strass et bijoux ×3 » : le nom et le nombre d'ongles, dans le titre d'un rendez-vous */
+  const morceaux = titre => String(titre || "").split(" + ").map(s => s.trim()).filter(Boolean).map(s => { const m = s.match(/^(.*?)\s*×\s*(\d+)$/); return m ? { nom: m[1], n: +m[2] } : { nom: s, n: 1 }; });
 
   /* ---------- les photos : réduites ici, et le lieu où elles ont été prises ne part pas avec (l'image est redessinée) ---------- */
   const reduit = (fichier, cote, limite) => new Promise((ok, ko) => {
@@ -170,5 +193,6 @@ html body .prd-f img+img{transform:rotate(7deg) translate(3px,-1px);z-index:-1}
     const f = (e.key === "Enter" || e.key === " ") && e.target.closest && e.target.closest(".prd-f"); if (f) { e.preventDefault(); e.stopPropagation(); montre(f); }
   }, true);
 
-  window.LOGI_PRESTA = { MAX, MAX_PHOTOS, esc, type, prix, duree, meta, metaHtml, photos, corps, note, propose, proposeTous, typeConseille, reduit, enBlob, mots };
+  window.LOGI_PRESTA = { MAX, MAX_PHOTOS, esc, type, prix, duree, meta, metaHtml, photos, corps, note, propose, proposeTous, typeConseille, reduit, enBlob, mots,
+    plat, estPlus, estPlusNom, estDepose, emo, parOngle, PRETS, pretDe, morceaux };
 })();
