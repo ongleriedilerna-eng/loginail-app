@@ -590,12 +590,13 @@ E.addEventListener("click", async ev => {
     else if (k === "mois-nav") { S.moisVu = new Date(S.moisVu.getFullYear(), S.moisVu.getMonth() + +a.dataset.n, 1); rendu(); }
     else if (k === "mois-j") { S.jour = new Date(a.dataset.d); S.lundi = lundiDe(S.jour); S.moisOuvert = false; await chargeSemaine(); rendu(); }
     else if (k === "nouveau-ok") { const [hh, mm] = ($("#n-h", E).value || "09:00").split(":").map(Number), deb = new Date(N.jour); deb.setHours(hh, mm, 0, 0);
-      const p = N.presta, fin = new Date(deb.getTime() + (p?.duree || 60) * 60000), saisie = $("#n-cli", E).value.trim();
+      const p = N.presta; let fin = new Date(deb.getTime() + (p?.duree || 60) * 60000); const saisie = $("#n-cli", E).value.trim();
       let cli = S.clientes.find(c => nomCli(c).toLowerCase() === saisie.toLowerCase());
       if (!cli && saisie) { const mots = saisie.split(/\s+/), prenom = mots.shift(); const { data, error } = await sb.from("clientes").insert({ prenom, nom: mots.join(" ") || null, telephone: ($("#n-tel", E) && $("#n-tel", E).value.trim()) || null }).select().single(); if (error) return oups(error); cli = data; S.clientes.push(data); }
+      const tp = cli && p && window.plusCliente ? plusCliente(cli) : 0; if (tp) fin = new Date(+fin + tp * 60000);   /* 24/11 (D114) : le temps en plus de cette cliente */
       if (S.rdv.some(r => r.statut !== "annule" && new Date(r.debut) < fin && new Date(r.fin) > deb)) return dit("Ce créneau est déjà pris");
       const { error } = await sb.from("rendez_vous").insert({ cliente_id: cli?.id || null, prestation_id: p?.id || null, titre: cli ? (p?.nom || null) : (saisie || "Bloqué"), debut: deb.toISOString(), fin: fin.toISOString(), prix: p?.prix ?? null });
-      if (error) return oups(error); ferme(); await chargeSemaine(); rendu(); dit("Rendez-vous enregistré ✓"); }
+      if (error) return oups(error); ferme(); await chargeSemaine(); rendu(); dit(tp ? `Rendez-vous enregistré ✓ · + ${tp} min pour ${cli.prenom || "elle"}` : "Rendez-vous enregistré ✓"); }
     else if (k === "statut") { const { error } = await sb.from("rendez_vous").update(a.dataset.par === "cliente_salon" ? { statut: a.dataset.s, annule_par: "cliente_salon" } : { statut: a.dataset.s }).eq("id", a.dataset.id); if (error) return oups(error);
       const r0 = (S.rdv || []).concat(S.tous || []).find(x => x.id === a.dataset.id), c0 = r0 && r0.cliente_id && (S.clientes || []).find(x => x.id === r0.cliente_id);
       const annul = !c0 || new Date(r0.debut) < new Date() ? "Rendez-vous annulé" : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((c0.email || "").trim()) ? "Annulé · la cliente reçoit un e-mail dans 1 minute" : "Annulé · pense à prévenir la cliente (pas d’e-mail)";

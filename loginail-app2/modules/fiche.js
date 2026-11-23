@@ -208,6 +208,7 @@
   let POUR = null; const nouveau0 = feuilleNouveau;
   feuilleNouveau = function (m) { const p = POUR && E.querySelector(".fc .md-pour") && S.clientes.find(x => x.id === POUR); POUR = null; nouveau0(m);
     const i = p && $("#n-cli", E); if (i) { i.value = nomCli(p); i.dispatchEvent(new Event("change", { bubbles: true })); } };
+  window.__ficheId = () => ID;   /* 24/11 : la fiche ouverte (modules/temps-plus.js) */
   const formulaire = feuilleCliente;   /* le formulaire d'origine (nom, téléphone, anniversaire) */
   feuilleCliente = function (id) { if (!id) return formulaire(id); ID = id; ONG = "fiche"; RDV = null; TOUT = false; SAISIE = null; OUV = null; RANGE = false; TOUS = false; DRAG = null; ORD = null; VUS = new Set(); montre(); chargeRdv(); };
 

@@ -57,7 +57,7 @@
      Le + s'arrête au rendez-vous suivant ; changer de prestation remet la durée prévue. */
   let MD = null;
   const hh = d => d.getHours() + ":" + String(d.getMinutes()).padStart(2, "0");
-  const prevue = () => MD.sel.length ? somme(MD.sel).duree : MD.d0;
+  const prevue = () => MD.sel.length ? somme(MD.sel).duree + (window.plusCliente ? plusCliente(S.clientes.find(c => c.id === MD.r.cliente_id)) : 0) : MD.d0;   /* + le temps en plus de la cliente (D114) */
   const suivant = () => { const deb = new Date(MD.r.debut); return S.rdv.filter(x => x.id !== MD.r.id && x.statut !== "annule" && new Date(x.debut) >= deb && new Date(x.debut).toDateString() === deb.toDateString()).map(x => new Date(x.debut)).sort((a, b) => a - b)[0] || null; };
   const horaire = pop => { const z = document.querySelector("#rv-hor"); if (!z) return; const deb = new Date(MD.r.debut), fin = new Date(+deb + MD.dur * 60000), pv = prevue(), nx = suivant(), bloque = nx && +deb + (MD.dur + 15) * 60000 > +nx;
     z.innerHTML = `<div class="rv-hor"><div><b>${hh(deb)}<i>→</i><span${pop ? ' class="pop"' : ""}>${hh(fin)}</span></b>
