@@ -170,7 +170,7 @@
     if (D !== d || !ouverte()) return;
     pasDeux = Date.now();
     feuilleNouveau(x.t);
-    if (p) setTimeout(() => { const b = E.querySelector(`.fc .chips [data-np="${p.i}"]`); if (b && !b.classList.contains("on")) b.click(); }, 0);
+    if (p) setTimeout(() => { const b = E.querySelector(`.fc .chips [data-np="${p.i}"], .fc .pr-z [data-np="${p.i}"]`); if (b && !b.classList.contains("on")) b.click(); }, 0);
   }
 
   addEventListener("click", e => {

@@ -8,10 +8,10 @@
   const st = document.createElement("style");
   st.textContent = `#E .du-plus{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;padding:5px;border-radius:18px;background:#fff;animation:du-plus .18s ease-out both}
 #E .du-plus[hidden]{display:none}
-#E .du-plus b{flex:1;text-align:center;font-size:17px;font-weight:500}
-#E .du-plus button{flex:none;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:rgba(30,28,27,.07);color:inherit;font:inherit;font-size:22px;cursor:pointer;transition:transform .12s}
-#E .du-plus button:active{transform:scale(.92)}
-#E .du-plus button:disabled{opacity:.3}
+#E .du-plus{margin-top:6px!important;padding:4px 6px 4px 12px!important;background:var(--v-rose,#F5E6E4);border-radius:14px;font-size:13px}
+#E .du-plus>span{flex:1;color:#5d4a4d}
+#E .du-plus select{height:32px;min-width:58px;padding:0 6px;border:1.5px solid var(--v-fonce,#1E1C1B);border-radius:10px;background:#fff;color:inherit;font:inherit;font-size:16px;text-align:center;text-align-last:center;-webkit-appearance:none;appearance:none;cursor:pointer}
+#E .fc .chips.ch-dur .chip.du-long:not(.on){font-size:19px!important;border-style:dashed!important;color:#8a2f50}
 @keyframes du-plus{from{opacity:0;transform:translateY(-4px)}}
 #E .ag-h{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;cursor:default}
 #E .ag-h .t{flex:1 1 130px;min-width:0}
@@ -27,38 +27,40 @@
 @media (prefers-reduced-motion:reduce){#E .du-plus,#E .fc .chips.n-glisse.n-six .chip{animation:none!important}}`;
   document.head.appendChild(st);
 
-  /* ---------- 2 · « 3 h et + » ---------- */
-  const LONG = 180, MAXI = 600, val = c => +(c.dataset.csD || c.dataset.nd || 0);
+  /* ---------- 2 · la pastille « + » (23/11, Marie, D108 : remplace « 3 h et + ») ----------
+     15 min → 2 h 30 en pastilles, puis « + » : « Autre durée [h] [min] » (minutes de 5 en 5), de 15 min à 10 h.
+     Une durée déjà enregistrée hors de la liste (1 h 15, 3 h 30…) s'affiche dans le « + ». */
+  const LONG = 180, MAXI = 600, MINI = 5, LISTE = [15, 30, 45, 60, 90, 120, 150], val = c => +(c.dataset.csD || c.dataset.nd || 0);
   const pastilleLongue = g => [...g.querySelectorAll(".chip")].find(c => c.classList.contains("du-long"));
 
   function reglette(g) {
     const c = pastilleLongue(g), z = g.nextElementSibling; if (!c || !z || !z.classList.contains("du-plus")) return;
-    const v = val(c); z.hidden = !c.classList.contains("on");
-    z.querySelector("b").textContent = duree(v);
-    z.querySelector('[data-du="-15"]').disabled = v <= LONG;
-    z.querySelector('[data-du="15"]').disabled = v >= MAXI;
+    const v = val(c), on = c.classList.contains("on"); z.hidden = !on;
+    c.textContent = on ? duree(v) : "+"; c.setAttribute("aria-label", on ? "Autre durée : " + duree(v) : "Autre durée");
+    z.querySelector("[data-du-h]").value = Math.floor(v / 60); z.querySelector("[data-du-m]").value = v % 60;
   }
   function poseDurees(g) {
     if (g.dataset.long) return; g.dataset.long = "1";
-    const L = [...g.querySelectorAll(".chip")].filter(c => val(c) >= LONG); if (!L.length) return;
-    /* une durée déjà enregistrée au-delà de 3 h (3 h 30…) devient la valeur de « 3 h et + » */
-    const garde = L.find(c => c.classList.contains("on")) || L[0];
+    const L = [...g.querySelectorAll(".chip")].filter(c => !LISTE.includes(val(c))); if (!L.length) return;
+    const garde = L.find(c => c.classList.contains("on")) || L.find(c => val(c) === LONG) || L[0];
     L.forEach(c => { if (c !== garde) c.remove(); });
-    garde.classList.add("du-long"); garde.textContent = "3 h et +";
-    g.insertAdjacentHTML("afterend", '<div class="du-plus" hidden><button type="button" data-du="-15" aria-label="15 minutes de moins">−</button><b aria-live="polite"></b><button type="button" data-du="15" aria-label="15 minutes de plus">+</button></div>');
+    g.appendChild(garde); garde.classList.add("du-long");
+    let h = ""; for (let x = 0; x <= MAXI / 60; x++) h += `<option value="${x}">${x} h</option>`;
+    g.insertAdjacentHTML("afterend", `<div class="du-plus" hidden><span>Autre durée</span><select data-du-h aria-label="Heures">${h}</select><select data-du-m aria-label="Minutes">${Array.from({ length: 12 }, (_, k) => k * 5).map(m => `<option value="${m}">${String(m).padStart(2, "0")} min</option>`).join("")}</select></div>`);
     reglette(g);
   }
   addEventListener("click", e => {
     if (!e.target.closest) return;
     const c = e.target.closest(".chips.ch-dur .chip"); if (c) { const g = c.parentElement; setTimeout(() => reglette(g)); return; }
-    const b = e.target.closest("[data-du]"); if (!b) return;
-    e.preventDefault(); e.stopPropagation();
-    const g = b.parentElement.previousElementSibling, p = g && pastilleLongue(g); if (!p) return;
-    const v = Math.min(MAXI, Math.max(LONG, val(p) + +b.dataset.du));
+  }, true);
+  document.addEventListener("change", e => {
+    if (!e.target.matches || !e.target.matches("[data-du-h],[data-du-m]")) return;
+    const z = e.target.parentElement, g = z.previousElementSibling, p = g && pastilleLongue(g); if (!p) return;
+    const v = Math.min(MAXI, Math.max(MINI, +z.querySelector("[data-du-h]").value * 60 + +z.querySelector("[data-du-m]").value));
     if (p.dataset.csD) p.dataset.csD = v; else p.dataset.nd = v;
     p.click();   /* l'écran refait son calcul comme si elle l'avait touchée (aperçu « Ta cliente verra ») */
     reglette(g);
-  }, true);
+  });
 
   /* ---------- 3 et 4 · Réglages ---------- */
   const options = (de, a, v) => { let h = ""; for (let x = de; x <= a; x++) h += `<option value="${x}"${x === v ? " selected" : ""}>${x} h</option>`; return h; };
