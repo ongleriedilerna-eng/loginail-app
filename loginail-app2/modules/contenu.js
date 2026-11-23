@@ -28,7 +28,23 @@
 #E .cs-ongle[hidden]{display:none}#E .cs-ongle small{font-size:12px;color:#776D64}
 #E .cs-ongle i{flex:none;width:20px;height:20px;border-radius:6px;border:1.5px solid rgba(30,28,27,.35);box-sizing:border-box;display:grid;place-items:center}
 #E .cs-ongle.on i{background:var(--v-fonce,#1E1C1B);border-color:transparent}#E .cs-ongle.on i::after{content:"✓";color:#fff;font-size:13px;font-style:normal}
-.cs-sup{display:block;width:100%;margin-top:9px;border:0;background:none;color:#A04A4A;font:inherit;font-size:13px;text-decoration:underline;cursor:pointer}`;
+.cs-sup{display:block;width:100%;margin-top:9px;border:0;background:none;color:#A04A4A;font:inherit;font-size:13px;text-decoration:underline;cursor:pointer}
+/* 24/11 (Marie, version A) : le carré de l'emoji d'un petit plus — elle choisit le sien */
+#E .cs-nl{display:flex;align-items:center;gap:10px}#E .cs-nl>label{flex:1;min-width:0}
+#E .cs-emo{flex:none;position:relative;width:52px;height:52px;border-radius:14px;background:#fff;border:1.5px dashed rgba(201,107,138,.7);display:grid;place-items:center;font-size:27px;line-height:1;padding:0;color:inherit;cursor:pointer;transition:transform .15s}
+#E .cs-emo:active{transform:scale(.92)}#E .cs-emo i{position:absolute;right:-5px;bottom:-5px;width:20px;height:20px;border-radius:50%;background:#C96B8A;color:#fff;font-size:11px;font-style:normal;display:grid;place-items:center;border:2px solid var(--creme,#FBF8F6)}
+#E .cs-emo.pop{animation:csPop .35s ease-out}@keyframes csPop{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+#E .cs-emo-aide{font-size:12px;color:#776D64;margin:6px 0 0 62px}
+#E .fc:has([data-cs-fam="presta"].on) :is(.cs-emo,.cs-emo-aide){display:none}
+#E .cs-ev{position:absolute;inset:0;background:rgba(20,18,17,.35);opacity:0;pointer-events:none;transition:opacity .2s;z-index:90}#E .cs-ev.on{opacity:1;pointer-events:auto}
+#E .cs-ep{position:absolute;left:0;right:0;bottom:0;z-index:91;background:var(--creme,#FBF8F6);border-radius:26px 26px 0 0;padding:10px 16px calc(env(safe-area-inset-bottom) + 24px);transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.9,.3,1)}
+#E .cs-ep.on{transform:none}#E .cs-ep .poig{width:40px;height:5px;border-radius:3px;background:rgba(30,28,27,.2);margin:0 auto 10px}
+#E .cs-ep h4{margin:0 0 4px;font-size:16px}#E .cs-ep p{margin:0 0 10px;font-size:12.5px;color:#776D64}
+#E .cs-eg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+#E .cs-eg button{aspect-ratio:1;min-width:0;padding:0;border:0;border-radius:12px;background:#fff;font-size:22px;line-height:1;cursor:pointer;transition:transform .12s}
+#E .cs-eg button:active{transform:scale(.85)}#E .cs-eg button.on{outline:2px solid #C96B8A}
+#E .cs-em2{margin-top:12px;display:flex;gap:8px;align-items:center;background:#fff;border-radius:14px;padding:6px 6px 6px 12px;border:1px solid rgba(30,28,27,.12)}
+#E .cs-em2 span{font-size:13px;flex:1}#E .cs-em2 input{width:64px;height:40px;border-radius:10px;border:1.5px dashed rgba(201,107,138,.7);text-align:center;font-size:24px;background:var(--creme,#FBF8F6);color:inherit}`;
   document.head.appendChild(st);
   /* --- Prestations et prix --- */
   /* 23/11 (Marie, D109-D110) : deux familles, « Prestations » et « Petits plus », et les petits plus « Déjà écrits pour toi » (il ne reste que le prix) */
@@ -51,8 +67,19 @@
   document.addEventListener("input",e=>{if(!e.target.matches||!e.target.matches("[data-cs-nom]")||!FAM||FAM.choisi)return;const fc=e.target.closest(".fc");if(!fc||!fc.querySelector("[data-cs-fam]"))return;
     const plus=LP.estPlusNom(e.target.value);metFam(fc,plus?"plus":"presta");const o=fc.querySelector("[data-cs-ongle]");if(o&&plus){const on=LP.parOngle({nom:e.target.value});o.classList.toggle("on",on);o.setAttribute("aria-pressed",on)}
     fc.querySelector("[data-cs-auto]").textContent=plus?"✓ Rangée toute seule dans les petits plus":""});
-  const pedit=(i,pre)=>{const p=i>=0?(lit().prestations||[])[i]||{}:(pre||{});return croix+`<h3>${i>=0?LP.esc(p.nom):pre?LP.esc(pre.emo+" "+pre.nom):"Nouvelle prestation"}</h3><div class="form" style="margin-top:12px">
-    <label><input data-cs-nom value="${esc(p.nom)}" aria-label="Nom" placeholder="Son nom, par exemple : Pose américaine"></label>
+  /* 24/11 (Marie, version A) : l'emoji d'un petit plus, c'est elle qui le choisit. Tant qu'elle n'a pas choisi, il suit le nom (deviné) ; choisi, il reste. */
+  let EMO={val:"✦",perso:false};
+  const EMOS="💅 ✨ 🤍 🌸 🌷 💎 🪩 💖 🦋 🍒 🍓 🌈 ⭐ 🌙 🔥 🎀 🐚 🫧 🍂 🍭 🧸 🖌️ 💧 🌿 🍯 🤎 🖤 ❤️ 💜 💙 💚 💛 🧡 ✦ 📏".split(" ");
+  const devine=nom=>LP.emo({nom});
+  const emoDe=v=>{const t=String(v||"");const seg=window.Intl&&Intl.Segmenter?[...new Intl.Segmenter().segment(t)].map(x=>x.segment):Array.from(t);return seg.find(x=>/\p{Extended_Pictographic}/u.test(x))||""};
+  const carre=(fc,v,anime)=>{const c=fc&&fc.querySelector("[data-cs-emo]");if(!c)return;c.firstChild.nodeValue=v;if(anime){c.classList.remove("pop");void c.offsetWidth;c.classList.add("pop")}};
+  const panneau=()=>{const E=document.getElementById("E");if(!E)return null;let v=E.querySelector(".cs-ev");if(!v){E.insertAdjacentHTML("beforeend",`<div class="cs-ev" data-cs-eferme></div><div class="cs-ep" role="dialog" aria-label="Choisir ton emoji"><div class="poig"></div><h4></h4><p>Il s’affiche dans ta liste et sur la réservation de tes clientes.</p><div class="cs-eg">${EMOS.map(x=>`<button type="button" data-cs-echoix="${x}">${x}</button>`).join("")}</div><div class="cs-em2"><span>😀 Le mien (clavier emoji de ton téléphone)</span><input data-cs-emien maxlength="16" placeholder="+" aria-label="Ton emoji" autocomplete="off"></div></div>`)}return E};
+  const ouvreEmo=fc=>{const E=panneau();if(!E)return;const nom=(fc.querySelector("[data-cs-nom]")||{}).value||"";E.querySelector(".cs-ep h4").textContent=nom.trim()?`Ton emoji pour « ${nom.trim()} »`:"Ton emoji";E.querySelectorAll("[data-cs-echoix]").forEach(b=>b.classList.toggle("on",b.dataset.csEchoix===EMO.val));E.querySelector("[data-cs-emien]").value="";E.querySelector(".cs-ev").classList.add("on");E.querySelector(".cs-ep").classList.add("on")};
+  const fermeEmo=()=>{const E=document.getElementById("E");if(!E)return;E.querySelectorAll(".cs-ev,.cs-ep").forEach(x=>x.classList.remove("on"));const m=E.querySelector("[data-cs-emien]");if(m)m.blur()};
+  const choisitEmo=v=>{EMO={val:v,perso:true};carre(document.querySelector("#E .fc"),v,true);fermeEmo()};
+  const pedit=(i,pre)=>{const p=i>=0?(lit().prestations||[])[i]||{}:(pre||{});
+    EMO={val:p.emo||devine(p.nom),perso:i>=0&&!!p.emo&&p.emo!==devine(p.nom)};return croix+`<h3>${i>=0?LP.esc(p.nom):pre?LP.esc(pre.emo+" "+pre.nom):"Nouvelle prestation"}</h3><div class="form" style="margin-top:12px">
+    <div class="cs-nl"><button type="button" class="cs-emo" data-cs-emo aria-label="Choisir ton emoji">${LP.esc(EMO.val)}<i aria-hidden="true">✎</i></button><label><input data-cs-nom value="${esc(p.nom)}" aria-label="Nom" placeholder="Son nom, par exemple : Pose américaine"></label></div><div class="cs-emo-aide">Touche le carré pour choisir ton emoji</div>
     </div>${famHtml(p,i,pre)}${__prestaFiche.haut(p,i)}
     <div class="lab" style="margin-top:12px">Durée</div><div class="chips ch-dur" data-cs-dur>${dureesPour(p.duree).map(d=>`<button class="chip${d===(+p.duree||60)?" on":""}" data-cs-d="${d}">${duree(d)}</button>`).join("")}</div>
     ${__prestaFiche.bas(p)}
@@ -83,6 +110,14 @@
   const apres=(e,t)=>{document.querySelectorAll('.vue[data-p="si"]').forEach(vu=>{const y=vu.scrollTop;vu.innerHTML=MS.rgk();vu.scrollTop=y});
     document.querySelectorAll(".ms2-apercu iframe").forEach(f=>{f.src="loginail-creer/pret.html?public&appli="+Date.now()});
     if(e)e.classList.remove("fe");toast(e,t)};
+  document.addEventListener("input",e=>{const t=e.target;if(!t.matches)return;
+    if(t.matches("[data-cs-nom]")&&!EMO.perso){EMO.val=devine(t.value);carre(t.closest(".fc"),EMO.val,false);return}
+    if(t.matches("[data-cs-emien]")){const v=emoDe(t.value);if(v){t.value="";choisitEmo(v)}}});
+  document.addEventListener("click",ev=>{const t=ev.target;if(!t.closest)return;
+    const c=t.closest("[data-cs-emo]");if(c){ev.stopPropagation();ouvreEmo(c.closest(".fc"));return}
+    const x=t.closest("[data-cs-echoix]");if(x){ev.stopPropagation();choisitEmo(x.dataset.csEchoix);return}
+    if(t.closest("[data-cs-eferme]")){ev.stopPropagation();fermeEmo();return}
+    if(t.closest(".cs-ep")){ev.stopPropagation();return}},true);
   /* 22/11 : la liste est unique : Réglages et l'Accueil se mettent à jour derrière la feuille */
   const majListe=()=>{if(S.onglet==="re"||S.onglet==="acc")rendu()};
   /* 22/11 (D80) : la fiche complète ; les photos partent d'abord, puis la liste est relue (elle a pu changer pendant l'envoi) */
@@ -98,7 +133,7 @@
     const fam=(fc.querySelector("[data-cs-fam].on")||{}).dataset?.csFam,og=fc.querySelector("[data-cs-ongle]");
     const p=i>=0?b.prestations[i]:{};Object.assign(p,{nom,duree:d},r.champs);if(i<0)b.prestations.push(p);
     /* 23/11 (D109) : la famille, l'émoticône et « par ongle » sont enregistrés avec la prestation (le site des clientes les lit aussi) */
-    if(fam==="plus"){p.famille="plus";p.emo=LP.emo({nom});p.parOngle=!!(og&&og.classList.contains("on"));if(LP.proposeTous(nom).includes(String(p.detail||"").trim()))p.detail=""}else if(fam){p.famille="presta";delete p.emo;delete p.parOngle}
+    if(fam==="plus"){p.famille="plus";p.emo=EMO.perso?EMO.val:devine(nom);p.parOngle=!!(og&&og.classList.contains("on"));if(LP.proposeTous(nom).includes(String(p.detail||"").trim()))p.detail=""}else if(fam){p.famille="presta";delete p.emo;delete p.parOngle}
     if(!ecrit(b)){r.annule();rend("Pas de place sur ton téléphone : rien n’est enregistré");return false}
     r.menage();apres(null,"");majListe();
     if(fc.contains(ok))fc.innerHTML=MSF["ms-presta"]();
