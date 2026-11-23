@@ -44,7 +44,7 @@
       if (t === undefined) continue;
       D.sel.set(cle(j.d, t), { d: j.d, t });
       D.vus = Math.min(HORIZON, Math.max(D.vus, Math.ceil((j.i + 1) / 7) * 7));   /* une heure cochée est toujours à l'écran */
-      if (D.sel.size === 3) break;
+      if (D.sel.size === (D.un ? 1 : 3)) break;
     }
   }
   /* ce qui est coché et qui n'est plus libre s'en va */
@@ -127,6 +127,8 @@
     z("[data-md=copie]").disabled = !n;
     z("[data-md=noter]").hidden = n !== 1;
   }
+  /* 23/11 : aussi depuis la fiche d'une cliente (fiche.js) : on choisit UNE heure (toucher une autre la remplace), « Noter le RDV » tout de suite */
+  window.mesDispos = un => { ouvrir(); if (un && D) D.un = true; };
   function ouvrir() {
     const P = prestations();
     let garde0 = null; try { garde0 = localStorage.getItem(CLE); } catch (e) {}
@@ -198,7 +200,7 @@
     }
     if (k === "heure") {
       const d = D.L[+b.dataset.j].d, t = +b.dataset.t, c = cle(d, t);
-      if (D.sel.has(c)) D.sel.delete(c); else D.sel.set(c, { d, t });
+      if (D.sel.has(c)) D.sel.delete(c); else { if (D.un) D.sel.clear(); D.sel.set(c, { d, t }); }
     }
     dessine();
   }, true);

@@ -48,6 +48,12 @@
 .fi-bas{display:flex;justify-content:flex-end;margin-top:6px}.fi-rplus{width:26px;height:26px;border-radius:50%;border:0;background:var(--v-rose,#EDE7E0);font:inherit;font-size:16px;line-height:1;color:#1E1C1B;padding:0}
 .fi-astuce{font-size:11.5px;color:#8A847E;margin:8px 2px 0;line-height:1.4;text-align:left}
 @keyframes fi-pop{from{transform:scale(.6);opacity:0}}`;
+  /* 23/11 (Marie) : « Prendre un rendez-vous » sur la fiche */
+  st.textContent += `
+.fi-prdv{width:100%;margin-top:10px;height:48px;border-radius:999px;border:1.5px solid #1E1C1B;background:#fff;color:#1E1C1B;font:inherit;font-size:14.5px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s,background .15s}
+.fi-prdv:active{transform:scale(.97);background:#F3EEE8}
+.fi-prdv svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#E .md-pour{margin:3px 58px 0 24px;font-size:14px;color:#1E1C1B}#E .md-pour b{font-weight:600}`;
   document.head.appendChild(st);
 
   const IC = { tel: '<svg viewBox="0 0 24 24"><path d="M6 3h3l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 4 5a2 2 0 0 1 2-2z" fill="none" stroke="#1E1C1B" stroke-width="1.6" stroke-linejoin="round"/></svg>',
@@ -150,6 +156,7 @@
         <div class="fi-bts"><button data-a="decaler" data-id="${proch[0].id}">Déplacer</button><button data-rdv="${proch[0].id}">Voir</button></div></div>`; }
     else h += `<div class="fi-carte"><div class="fi-lg"><div>Pas de rendez-vous prévu<span>${venues.length ? "Sa dernière visite : " + jourCourt(venues[0].debut) : "Elle n’est pas encore venue"}</span></div></div></div>`;
     if (proch.length > 1) h += `<div class="sous" style="text-align:left;margin:8px 2px 0">Et aussi : ${proch.slice(1, 3).map(r => jj(r.debut) + " à " + hm(d(r.debut))).join(" · ")}</div>`;
+    h += `<button class="fi-prdv" data-fi="prdv"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4M12 12.5v5M9.5 15h5"/></svg>Prendre un rendez-vous</button>`;
     h += `<div class="fi-t3"><div><small>Visites</small><b>${venues.length}</b></div>${e.f.on ? `<div><small>Fidélité</small><b>${e.fait} <em>/ ${e.f.n}</em></b></div>` : ""}<div><small>Dernière</small><b>${venues.length ? jourCourt(venues[0].debut) : "—"}</b></div></div>`;
     if (e.f.on) { const txt = e.pret ? `Bonjour ${c.prenom || ""}, votre carte de fidélité est complète : ${e.f.cadeau} à votre prochain rendez-vous ! ${S.profil.nom_salon || ""}`.trim() : `Bonjour ${c.prenom || ""}, vous en êtes à ${e.fait} visite${e.fait > 1 ? "s" : ""} sur ${e.f.n} sur votre carte de fidélité. Encore ${e.reste} avant votre cadeau : ${e.f.cadeau}. ${S.profil.nom_salon || ""}`.trim();
       h += `<div class="fi-fid"><div class="ht"><small>Carte de fidélité</small><b>${e.fait} visite${e.fait > 1 ? "s" : ""} sur ${e.f.n}</b></div><div class="fi-barre"><i style="width:${Math.round(e.fait / e.f.n * 100)}%"></i></div>
@@ -196,11 +203,18 @@
 
   document.addEventListener("click", e => { const a = e.target.closest && e.target.closest(".fc [data-rdv], .fc [data-a='decaler']"); if (!a || !RDV) return; const id = a.dataset.rdv || a.dataset.id; if (S.rdv.some(x => x.id === id)) return;
     const r = RDV.find(x => x.id === id), c = S.clientes.find(x => x.id === ID); if (r) S.rdv.push(Object.assign({}, r, { clientes: c ? { id: c.id, prenom: c.prenom, nom: c.nom, telephone: c.telephone } : null })); }, true);
+  /* 23/11 (Marie : « on cale ses rdv direct ») : depuis la fiche, « Prendre un rendez-vous » ouvre Mes dispos ;
+     « Noter le RDV » ouvre le formulaire avec son nom déjà écrit (seulement si on vient bien de Mes dispos ouvert depuis sa fiche) */
+  let POUR = null; const nouveau0 = feuilleNouveau;
+  feuilleNouveau = function (m) { const p = POUR && E.querySelector(".fc .md-pour") && S.clientes.find(x => x.id === POUR); POUR = null; nouveau0(m);
+    const i = p && $("#n-cli", E); if (i) { i.value = nomCli(p); i.dispatchEvent(new Event("change", { bubbles: true })); } };
   const formulaire = feuilleCliente;   /* le formulaire d'origine (nom, téléphone, anniversaire) */
   feuilleCliente = function (id) { if (!id) return formulaire(id); ID = id; ONG = "fiche"; RDV = null; TOUT = false; SAISIE = null; OUV = null; RANGE = false; TOUS = false; DRAG = null; ORD = null; VUS = new Set(); montre(); chargeRdv(); };
 
   document.addEventListener("click", async e => { const a = e.target.closest && e.target.closest("[data-fi]"); if (!a) return; e.stopPropagation(); const k = a.dataset.fi, c = S.clientes.find(x => x.id === ID);
     if (k === "ong") { if (RANGE) finRange(); ONG = a.dataset.o; SAISIE = null; OUV = null; montre(); }
+    else if (k === "prdv") { if (!c || !window.mesDispos) return; POUR = c.id; window.mesDispos(true);
+      const t = $(".fc .md h3", E); if (t) t.insertAdjacentHTML("afterend", `<div class="md-pour">Pour <b>${esc(titreNom(c))}</b></div>`); }
     else if (k === "tout") { TOUT = true; montre(true); }
     else if (k === "ouv") { OUV = OUV === a.dataset.q ? null : a.dataset.q; SAISIE = null; montre(true); }
     /* Oui / Non / un choix ; retoucher la réponse déjà choisie l'efface (= « je ne sais pas ») */
