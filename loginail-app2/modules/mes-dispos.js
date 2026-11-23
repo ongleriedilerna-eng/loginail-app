@@ -163,6 +163,8 @@
       <div class="md-hh">de <select data-n="${n}" data-c="a" aria-label="à partir de">${opt(r.a)}</select> à <select data-n="${n}" data-c="b" aria-label="jusqu’à">${opt(r.b)}</select>${D.reg.length > 1 ? `<button class="md-suppr" data-md="rx" data-n="${n}" aria-label="Enlever ce moment">×</button>` : ""}</div></div>`).join("")
       + '<button class="md-ajout" data-md="ajout">+ Ajouter un autre moment</button>';
   }
+  /* 23/11 : aussi depuis la fiche d'une cliente (fiche.js, bouton « Prendre un rendez-vous ») : UNE heure (toucher une autre la remplace), « Noter le RDV » */
+  window.mesDispos = un => { ouvrir(); if (un && D) D.un = true; };
   function ouvrir() {
     const P = prestations();
     let garde0 = null; try { garde0 = localStorage.getItem(CLE); } catch (e) {}
@@ -234,7 +236,7 @@
     if (k === "sav" || k === "sap") { D.wk = Math.max(0, Math.min(derniere(), D.wk + (k === "sap" ? 1 : -1))); D.sel.clear(); z(".md-liste").scrollTop = 0; }
     if (k === "heure") {
       const d = D.L[+b.dataset.j].d, t = +b.dataset.t, c = cle(d, t);
-      if (D.sel.has(c)) D.sel.delete(c); else D.sel.set(c, { d, t });
+      if (D.sel.has(c)) D.sel.delete(c); else { if (D.un) D.sel.clear(); D.sel.set(c, { d, t }); }
     }
     dessine();
   }, true);
@@ -320,6 +322,7 @@
 #E .md-regles{position:absolute;inset:0;z-index:7;display:flex;flex-direction:column;border-radius:28px 28px 0 0;background:var(--v-c);transform:translateY(102%);visibility:hidden;transition:transform .32s cubic-bezier(.2,.7,.2,1),visibility 0s .32s}
 #E .md-regles.on{transform:none;visibility:visible;transition:transform .32s cubic-bezier(.2,.7,.2,1)}
 #E .feuille.md-f .fe-x{z-index:8}
+#E .md-pour{margin:3px 58px 0 20px!important}
 #E .md-rh{flex:none;padding:8px 58px 6px 20px}
 #E .md-rh h4{margin:0;font:400 28px/1.05 'Italiana','Cormorant Garamond',Georgia,serif}
 #E .md-rh p{margin:6px 0 0;color:var(--gris);font-size:14.5px}
