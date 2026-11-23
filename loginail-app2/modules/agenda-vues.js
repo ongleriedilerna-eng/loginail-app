@@ -56,7 +56,7 @@
 #E .av-jours{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}
 #E .av-jours button{min-height:60px;border:0;border-radius:16px;background:#fff;color:inherit;font:inherit;font-size:12.5px;cursor:pointer}
 #E .av-jours b{display:block;font-size:19px;font-weight:500}
-@media (max-width:350px){#E .av-tete h1{font-size:25px}#E .av-tete .su-auj2{padding:0 8px!important;font-size:12px!important;height:36px}#E .av-tete .v-ronds{gap:4px}#E .av-tete .v-rondb{width:36px;height:36px;min-width:36px}#E .av-g{grid-template-columns:18px repeat(7,minmax(0,1fr));padding-right:1px}#E .av-hh i{right:2px;font-size:9px}#E .av-b{padding:1px 0 0 1px;font-size:8px;line-height:9px}#E .av-b>.av-n{font-size:8.4px}#E .av-b>.av-p{font-size:7.8px}}
+@media (max-width:350px){#E .v-avecban .av-tete>div:first-child{padding-left:9px;padding-right:9px}#E .av-tete{gap:6px}#E .av-tete h1{font-size:25px}#E .av-tete .su-auj2{padding:0 8px!important;font-size:12px!important;height:36px}#E .av-tete .v-ronds{gap:4px}#E .av-tete .v-rondb{width:36px;height:36px;min-width:36px}#E .av-g{grid-template-columns:18px repeat(7,minmax(0,1fr));padding-right:1px}#E .av-hh i{right:2px;font-size:9px}#E .av-b{padding:1px 0 0 1px;font-size:8px;line-height:9px}#E .av-b>.av-n{font-size:8.4px}#E .av-b>.av-p{font-size:7.8px}}
 @keyframes av-menu{from{opacity:.2;transform:translateY(-4px)}}
 @keyframes av-arrive{from{opacity:.2;transform:translateY(-4px)}}
 @keyframes av-g1{from{opacity:.2;transform:translateX(34px)}}
@@ -159,6 +159,8 @@
     } else {
       pap.outerHTML = calendrier();
       const m = leMois();
+      /* 24/11 (Marie) : le petit titre au-dessus d'« Agenda » suit le mois affiché (il restait sur « Novembre 2026 » en décembre) */
+      const sm = t.querySelector("small"); if (sm) sm.textContent = MOIS[m.getMonth()].replace(/^./, c => c.toUpperCase()) + " " + m.getFullYear();
       if (k) k.textContent = "Touche un jour pour l’ouvrir";
       if (nav) {
         nav.querySelector("span").textContent = MOIS[m.getMonth()].replace(/^./, c => c.toUpperCase()) + " " + m.getFullYear();
