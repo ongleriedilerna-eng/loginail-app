@@ -37,5 +37,5 @@
       if (nv > av) { const { data: x } = await sb.from("rendez_vous").select("id").neq("id", r.id).neq("statut", "annule").gte("debut", r.fin).lt("debut", f.toISOString()).limit(1); if (x && x.length) { non++; continue; } }
       const { error: e2 } = await sb.from("rendez_vous").update({ fin: f.toISOString() }).eq("id", r.id); if (!e2) ok++; }
     if (ok) { await chargeSemaine(); rendu(); }
-    dit(non ? `${ok ? ok + " rendez-vous allongé" + (ok > 1 ? "s" : "") + " · " : ""}${non} déborderai${non > 1 ? "en" : ""}t sur une autre cliente : à allonger à la main` : ok ? `C’est noté ✓ · ${ok} rendez-vous ${nv > av ? "allongé" : "raccourci"}${ok > 1 ? "s" : ""}` : "C’est noté ✓"); }, true);
+    dit(non ? `${ok ? ok + " RDV allongé" + (ok > 1 ? "s" : "") + " · " : ""}${non} trop serré${non > 1 ? "s" : ""}, à voir toi-même` : ok ? `C’est noté ✓ · ${ok} rendez-vous ${nv > av ? "allongé" : "raccourci"}${ok > 1 ? "s" : ""}` : "C’est noté ✓"); }, true);
 })();
