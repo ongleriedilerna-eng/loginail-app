@@ -10,7 +10,19 @@
 .rv-note{margin-top:12px;border-radius:14px;background:#fff;padding:10px 13px;font-size:13.5px;line-height:1.45;text-align:left}.rv-note b{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8A847E;font-weight:500;margin-bottom:3px}
 #E .fc .rv-duo{display:flex;gap:8px;margin-top:12px}
 #E .fc .rv-duo .btn{flex:1 1 0;width:auto;min-width:0;height:46px;margin:0;border-radius:999px;white-space:nowrap}
-.fc .fiche-t h3[data-cli]{cursor:pointer;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px}`;
+.fc .fiche-t h3[data-cli]{cursor:pointer;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px}
+.rv-hor{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 11px 11px 16px;border-radius:18px;background:#fff;border:1px solid rgba(30,28,27,.1)}
+.rv-hor b{display:block;font:400 26px/1.1 'Italiana','Cormorant Garamond',Georgia,serif;white-space:nowrap}
+.rv-hor b i{font-style:normal;opacity:.45;margin:0 3px}
+.rv-hor b span{display:inline-block}.rv-hor b span.pop{animation:rvpop .28s ease-out}
+@keyframes rvpop{0%{transform:translateY(6px);opacity:.2}}
+.rv-hor small{display:block;margin-top:3px;color:var(--gris);font-size:12.5px}
+.rv-hor small button{color:inherit;text-decoration:underline;font:inherit;padding:0;background:none;border:0}
+.rv-pas{display:flex;gap:8px;flex:none}
+.rv-pas button{width:46px;height:46px;border-radius:50%;background:#fff;border:1px solid rgba(30,28,27,.14);font-size:22px;line-height:1;color:inherit;transition:transform .12s,opacity .2s}
+.rv-pas button:active{transform:scale(.9)}.rv-pas button:disabled{opacity:.3}
+.rv-lim{margin:6px 0 0 4px;color:var(--gris);font-size:12.5px}
+@media(prefers-reduced-motion:reduce){.rv-hor b span.pop{animation:none}}`;
   document.head.appendChild(st);
   const P = () => prestasDispo(), parTitre = r => { const t = (r.titre || (r.prestations && r.prestations.nom) || "").split(" + "); return P().map((p, i) => t.includes(p.nom) ? i : -1).filter(i => i >= 0); };
   const somme = l => ({ duree: l.reduce((s, i) => s + (P()[i].duree || 60), 0) || 60, prix: l.length && l.every(i => P()[i].prix == null) ? null : l.reduce((s, i) => s + (+P()[i].prix || 0), 0), nom: l.map(i => P()[i].nom).join(" + ") });
@@ -40,23 +52,36 @@
       x += `<div class="rv-fid"><span>Fidélité · <b>${e.fait}</b> sur ${e.f.n}${e.pret ? ` · carte complète : ${esc(e.f.cadeau)}` : ""}</span><button data-rv="fid-plus" data-id="${r.id}">+ 1 point</button></div>${r.statut === "prevu" ? `<div class="rv-fid-n">« C’est fini » ajoute aussi 1 point tout seul.</div>` : ""}`; } }
     z.insertAdjacentHTML("afterend", x); }).observe(document.body, { childList: true, subtree: true });
 
+  /* 24/11 (Marie, D113) : « Horaire » 10:00 → 11:30 avec − / + (15 min) : une cliente plus lente garde son vrai temps.
+     La durée part de la vraie durée du rendez-vous (avant, « Enregistrer » la remettait à celle de la prestation).
+     Le + s'arrête au rendez-vous suivant ; changer de prestation remet la durée prévue. */
   let MD = null;
-  const feuilleModif = r => { MD = { r, sel: parTitre(r) }; const t = somme(MD.sel);
+  const hh = d => d.getHours() + ":" + String(d.getMinutes()).padStart(2, "0");
+  const prevue = () => MD.sel.length ? somme(MD.sel).duree : MD.d0;
+  const suivant = () => { const deb = new Date(MD.r.debut); return S.rdv.filter(x => x.id !== MD.r.id && x.statut !== "annule" && new Date(x.debut) >= deb && new Date(x.debut).toDateString() === deb.toDateString()).map(x => new Date(x.debut)).sort((a, b) => a - b)[0] || null; };
+  const horaire = pop => { const z = document.querySelector("#rv-hor"); if (!z) return; const deb = new Date(MD.r.debut), fin = new Date(+deb + MD.dur * 60000), pv = prevue(), nx = suivant(), bloque = nx && +deb + (MD.dur + 15) * 60000 > +nx;
+    z.innerHTML = `<div class="rv-hor"><div><b>${hh(deb)}<i>→</i><span${pop ? ' class="pop"' : ""}>${hh(fin)}</span></b>
+      <small>${duree(MD.dur)}${MD.dur !== pv ? ` · prévu ${duree(pv)} · <button data-rv="dur" data-d="${pv}">remettre</button>` : " · comme prévu"}</small></div>
+      <div class="rv-pas"><button data-rv="dur" data-d="${MD.dur - 15}" aria-label="15 minutes de moins"${MD.dur <= 15 ? " disabled" : ""}>−</button><button data-rv="dur" data-d="${MD.dur + 15}" aria-label="15 minutes de plus"${bloque ? " disabled" : ""}>+</button></div></div>
+      ${bloque ? `<div class="rv-lim">${esc(nomRdv(S.rdv.find(x => +new Date(x.debut) === +nx && x.statut !== "annule" && x.id !== MD.r.id)) || "Le rendez-vous suivant")} arrive à ${hh(nx)}</div>` : ""}`; };
+  const feuilleModif = r => { const d0 = Math.max(15, Math.round((new Date(r.fin) - new Date(r.debut)) / 60000) || 60); MD = { r, sel: parTitre(r), d0, dur: d0 }; const t = somme(MD.sel);
     ouvre(`<h3>Modifier le rendez-vous</h3><div class="sous">${esc(nomRdv(r))}</div>
       <div class="lab2">Prestations <small style="text-transform:none;letter-spacing:0;opacity:.6">touches-en une ou plusieurs</small></div>
       <div class="chips">${P().map((p, i) => `<button class="chip${MD.sel.includes(i) ? " on" : ""}" data-rvp="${i}">${esc(p.nom)}<span>${duree(p.duree || 60)}</span></button>`).join("")}</div>
+      <div class="lab2">Horaire</div><div id="rv-hor"></div>
       <div class="lab2">Prix</div><input class="champ" id="rv-prix" inputmode="decimal" value="${r.prix ?? t.prix ?? ""}" style="font-size:16px;width:100%;box-sizing:border-box">
       <div class="lab2">Note <small style="text-transform:none;letter-spacing:0;opacity:.6">facultatif</small></div><textarea class="msg" id="rv-note" style="height:80px" placeholder="Par exemple : veut du rouge, 10 minutes de retard la dernière fois">${esc(r.note || "")}</textarea>
-      <button class="btn" data-rv="ok" style="margin-top:14px">Enregistrer</button>`); };
+      <button class="btn" data-rv="ok" style="margin-top:14px">Enregistrer</button>`); horaire(); };
 
   document.addEventListener("click", async e => { const a = e.target.closest && e.target.closest("[data-rv],[data-rvp]"); if (!a) return; e.stopPropagation();
-    if (a.dataset.rvp != null) { const i = +a.dataset.rvp, k = MD.sel.indexOf(i); if (k >= 0) MD.sel.splice(k, 1); else MD.sel.push(i); a.classList.toggle("on", k < 0); const p = document.querySelector("#rv-prix"); if (p && MD.sel.length) p.value = somme(MD.sel).prix; return; }
+    if (a.dataset.rvp != null) { const i = +a.dataset.rvp, k = MD.sel.indexOf(i); if (k >= 0) MD.sel.splice(k, 1); else MD.sel.push(i); a.classList.toggle("on", k < 0); const p = document.querySelector("#rv-prix"); if (p && MD.sel.length) p.value = somme(MD.sel).prix; MD.dur = prevue(); horaire(true); return; }
     const k = a.dataset.rv, r = S.rdv.find(x => x.id === a.dataset.id) || (MD && MD.r);
+    if (k === "dur") { if (a.disabled) return; MD.dur = Math.max(15, +a.dataset.d); horaire(true); return; }
     if (k === "modifier") feuilleModif(r);
     else if (k === "remplacer") { const d = new Date(r.debut); S.jour = new Date(d); S.jour.setHours(0, 0, 0, 0); feuilleNouveau(d.getHours() * 60 + d.getMinutes()); }
     else if (k === "ok") { const r0 = MD.r, t = MD.sel.length ? somme(MD.sel) : null, deb = new Date(r0.debut), prix = parseFloat(String(document.querySelector("#rv-prix").value).replace(",", ".")), note = document.querySelector("#rv-note").value.trim();
-      const v = { prix: isNaN(prix) ? null : prix }; if (t) Object.assign(v, { prestation_id: P()[MD.sel[0]].id, titre: t.nom, fin: new Date(+deb + t.duree * 60000).toISOString() });
-      if (t && S.rdv.some(x => x.id !== r0.id && x.statut !== "annule" && new Date(x.debut) < new Date(v.fin) && new Date(x.fin) > deb)) return dit("La nouvelle durée déborde sur un autre rendez-vous");
+      const v = { prix: isNaN(prix) ? null : prix, fin: new Date(+deb + MD.dur * 60000).toISOString() }; if (t) Object.assign(v, { prestation_id: P()[MD.sel[0]].id, titre: t.nom });
+      if (+new Date(v.fin) !== +new Date(r0.fin) && S.rdv.some(x => x.id !== r0.id && x.statut !== "annule" && new Date(x.debut) < new Date(v.fin) && new Date(x.fin) > deb)) return dit("La nouvelle durée déborde sur un autre rendez-vous");
       a.disabled = true; let { error } = await sb.from("rendez_vous").update(Object.assign({}, v, { note: note || null })).eq("id", r0.id);
       if (error && /note/.test(error.message || "")) { ({ error } = await sb.from("rendez_vous").update(v).eq("id", r0.id)); if (!error) dit("Enregistré (la note sera disponible bientôt)"); }
       if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessaie."); }
