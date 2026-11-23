@@ -25,17 +25,17 @@
     conf: ["Confidentialité", `
       <p><b>En bref :</b> vos informations servent seulement à gérer vos rendez-vous. Elles ne sont jamais vendues.</p>
       <h4>Qui est responsable</h4><p>${nomPro}${salon ? ` (${salon})` : ""}, ${adresse}.</p>
-      <h4>Ce que nous gardons</h4><p>Quand vous réservez : votre prénom, votre nom, votre téléphone, votre e-mail, la prestation, la date et l’heure, et l’acompte payé.</p>
+      <h4>Ce que nous gardons</h4><p>Quand vous réservez : votre prénom, votre nom, votre téléphone, votre e-mail, la prestation, la date et l’heure, et le montant de l’acompte demandé, s’il y en a un.</p>
       <h4>Pourquoi</h4><p>Pour réserver votre rendez-vous, vous envoyer la confirmation et le rappel la veille, et faire votre ticket de caisse. C’est nécessaire pour la réservation que vous demandez.</p>
       <p>Le petit SMS d’anniversaire n’est envoyé que si vous avez dit oui, et seulement si vous êtes venue au salon ces 12 derniers mois. Vous pouvez dire stop à tout moment. Aucune publicité n’est envoyée.</p>
       <h4>Combien de temps</h4><p>Trois ans après votre dernier rendez-vous, puis tout est effacé. Les tickets de caisse sont gardés le temps exigé par la loi.</p>
-      <h4>Qui les voit</h4><p>Seulement ${salon || "la prothésiste"}. Le site et l’agenda sont gérés par Loginail, qui les garde pour elle et ne les utilise pas pour autre chose. Si vous payez un acompte en ligne, le paiement passe par Stripe : le salon ne voit jamais votre numéro de carte.</p>
+      <h4>Qui les voit</h4><p>Seulement ${salon || "la prothésiste"}. Le site et l’agenda sont gérés par Loginail, qui les garde pour elle et ne les utilise pas pour autre chose.</p>
       <h4>Vos droits</h4><p>Vous pouvez voir, corriger ou effacer vos informations en contactant le salon (${contact}). En cas de désaccord, vous pouvez vous adresser à la CNIL (cnil.fr).</p>`],
     cgv: ["Conditions de réservation", `
       <h4>Les prix</h4><p>Les prix affichés sont en euros, toutes taxes comprises${L.tvaNon === false ? "" : " (TVA non applicable, article 293 B du CGI)"}. Le prix payé est celui affiché au moment de la réservation.</p>
       <h4>La réservation</h4><p>Vous choisissez une prestation, un jour et une heure, puis vous donnez vos coordonnées. Vous recevez une confirmation par SMS.</p>
-      ${R.acompte ? `<h4>L’acompte</h4><p>Un acompte de <b>${esc(R.montant)}</b> est demandé pour réserver. Il est déduit du prix le jour du rendez-vous. Le reste se paie au salon.</p>` : `<h4>Le paiement</h4><p>Tout se paie au salon, le jour du rendez-vous.</p>`}
-      <h4>Annuler ou déplacer</h4><p>Vous pouvez annuler ou déplacer gratuitement jusqu’à <b>${esc(ann)}</b> avant le rendez-vous${R.acompte ? ", et l’acompte vous est rendu" : ""}. Après, ou si vous ne venez pas${R.acompte ? ", l’acompte est gardé" : ", le salon peut refuser une prochaine réservation en ligne"}.</p>
+      ${R.acompte ? `<h4>L’acompte</h4><p>Un acompte de <b>${esc(R.montant)}</b> est demandé pour réserver. Le salon vous dit comment le régler. Une fois versé, il est déduit du prix le jour du rendez-vous. Le reste se paie au salon.</p>` : `<h4>Le paiement</h4><p>Tout se paie au salon, le jour du rendez-vous.</p>`}
+      <h4>Annuler ou déplacer</h4><p>Vous pouvez annuler ou déplacer gratuitement jusqu’à <b>${esc(ann)}</b> avant le rendez-vous${R.acompte ? " : un acompte déjà versé vous est alors rendu" : ""}. Après, ou si vous ne venez pas${R.acompte ? ", un acompte déjà versé est gardé" : ", le salon peut refuser une prochaine réservation en ligne"}.</p>
       <h4>Les retards</h4><p>Un retard de <b>${esc(R.retard)}</b> est accepté. Au-delà, la prestation peut être raccourcie ou le rendez-vous déplacé.</p>
       ${R.autre ? `<h4>Bon à savoir</h4><p>${esc(R.autre)}</p>` : ""}
       <h4>Le droit de rétractation</h4><p>Quand vous réservez en ligne, la loi vous donne 14 jours pour changer d’avis. Si votre rendez-vous a lieu avant la fin de ces 14 jours, vous demandez que la prestation soit faite avant. Si vous changez d’avis, il faut nous le dire avant le rendez-vous.</p>
