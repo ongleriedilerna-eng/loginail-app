@@ -11,6 +11,18 @@
   const manque=b=>{const L=b.legal||{};const m=[];if(!L.nomComplet)m.push("ton nom");if(!/^\d{14}$/.test((L.siret||"").replace(/\s/g,"")))m.push("ton SIRET");return m};
   window.__legalManque=()=>manque(lit());   /* pour le rappel de l'Accueil (rappel-legal.js) */
   const puces=(k,l,v)=>`<div class="chips" data-lg-ch="${k}">${l.map(x=>`<button class="chip${x===v?" on":""}" data-lg-c>${x}</button>`).join("")}</div>`;
+  /* 22/11 (Marie) : « y a des filles qui ont plus de 15 euros » → montant libre, en euros ou en %. Nombres entiers : c'est ce que le site et reserver() lisent tous les deux */
+  const MONTANTS=["10 €","15 €","20 €","30 %"];
+  const choixMontant=v=>{const autre=!MONTANTS.includes(v),n=autre?parseInt(v,10)||"":"",pc=autre&&/%/.test(v);
+    return `<div class="chips" data-lg-ch="montant">${MONTANTS.map(x=>`<button class="chip${x===v?" on":""}" data-lg-c>${x}</button>`).join("")}<button class="chip${autre?" on":""}" data-lg-c data-lg-autre>Autre montant</button></div>
+    <div data-lg-libre${autre?"":" hidden"}><div style="display:flex;gap:8px;align-items:center;margin-top:8px"><input class="champ" data-lg-mt value="${n}" inputmode="numeric" maxlength="3" placeholder="50" aria-label="Ton montant d’acompte" style="width:96px;margin:0;font-size:16px"><div class="chips" data-lg-unite>${["€","%"].map(u=>`<button class="chip${(u==="%")===pc?" on":""}" data-lg-c style="min-width:46px;min-height:44px;justify-content:center;align-items:center">${u}</button>`).join("")}</div></div>
+    <div class="sous" style="text-align:left;margin-top:6px;font-size:11.5px">Si une prestation coûte moins cher, l’acompte s’arrête à son prix.</div></div>`};
+  const litMontant=fc=>{const a=fc.querySelector("[data-lg-autre].on");if(!a)return{ok:true};
+    const v=fc.querySelector("[data-lg-mt]").value.trim().replace(/[ €%]+$/,""),u=fc.querySelector("[data-lg-unite] .on").textContent;
+    if(!/^[0-9]+$/.test(v))return{ok:false,dit:"Écris ton montant en chiffres ronds"};
+    if(u==="%"&&(+v<1||+v>90))return{ok:false,dit:"Choisis entre 1 et 90 %"};
+    if(+v<1||+v>999)return{ok:false,dit:"Choisis entre 1 et 999 €"};
+    return{ok:true,val:+v+" "+u}};
   MSF["ms-legal"]=()=>{const b=lit(),L=b.legal||{};const adr=L.adresse||[b.rue,[b.cp,b.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ");
     return croix+`<h3>Mes infos légales</h3><div class="sous">Elles remplissent toutes seules les pages légales de ton site</div>
     ${L.mediateur?"":'<div class="lg-med">Pense aussi à ton <b>médiateur de la consommation</b>, la loi en demande un. Pas encore choisi ? Pas de souci, enregistre déjà le reste.</div>'}<div class="form" style="margin-top:12px">
@@ -26,7 +38,7 @@
     <button class="btn" data-lg-ok="legal" style="width:100%;margin-top:14px">Enregistrer</button>`};
   MSF["ms-bon"]=()=>{const r=regles(lit());return croix+`<h3>Bon à savoir</h3><div class="sous">Tes règles, montrées à la cliente avant qu’elle réserve</div>
     <div class="liste" style="margin-top:12px"><div class="ligne"><div class="t">Acompte à la réservation<span>Déduit du prix le jour du rendez-vous</span></div><button class="sw${r.acompte?" on":""}" data-lg-sw="acompte"></button></div></div>
-    <div class="lab" style="margin-top:12px">Montant de l’acompte</div>${puces("montant",["10 €","15 €","20 €","30 %"],r.montant)}
+    <div class="lab" style="margin-top:12px">Montant de l’acompte</div>${choixMontant(r.montant)}
     <div class="lab" style="margin-top:12px">Retard accepté</div>${puces("retard",["5 min","10 min","15 min"],r.retard)}
     <div class="lab" style="margin-top:12px">Annulation gratuite jusqu’à</div>${puces("annulation",["24 h avant","48 h avant","72 h avant"],r.annulation)}
     <div class="lab" style="margin-top:12px">Autre chose à dire <small>facultatif</small></div><textarea class="msg" data-lg-txt style="height:80px" placeholder="Par exemple : venez sans vernis">${esc(r.autre)}</textarea>
@@ -34,12 +46,14 @@
     <button class="btn" data-lg-ok="regles" style="width:100%;margin-top:6px">Enregistrer</button>`};
   const toast=(e,t)=>{const z=e&&e.querySelector(".toast");if(!z)return;z.textContent=t;z.classList.add("on");clearTimeout(z._t);z._t=setTimeout(()=>z.classList.remove("on"),2200)};
   document.addEventListener("click",ev=>{const t=ev.target;
-    const c=t.closest("[data-lg-c]");if(c){ev.stopPropagation();c.parentElement.querySelectorAll("[data-lg-c]").forEach(x=>x.classList.toggle("on",x===c));return}
+    const c=t.closest("[data-lg-c]");if(c){ev.stopPropagation();c.parentElement.querySelectorAll("[data-lg-c]").forEach(x=>x.classList.toggle("on",x===c));
+      if(c.parentElement.dataset.lgCh==="montant"){const z=c.parentElement.nextElementSibling,a=c.hasAttribute("data-lg-autre");z.hidden=!a;if(a)z.querySelector("input").focus()}return}
     const sw=t.closest("[data-lg-sw]");if(sw){ev.stopPropagation();sw.classList.toggle("on");return}
     const ok=t.closest("[data-lg-ok]");if(!ok)return;ev.stopPropagation();const fc=ok.closest(".fc"),e=ok.closest(".ecran"),b=lit();
     if(ok.dataset.lgOk==="legal"){const L=b.legal||{};fc.querySelectorAll("[data-lg]").forEach(i=>L[i.dataset.lg]=i.value.trim());L.siret=L.siret.replace(/\s/g,"");L.tvaNon=fc.querySelector('[data-lg-sw="tvaNon"]').classList.contains("on");
       if(L.siret&&!/^\d{14}$/.test(L.siret)){toast(e,"Le SIRET a 14 chiffres");return}b.legal=L}
-    else{const r=regles(b);r.acompte=fc.querySelector('[data-lg-sw="acompte"]').classList.contains("on");fc.querySelectorAll("[data-lg-ch]").forEach(g=>{const o=g.querySelector(".on");if(o)r[g.dataset.lgCh]=o.textContent});r.autre=fc.querySelector("[data-lg-txt]").value.trim();b.regles=r}
+    else{const r=regles(b),avant=r.montant,M=litMontant(fc);r.acompte=fc.querySelector('[data-lg-sw="acompte"]').classList.contains("on");
+      if(r.acompte&&!M.ok){toast(e,M.dit);return}fc.querySelectorAll("[data-lg-ch]").forEach(g=>{const o=g.querySelector(".on");if(o)r[g.dataset.lgCh]=o.textContent});if(!M.ok)r.montant=avant;else if(M.val)r.montant=M.val;r.autre=fc.querySelector("[data-lg-txt]").value.trim();b.regles=r}
     if(!ecrit(b))return;e.classList.remove("fe");if(typeof S==="object"&&S.onglet==="acc")rendu();const m=manque(b);toast(e,ok.dataset.lgOk==="legal"&&m.length?"Enregistré · il manque encore "+m.join(", "):"Enregistré ✓ · ton site est à jour");
     document.querySelectorAll(".ms2-apercu iframe").forEach(f=>{f.src="loginail-creer/pret.html?public&appli="+Date.now()})},true);
   /* dans « Mon site » : la partie « Obligatoire » (avec ce qui manque) */

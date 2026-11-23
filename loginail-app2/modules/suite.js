@@ -7,6 +7,7 @@
 .su-carte{background:#fff;border-radius:20px;padding:4px 16px;text-align:left}.su-lg{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid rgba(30,28,27,.08);font-size:14px}.su-lg:last-child{border-bottom:0}.su-lg>div{flex:1;min-width:0}.su-lg>div span{display:block;font-size:12px;color:#8A847E;margin-top:2px}
 .su-b{flex:none;border:0;background:none;padding:8px 0 8px 8px;font:inherit;font-size:13px;font-weight:500;color:#1E1C1B;white-space:nowrap}
 .su-puces{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 0}.su-puces button{border:0;border-radius:999px;background:#fff;padding:10px 14px;font:inherit;font-size:13px;color:#1E1C1B}.su-puces button.on{background:#1E1C1B;color:#fff}
+/* 23/11 (Marie) : « Bloquer » = 6 choix, 3 et 3 */.su-puces.bl-3x3{display:grid;grid-template-columns:repeat(3,1fr)}.su-puces.bl-3x3 button{padding:10px 4px;white-space:nowrap}
 .su-gros{font-size:32px;line-height:1;font-weight:400}.su-b2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;text-align:left}.su-b2 div{background:#fff;border-radius:18px;padding:14px}.su-b2 small{display:block;font-size:9.5px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:#8A847E;margin-bottom:6px}.su-b2 b{font-size:20px;font-weight:500}
 .su-rel{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:10px;border:0;border-radius:18px;background:#fff;padding:14px 16px;font:inherit;font-size:14px;text-align:left;color:#1E1C1B}.su-rel span{font-size:12px;color:#8A847E;display:block;margin-top:2px}
 .su-champ{width:100%;min-width:0;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block;font-size:16px}
@@ -189,8 +190,10 @@
 .s5-quarts button:active{transform:scale(.94)}
 .s5-quarts button.on{background:var(--v-fonce,#1E1C1B);color:#fff;border-color:var(--v-fonce,#1E1C1B)}`; document.head.appendChild(st); }
   window.__feuilleCreneau = feuilleCreneau;   /* 22/11 : la même fenêtre quand on touche une heure en vue Semaine (agenda-vues.js) */
+  /* 23/11 (Marie) : « jusqu'à la fin de la journée » = jusqu'à l'heure de fermeture du jour (ses horaires) ; sans horaires, ou si c'est déjà fermé : minuit */
+  const finJour = () => { const hor = ((S.site && S.site.donnees && S.site.donnees.horaires) || (typeof brouillon === "function" && brouillon() || {}).horaires || [])[(S.jour.getDay() + 6) % 7], f = hor && hor.f ? +String(hor.f).slice(0, 2) * 60 + +String(hor.f).slice(3, 5) : 0; return f > BL.m ? f : 23 * 60 + 59; };
   const feuilleBloquer = () => ouvre(`<h3>Bloquer à partir de ${hM(BL.m)}</h3><div class="sous">Personne ne pourra réserver sur ce créneau.</div>
-      <div class="su-puces">${[[30, "30 min"], [60, "1 h"], [90, "1 h 30"], [120, "2 h"]].map(x => `<button data-s5="bl-d" data-d="${x[0]}" class="${BL.d === x[0] && !BL.libre ? "on" : ""}">${x[1]}</button>`).join("")}<button data-s5="bl-libre" class="${BL.libre ? "on" : ""}">Autre…</button></div>
+      <div class="su-puces bl-3x3">${[[30, "30 min"], [60, "1 h"], [90, "1 h 30"], [120, "2 h"]].map(x => `<button data-s5="bl-d" data-d="${x[0]}" class="${BL.d === x[0] && !BL.libre && !BL.fj ? "on" : ""}">${x[1]}</button>`).join("")}<button data-s5="bl-fj" class="${BL.fj ? "on" : ""}">${finJour() >= 23 * 60 + 59 ? "Jusqu’à minuit" : "Jusqu’à " + hM(finJour()).replace("h00", "h")}</button><button data-s5="bl-libre" class="${BL.libre ? "on" : ""}">Autre…</button></div>
       ${BL.libre ? `<div class="lab2">Jusqu’à</div><input class="champ" id="bl-fin" type="time" step="300" value="${hM(Math.min(23 * 60 + 55, BL.m + BL.d)).replace("h", ":").padStart(5, "0")}" style="font-size:16px;width:100%;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block">` : ""}
       <div class="lab2">Pourquoi ? <small style="text-transform:none;letter-spacing:0;opacity:.6">facultatif</small></div><input class="champ" id="bl-n" maxlength="40" placeholder="Pause, médecin, formation…" value="${esc(BL.n || "")}" style="font-size:16px;width:100%;box-sizing:border-box">
       <button class="btn" data-s5="bl-ok" style="margin-top:16px">Bloquer</button>`);
@@ -297,13 +300,18 @@
       E.querySelectorAll('[data-s5="quart"]').forEach(b => b.classList.toggle("on", b === a)); const ap = E.querySelector("#s5-ap"); if (ap) ap.textContent = BL.apres && BL.m === BL.apM ? " · juste après " + BL.apres : ""; }
     else if (k === "rdv") feuilleNouveau(BL.m);
     else if (k === "bloquer") feuilleBloquer();
-    else if (k === "bl-d") { BL.n = E.querySelector("#bl-n").value; BL.d = +a.dataset.d; BL.libre = false; feuilleBloquer(); }
-    else if (k === "bl-libre") { BL.n = E.querySelector("#bl-n").value; BL.libre = true; feuilleBloquer(); }
-    else if (k === "bl-ok") { if (BL.libre) { const v = (E.querySelector("#bl-fin").value || "").split(":").map(Number); const f = v[0] * 60 + (v[1] || 0); if (!(f > BL.m)) return dit("L’heure de fin doit être après " + hM(BL.m)); BL.d = f - BL.m; }
+    else if (k === "bl-d") { BL.n = E.querySelector("#bl-n").value; BL.d = +a.dataset.d; BL.libre = false; BL.fj = false; feuilleBloquer(); }
+    else if (k === "bl-fj") { BL.n = E.querySelector("#bl-n").value; BL.fj = true; BL.libre = false; feuilleBloquer(); }
+    else if (k === "bl-libre") { BL.n = E.querySelector("#bl-n").value; BL.libre = true; BL.fj = false; feuilleBloquer(); }
+    else if (k === "bl-ok") { if (BL.libre) { const v = (E.querySelector("#bl-fin").value || "").split(":").map(Number); const f = v[0] * 60 + (v[1] || 0); if (!(f > BL.m)) return dit("L’heure de fin doit être après " + hM(BL.m)); BL.d = f - BL.m; } else if (BL.fj) BL.d = finJour() - BL.m;
       const deb = new Date(S.jour); deb.setHours(0, BL.m, 0, 0); const fin = new Date(+deb + BL.d * 60000), note = (E.querySelector("#bl-n").value || "").trim();
-      if (S.rdv.some(r => r.statut !== "annule" && new Date(r.debut) < fin && new Date(r.fin) > deb)) return dit("Il y a déjà un rendez-vous sur ce créneau");
-      a.disabled = true; const { error } = await sb.from("rendez_vous").insert({ cliente_id: null, prestation_id: null, titre: note || "Bloqué", debut: deb.toISOString(), fin: fin.toISOString(), prix: null });
-      if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessaie."); } await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit("Créneau bloqué ✓"); }
+      const genes = S.rdv.filter(r => r.statut !== "annule" && new Date(r.debut) < fin && new Date(r.fin) > deb).sort((x, y) => new Date(x.debut) - new Date(y.debut));
+      /* 23/11 (Marie) : « jusqu'à la fin de journée » bloque tous les trous libres ; les rendez-vous déjà pris restent */
+      let morceaux = [[deb, fin]];
+      if (genes.length && !BL.fj) return dit("Il y a déjà un rendez-vous sur ce créneau");
+      if (genes.length) { morceaux = []; let c = deb; genes.forEach(r => { const x = new Date(r.debut), y = new Date(r.fin); if (x > c) morceaux.push([c, x]); if (y > c) c = y; }); if (fin > c) morceaux.push([c, fin]); morceaux = morceaux.filter(m => m[1] - m[0] >= 5 * 60000); if (!morceaux.length) return dit("Ta journée est déjà pleine jusqu’au soir"); }
+      a.disabled = true; const { error } = await sb.from("rendez_vous").insert(morceaux.map(m => ({ cliente_id: null, prestation_id: null, titre: note || "Bloqué", debut: m[0].toISOString(), fin: m[1].toISOString(), prix: null })));
+      if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessaie."); } await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit(BL.fj ? (genes.length ? "Bloqué jusqu’au soir ✓ Tes rendez-vous restent" : "Bloqué jusqu’au soir ✓") : "Créneau bloqué ✓"); }
     else if (k === "plusieurs") feuillePlusieurs();
     else if (k === "pl-ok") { const deja = new Set(S.clientes.map(c => nomCli(c).toLowerCase())), igDeja = new Set(S.clientes.map(c => c.instagram).filter(Boolean)), l = lis(E.querySelector("#s5-liste").value).filter((c, i, t) => !deja.has(nomCli(c).toLowerCase()) && !(c.instagram && igDeja.has(c.instagram)) && t.findIndex(x => nomCli(x).toLowerCase() === nomCli(c).toLowerCase()) === i); if (!l.length) return dit("Ces clientes sont déjà dans ta liste"); a.disabled = true; a.textContent = "Un instant…";
       const { error } = await sb.from("clientes").insert(l); if (error) { a.disabled = false; a.textContent = "Ajouter"; return dit("Oups, ça n’a pas marché. Réessaie."); }
