@@ -172,9 +172,22 @@
   /* 2 · un créneau vide : nouveau rendez-vous, ou bloquer ce créneau */
   E.addEventListener("touchstart", e => { window.__s5t = e.target.closest ? e.target.closest(".pl") : null; window.__s5d = Date.now(); }, { passive: true, capture: true });
   let BL = { m: 0, d: 60 };
-  const feuilleCreneau = m => { BL = { m, d: 60 }; const j = S.jour;
-    ouvre(`<h3>${hM(m)}</h3><div class="sous" style="text-transform:capitalize">${JOURS[(j.getDay() + 6) % 7]} ${j.getDate()} ${MOIS[j.getMonth()]}</div>
+  /* 23/11 (Marie) : les rendez-vous tombent souvent à 10h15, 10h45. 1) Si la cliente d'avant finit dans la demi-heure touchée, on démarre juste après elle ;
+     2) 4 boutons au quart d'heure (10h · 10h15 · 10h30 · 10h45) pour changer l'heure d'un seul geste (cases de 15 min = trop petites pour le doigt). */
+  const hC = m => Math.floor(m / 60) + "h" + (m % 60 ? p2(m % 60) : "");
+  const feuilleCreneau = m => { const j = S.jour;
+    const avant = S.rdv.filter(r => r.statut !== "annule" && memeJour(new Date(r.debut), j)).map(r => { const f = new Date(r.fin); return { r, f: f.getHours() * 60 + f.getMinutes() }; })
+      .filter(x => x.f > m && x.f < m + 30).sort((a, b) => b.f - a.f)[0];
+    if (avant) m = avant.f;
+    BL = { m, d: 60, base: Math.floor(m / 60) * 60, apM: m, apres: avant && avant.r.cliente_id ? String(nomRdv(avant.r)).split(" ")[0] : "" };
+    ouvre(`<h3 id="s5-h">${hC(m)}</h3><div class="sous" style="text-transform:capitalize">${JOURS[(j.getDay() + 6) % 7]} ${j.getDate()} ${MOIS[j.getMonth()]}<span id="s5-ap" style="text-transform:none">${BL.apres ? " · juste après " + esc(BL.apres) : ""}</span></div>
+      <div class="s5-quarts">${[0, 15, 30, 45].map(q => `<button data-s5="quart" data-m="${BL.base + q}" class="${BL.base + q === m ? "on" : ""}">${hC(BL.base + q)}</button>`).join("")}</div>
       <button class="btn" data-s5="rdv" style="margin-top:16px">Nouveau rendez-vous</button><button class="btn clair" data-s5="bloquer" style="margin-top:8px">Bloquer ce créneau</button>`); };
+  { const st = document.createElement("style"); st.textContent = `
+.s5-quarts{display:flex;gap:7px;margin-top:14px}
+.s5-quarts button{flex:1;min-width:0;height:42px;border-radius:999px;border:1px solid rgba(30,28,27,.14);background:#fff;font:inherit;font-size:15px;font-weight:500;color:#1E1C1B;padding:0;font-variant-numeric:tabular-nums;transition:transform .1s,background .15s,color .15s;-webkit-tap-highlight-color:transparent}
+.s5-quarts button:active{transform:scale(.94)}
+.s5-quarts button.on{background:var(--v-fonce,#1E1C1B);color:#fff;border-color:var(--v-fonce,#1E1C1B)}`; document.head.appendChild(st); }
   window.__feuilleCreneau = feuilleCreneau;   /* 22/11 : la même fenêtre quand on touche une heure en vue Semaine (agenda-vues.js) */
   const feuilleBloquer = () => ouvre(`<h3>Bloquer à partir de ${hM(BL.m)}</h3><div class="sous">Personne ne pourra réserver sur ce créneau.</div>
       <div class="su-puces">${[[30, "30 min"], [60, "1 h"], [90, "1 h 30"], [120, "2 h"]].map(x => `<button data-s5="bl-d" data-d="${x[0]}" class="${BL.d === x[0] && !BL.libre ? "on" : ""}">${x[1]}</button>`).join("")}<button data-s5="bl-libre" class="${BL.libre ? "on" : ""}">Autre…</button></div>
@@ -280,7 +293,9 @@
     /* 13/11 (iPhone) : la fenêtre « 13h · nouveau rendez-vous · bloquer » ne s'ouvre que dans l'Agenda, sur la case vraiment touchée */
     const cr = t.closest('.vue.on .pap .pl[data-a="creneau"]'); if (cr && S.onglet === "ag" && !E.querySelector(".vue.on .calm") && (!window.__s5t || window.__s5t === cr || Date.now() - window.__s5d > 1500)) { e.stopPropagation(); e.preventDefault(); return feuilleCreneau(+cr.dataset.m); }
     const a = t.closest("[data-s5]"); if (!a) return; e.stopPropagation(); const k = a.dataset.s5;
-    if (k === "rdv") feuilleNouveau(BL.m);
+    if (k === "quart") { BL.m = +a.dataset.m; const h = E.querySelector("#s5-h"); if (h) h.textContent = hC(BL.m);
+      E.querySelectorAll('[data-s5="quart"]').forEach(b => b.classList.toggle("on", b === a)); const ap = E.querySelector("#s5-ap"); if (ap) ap.textContent = BL.apres && BL.m === BL.apM ? " · juste après " + BL.apres : ""; }
+    else if (k === "rdv") feuilleNouveau(BL.m);
     else if (k === "bloquer") feuilleBloquer();
     else if (k === "bl-d") { BL.n = E.querySelector("#bl-n").value; BL.d = +a.dataset.d; BL.libre = false; feuilleBloquer(); }
     else if (k === "bl-libre") { BL.n = E.querySelector("#bl-n").value; BL.libre = true; feuilleBloquer(); }
