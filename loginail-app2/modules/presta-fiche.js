@@ -29,7 +29,36 @@
 #E .pf-vu>div{display:flex;gap:10px;margin-top:5px}
 #E .pf-vu p{flex:1;min-width:0;margin:0;font-size:12.5px;line-height:1.4;color:#5d4a4d;overflow-wrap:anywhere}
 #E .pf-vu img{flex:none;width:50px;height:50px;object-fit:cover;border-radius:11px}
-#E .pf-vu img[hidden]{display:none}`;
+#E .pf-vu img[hidden]{display:none}
+/* 23/11 (Marie, D108) : la fiche tient sur l'écran, « Enregistrer » se voit sans descendre (maquettes/presta-enregistrer-2311) */
+#E .fc:has(.pf-ligne) h3{font-size:22px;margin:0 0 2px}
+#E .fc:has(.pf-ligne) .form{margin-top:8px!important;gap:0}
+#E .fc:has(.pf-ligne) .form input{height:42px}
+#E .fc:has(.pf-ligne) .pf-lab,#E .fc:has(.pf-ligne) .lab{margin:10px 0 5px!important}
+#E .pf-ligne{display:flex;gap:8px;align-items:stretch}
+#E .pf-ligne .pf-types{flex:1;min-width:0;gap:0;padding:3px;border:1px solid rgba(30,28,27,.12);border-radius:14px;background:#fff;box-sizing:border-box;height:44px}
+#E .pf-ligne .pf-types button{height:36px;border:0;border-radius:11px;font-size:12.5px;background:none}
+#E .pf-ligne .pf-types button.on{background:var(--v-fonce,#1E1C1B)}
+#E .pf-ligne .pf-prix{margin:0;flex:none;width:104px;position:relative}
+#E .pf-ligne .pf-prix input{width:100%;height:44px;box-sizing:border-box;padding:0 26px 0 12px;border:1px solid rgba(30,28,27,.12);border-radius:14px;background:#fff;color:inherit;font:inherit;font-size:16px}
+#E .pf-ligne .pf-prix span{position:absolute;right:11px;top:50%;transform:translateY(-50%);font-size:15px;color:#776D64;pointer-events:none}
+#E .fc:has(.pf-ligne) .chips.ch-dur{gap:6px!important}
+#E .fc:has(.pf-ligne) .chips.ch-dur .chip{min-height:0!important;height:38px;padding:0 2px!important;border-radius:12px!important;font-size:13px!important;justify-content:center}
+#E .fc:has(.pf-ligne) textarea.pf-texte{height:62px;padding:8px 12px}
+#E .pf-magie{display:inline-flex;align-items:center;gap:6px;margin-top:7px;height:32px;padding:0 13px 0 10px;border:0;border-radius:16px;background:var(--v-rose,#F5E6E4);color:#8a2f50;font:inherit;font-size:13px;cursor:pointer;transition:transform .12s}
+#E .pf-magie:active{transform:scale(.96)}
+#E .pf-magie i{font-style:normal;color:#B03562;font-size:14px;display:inline-block;transition:transform .25s}
+#E .pf-magie.tourne i{transform:rotate(72deg) scale(1.15)}
+#E textarea.pf-texte.ecrit{animation:pf-ecrit .35s ease-out}
+@keyframes pf-ecrit{from{color:transparent}}
+#E .pf-phl{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
+#E .pf-phl .pf-lab{margin:0!important}
+#E .pf-phl .pf-photos{padding:0;gap:8px}
+#E .pf-phl .pf-ph,#E .pf-phl .pf-plus{width:42px;height:42px;font-size:20px}
+#E .pf-vu1{margin-top:12px;font-size:12px;color:#776D64;text-align:center;line-height:1.4;overflow-wrap:anywhere}
+#E .pf-vu1 b{color:var(--noir,#1E1C1B);font-weight:500}
+#E .fc:has(.pf-ligne) [data-cs-ok="presta"]{margin-top:12px!important}
+@media (prefers-reduced-motion:reduce){#E textarea.pf-texte.ecrit,#E .pf-magie i{animation:none;transition:none}}`;
   document.head.appendChild(st);
 
   const montantDe = v => { const s = String(v || "").replace(/[\s€]/g, "").replace(",", "."); return /^\d+(\.\d{1,2})?$/.test(s) ? +s : null; };
@@ -37,19 +66,19 @@
 
   function haut(p, i) {
     const nouvelle = i < 0;
-    F = { i, nom: p.nom, type: nouvelle ? "des" : K.type(p), choisi: !nouvelle, texteTouche: !nouvelle, avant: K.photos(p), photos: K.photos(p).map(url => ({ url })) };
+    F = { i, nom: p.nom, type: nouvelle ? p.typePrix || "des" : K.type(p), choisi: !nouvelle || !!p.typePrix,   /* 23/11 : un petit plus « Déjà écrit » arrive en prix fixe */
+      texteTouche: !nouvelle, avant: K.photos(p), photos: K.photos(p).map(url => ({ url })) };
     const t = (id, mot) => `<button type="button" data-pf-t="${id}" class="${F.type === id ? "on" : ""}" aria-pressed="${F.type === id}">${mot}</button>`;
-    return `<div class="pf-lab"><span>Ton prix</span></div><div class="pf-types">${t("des", "À partir de")}${t("fixe", "Prix fixe")}${t("devis", "Sur devis")}</div>
-      <div class="form pf-prix"${F.type === "devis" ? " hidden" : ""}><label>Prix en €<input data-cs-prix value="${p.prix == null ? "" : K.esc(String(p.prix).replace(".", ","))}" placeholder="Par exemple : 55" inputmode="decimal"></label></div>`;
+    return `<div class="pf-lab"><span>Ton prix</span></div><div class="pf-ligne"><div class="pf-types">${t("des", "À partir de")}${t("fixe", "Fixe")}${t("devis", "Sur devis")}</div>
+      <label class="pf-prix"${F.type === "devis" ? " hidden" : ""}><input data-cs-prix value="${p.prix == null ? "" : K.esc(String(p.prix).replace(".", ","))}" placeholder="55" inputmode="decimal" aria-label="Prix en euros"><span>€</span></label></div>`;
   }
   function bas(p) {
-    const d = String(p.detail || "").slice(0, K.MAX), prop = K.propose(p.nom), ph = F.photos;
+    const d = String(p.detail || "").slice(0, K.MAX);
     return `<div class="pf-lab"><span>C’est quoi ? · facultatif</span><em data-pf-n>${d.length} / ${K.MAX}</em></div>
       <textarea class="pf-texte" data-pf-texte maxlength="${K.MAX}" placeholder="En une phrase, ce que ta cliente va avoir.">${K.esc(d)}</textarea>
-      <button type="button" class="pf-propose" data-pf-prop${prop && prop !== d ? "" : " hidden"}><b>✦ Utiliser le texte proposé</b><span>${K.esc(prop)}</span></button>
-      <div class="pf-lab"><span>Photos · facultatif, ${K.MAX_PHOTOS} au plus</span></div>
-      <div class="pf-photos">${vignettes()}</div><input type="file" accept="image/*" multiple hidden data-pf-file>
-      <div class="pf-vu"><small>Ta cliente verra</small><b data-pf-vn>${K.esc(p.nom || "Ta prestation")}</b><span data-pf-vp>${K.esc(p.nom ? K.meta({ ...p, duree: +p.duree || 60 }) : "")}</span><div><p data-pf-vt>${K.esc(d)}</p><img data-pf-vi alt="" ${ph.length ? `src="${K.esc(ph[0].url)}"` : "hidden"}></div></div>`;
+      <button type="button" class="pf-magie" data-pf-prop><i>✦</i><span>${d.trim() ? "Une autre idée" : "Écris-le pour moi"}</span></button>
+      <div class="pf-phl"><div class="pf-lab"><span>Photos · facultatif, ${K.MAX_PHOTOS} au plus</span></div><div class="pf-photos">${vignettes()}</div></div><input type="file" accept="image/*" multiple hidden data-pf-file>
+      <div class="pf-vu1">Ta cliente verra : <b data-pf-vn>${K.esc(p.nom || "Ta prestation")}</b> · <span data-pf-vp>${K.esc(p.nom ? K.meta({ ...p, duree: +p.duree || 60 }) : "")}</span></div>`;
   }
   function vignettes() {
     return F.photos.map((p, k) => `<div class="pf-ph"><img src="${K.esc(p.url)}" alt=""><button type="button" data-pf-x="${k}" aria-label="Retirer la photo"><i>×</i></button></div>`).join("")
@@ -57,19 +86,17 @@
   }
   function maj() {
     if (!F || !q("[data-pf-texte]")) return;
-    const nom = q("[data-cs-nom]").value.trim(), zone = q("[data-pf-texte]"), prop = K.propose(nom);
+    const nom = q("[data-cs-nom]").value.trim(), zone = q("[data-pf-texte]"), prop = (K.proposeTous ? K.proposeTous(nom)[0] : K.propose(nom)) || "";
     if (!F.choisi && nom) F.type = K.typeConseille(nom);
     if (!F.texteTouche) zone.value = prop;   /* nouvelle prestation : le texte s'écrit tout seul */
     E.querySelectorAll(".fc [data-pf-t]").forEach(b => { const on = b.dataset.pfT === F.type; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
     q(".pf-prix").hidden = F.type === "devis";
     const m = montantDe(q("[data-cs-prix]").value), d = q("[data-cs-d].on");
     q("[data-pf-n]").textContent = `${zone.value.length} / ${K.MAX}`;
-    const b = q("[data-pf-prop]"); b.hidden = !prop || prop === zone.value.trim(); b.querySelector("span").textContent = prop;
+    q("[data-pf-prop] span").textContent = zone.value.trim() ? "Une autre idée" : "Écris-le pour moi";
     q("[data-pf-vn]").textContent = nom || "Ta prestation";
     q("[data-pf-vp]").textContent = F.type !== "devis" && m == null ? "Il manque le prix"
       : K.meta({ duree: d ? +d.dataset.csD : 60, prix: F.type === "devis" ? null : m, typePrix: F.type });
-    q("[data-pf-vt]").textContent = zone.value;
-    const im = q("[data-pf-vi]"); im.hidden = !F.photos.length; if (F.photos.length) im.src = F.photos[0].url;
   }
 
   addEventListener("click", e => {
@@ -78,7 +105,12 @@
     if (!t) { if (e.target.closest("[data-cs-d]")) setTimeout(maj); return; }
     e.preventDefault(); e.stopPropagation();
     if (t.dataset.pfT) { F.type = t.dataset.pfT; F.choisi = true; }
-    else if (t.hasAttribute("data-pf-prop")) { q("[data-pf-texte]").value = t.querySelector("span").textContent; F.texteTouche = true; }
+    else if (t.hasAttribute("data-pf-prop")) {
+      const z = q("[data-pf-texte]"), l = K.proposeTous ? K.proposeTous(q("[data-cs-nom]").value) : [K.propose(q("[data-cs-nom]").value)].filter(Boolean);
+      if (l.length) { const k = l.indexOf(z.value.trim()); z.value = l[k < 0 && !z.value.trim() ? 0 : (k + 1) % l.length]; }
+      F.texteTouche = true; z.classList.remove("ecrit"); void z.offsetWidth; z.classList.add("ecrit");
+      t.classList.add("tourne"); setTimeout(() => t.classList.remove("tourne"), 260);
+    }
     else if (t.hasAttribute("data-pf-plus")) return q("[data-pf-file]").click();
     else { F.photos.splice(+t.dataset.pfX, 1); q(".pf-photos").innerHTML = vignettes(); }
     maj();
