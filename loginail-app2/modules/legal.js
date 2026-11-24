@@ -6,7 +6,7 @@
     const d=typeof S==="object"&&S.site&&S.site.donnees;return d&&!b.nom?Object.assign(JSON.parse(JSON.stringify(d)),b):b};
   const ecrit=b=>{try{localStorage.setItem("loginail-brouillon",JSON.stringify(b));return true}catch(_){return false}};
   const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
-  const REG0={acompte:true,montant:"15 €",retard:"10 min",annulation:"48 h avant",autre:""};
+  const REG0={acompte:true,montant:"15 €",retard:"10 min",annulation:"48 h avant",frais:"Rien",autre:""};
   const regles=b=>Object.assign({},REG0,b.regles||{});
   const manque=b=>{const L=b.legal||{};const m=[];if(!L.nomComplet)m.push("ton nom");if(!/^\d{14}$/.test((L.siret||"").replace(/\s/g,"")))m.push("ton SIRET");return m};
   window.__legalManque=()=>manque(lit());   /* pour le rappel de l'Accueil (rappel-legal.js) */
@@ -41,6 +41,8 @@
     <div class="lab" style="margin-top:12px">Montant de l’acompte</div>${choixMontant(r.montant)}
     <div class="lab" style="margin-top:12px">Retard accepté</div>${puces("retard",["5 min","10 min","15 min"],r.retard)}
     <div class="lab" style="margin-top:12px">Annulation gratuite jusqu’à</div>${puces("annulation",["24 h avant","48 h avant","72 h avant"],r.annulation)}
+    <div class="lab" style="margin-top:12px">Si elle annule plus tard, ou ne vient pas</div>${puces("frais",["Rien","10 €","15 €","20 €","25 €","30 €"],r.frais)}
+    <div class="sous" style="text-align:left;margin-top:6px;font-size:11.5px">Ces frais s’affichent sur ton site avant qu’elle réserve (obligatoire). Quand elle annule trop tard, l’appli te propose de les noter dans « À récupérer ».</div>
     <div class="lab" style="margin-top:12px">Autre chose à dire <small>facultatif</small></div><textarea class="msg" data-lg-txt style="height:80px" placeholder="Par exemple : venez sans vernis">${esc(r.autre)}</textarea>
     <div class="sous" style="margin-top:10px;font-size:11.5px">Obligatoire : ces règles sont dans tes conditions de réservation, que la cliente accepte avant de réserver.</div>
     <button class="btn" data-lg-ok="regles" style="width:100%;margin-top:6px">Enregistrer</button>`};
@@ -59,7 +61,7 @@
   /* dans « Mon site » : la partie « Obligatoire » (avec ce qui manque) */
   const bloc=()=>{const b=lit(),m=manque(b),r=regles(b);
     return `<div class="lg-bloc"><div class="k">Obligatoire</div><div class="liste"><div class="ligne" data-a="ms-legal"><div class="t">Mes infos légales<span${m.length?' style="color:#A04A4A"':""}>${m.length?"Il manque "+m.join(", "):!(b.legal||{}).mediateur?"Nom et SIRET ✓ · pense à ton médiateur":"Complet ✓"}</span></div><span class="fl">›</span></div>
-    <div class="ligne" data-a="ms-bon"><div class="t">Bon à savoir<span>${r.acompte?"Acompte "+r.montant:"Sans acompte"} · annulation ${r.annulation}</span></div><span class="fl">›</span></div></div></div>`};
+    <div class="ligne" data-a="ms-bon"><div class="t">Bon à savoir<span>${r.acompte?"Acompte "+r.montant:"Sans acompte"} · annulation ${r.annulation}${r.frais&&r.frais!=="Rien"?" · frais "+r.frais:""}</span></div><span class="fl">›</span></div></div></div>`};
   const pose=()=>document.querySelectorAll('.vue[data-p="si"]').forEach(vu=>{const ks=[...vu.querySelectorAll(".k")];const k=ks.find(x=>/Mon contenu/.test(x.textContent));if(!k)return;
     /* « Bon à savoir » passe dans « Obligatoire » */
     const vieux=k.nextElementSibling&&k.nextElementSibling.querySelector('.ligne[data-a="ms-bon"]');if(vieux)vieux.remove();
