@@ -107,7 +107,8 @@
 #E .dt-ban{display:flex;align-items:center;gap:10px;margin-top:12px;padding:11px 13px;border-radius:16px;background:#F7E9EC;text-align:left}
 #E .dt-ban>span{flex:none;font-size:17px}#E .dt-ban>div{flex:1;min-width:0}#E .dt-ban b{display:block;font-weight:500;color:#9A5B62;font-size:14.5px}#E .dt-ban small{display:block;font-size:12.5px;color:#776D64;overflow-wrap:anywhere}
 #E .dt-ban button{flex:none;height:34px;padding:0 12px;border-radius:99px;border:1px solid rgba(30,28,27,.15);background:#fff;color:#4F4643;font:inherit;font-size:12.5px;cursor:pointer}
-#E .dt-ag{margin-left:4px;font-style:normal}`;
+#E .dt-ag{margin-left:4px;font-style:normal}
+#E .vue .pr span .dt-rap,#E .pr .dt-rap{font-weight:700!important;color:#9A5B62;white-space:nowrap}`;
   document.head.appendChild(st2);
   const cliDe = r => r && r.cliente_id && S.clientes.find(c => c.id === r.cliente_id);
   const duPour = r => { const c = cliDe(r); return c && r.statut !== "annule" ? total(dettes(c)) : 0; };
@@ -117,7 +118,10 @@
     return n ? f.innerHTML : h; };
   const ag1 = VUES.ag;
   VUES.ag = () => { const h = ag1(), f = document.createElement("div"); f.innerHTML = h; let n = 0;
-    f.querySelectorAll(".pr[data-rdv] > b, .av-b[data-rdv] .av-n").forEach(b => { const el = b.closest("[data-rdv]"), r = (S.rdv || []).find(x => x.id === el.dataset.rdv); if (!duPour(r)) return; b.insertAdjacentHTML("beforeend", '<i class="dt-ag" title="À récupérer">💸</i>'); n++; });
+    /* 24/11 nuit (Marie : « après "Remplissage", en gras, RAP 25 ») : en vue Jour, à la suite de la prestation ; en Semaine (étroit), un 💸 */
+    f.querySelectorAll(".pr[data-rdv], .av-b[data-rdv]").forEach(el => { const r = (S.rdv || []).find(x => x.id === el.dataset.rdv), m = duPour(r); if (!m) return;
+      const z = el.classList.contains("pr") ? (el.querySelector(":scope > span") || el.querySelector(":scope > b")) : el.querySelector(".av-n"); if (!z) return;
+      z.insertAdjacentHTML("beforeend", el.classList.contains("pr") ? ` · <b class="dt-rap">À récup. ${esc(eu(m))}</b>` : '<i class="dt-ag" title="À récupérer">💸</i>'); n++; });
     return n ? f.innerHTML : h; };
   const fr0 = feuilleRdv;
   feuilleRdv = function (id) { const v = fr0.apply(this, arguments);

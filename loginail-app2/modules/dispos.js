@@ -334,6 +334,50 @@
       cx.fillStyle = t; cx.textAlign = "left"; cx.textBaseline = "middle"; cx.fillText(ici, px + 12 * K, py + ph / 2 + 1); }
     return c; }
 
+  /* ---------- 24/11 nuit (Marie : « quand je clique sur un créneau… un "partager ma dispo" qui enregistre l'image "nouvelle dispo mardi 16 décembre à 10h30" ») ----------
+     Une seule heure, aux couleurs et au fond de son site, comme « Mes dispos de la semaine ». Toucher → l'image part dans Photos (appli iPhone) ou le menu Partager. */
+  const JLONG = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+  async function dessineUne(deb) {
+    await Promise.all([chargeFonds(), chargePolices()]);
+    { const nom = donnees().fond; if (nom && !(window.F100 && F100.idx[nom] != null)) await fondsDuSite().catch(() => {}); }
+    const s = site(), c = document.createElement("canvas"); c.width = W; c.height = H; const cx = c.getContext("2d");
+    try { await Promise.all([`60px ${s.pol[0]}`, `500 40px 'Cormorant Garamond'`, `italic 500 40px 'Cormorant Garamond'`, `400 12px Jost`, `500 12px Jost`].map(f => document.fonts.load(f, s.nom + "Nouvelle dispo 0123456789H décembre"))); } catch (e) {}
+    await fond(cx, s);
+    const t = s.sombre ? "#F3F0EC" : melange(s.acc, "#1E1C1B", .45), a = s.sombre ? melange(s.acc, "#FFFFFF", .7) : s.acc,
+      carte = s.sombre ? "rgba(18,18,20,.82)" : "rgba(255,250,248,.93)", pil = s.sombre ? "rgba(255,255,255,.13)" : melange(s.acc, "#FFFFFF", .85);
+    const X = 40 * K, CW = W - 2 * X, PADX = 22 * K, CH = 300 * K, TOP = Math.round(250 + (1330 - CH - 41 * K) / 2), CB = TOP + CH;
+    cx.save(); cx.shadowColor = "rgba(30,20,22,.28)"; cx.shadowBlur = 40; cx.shadowOffsetY = 18; cx.fillStyle = carte; rond(cx, X, TOP, CW, CH, 26 * K); cx.fill(); cx.restore();
+    const etoile = (x, y, sz) => { cx.save(); cx.font = `${sz}px 'Cormorant Garamond', serif`; cx.fillStyle = "#fff"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.shadowColor = "rgba(0,0,0,.3)"; cx.shadowBlur = 12; cx.fillText("✦", x, y); cx.restore(); };
+    etoile(X + 4 * K, TOP - 4 * K, 30 * K); etoile(X + 22 * K, TOP - 22 * K, 14 * K); etoile(W - X - 4 * K, CB + 2 * K, 24 * K); etoile(W - X + 12 * K, CB + 22 * K, 12 * K);
+    cx.textAlign = "center"; cx.textBaseline = "alphabetic";
+    /* le nom du salon, dans son écriture */
+    let fs = 30 * K * s.pol[1]; const pol = z => `400 ${z}px ${s.pol[0]}, 'Great Vibes', cursive`; cx.font = pol(fs);
+    while (cx.measureText(s.nom).width > CW - 2 * PADX && fs > 14 * K) { fs -= 2; cx.font = pol(fs); }
+    let y = TOP + 26 * K + fs * .85; cx.fillStyle = a; cx.fillText(s.nom, W / 2, y);
+    /* « Nouvelle dispo » (dispo en italique, couleur du site) */
+    y += 52 * K; { const f1 = `500 ${38 * K}px 'Cormorant Garamond', Georgia, serif`, f2 = `italic 500 ${38 * K}px 'Cormorant Garamond', Georgia, serif`, p1 = "Nouvelle ", p2 = "dispo";
+      cx.font = f1; const w1 = cx.measureText(p1).width; cx.font = f2; const w2 = cx.measureText(p2).width, x0 = W / 2 - (w1 + w2) / 2;
+      cx.textAlign = "left"; cx.font = f1; cx.fillStyle = t; cx.fillText(p1, x0, y); cx.font = f2; cx.fillStyle = a; cx.fillText(p2, x0 + w1, y); cx.textAlign = "center"; }
+    /* le jour */
+    y += 40 * K; cx.globalAlpha = .7; cx.fillStyle = t; cx.font = `400 ${13 * K}px Jost, sans-serif`; if ("letterSpacing" in cx) cx.letterSpacing = `${.1 * 13 * K}px`;
+    cx.fillText(`${JLONG[deb.getDay()]} ${deb.getDate()} ${MOIS[deb.getMonth()]}`.toUpperCase(), W / 2, y); if ("letterSpacing" in cx) cx.letterSpacing = "0px"; cx.globalAlpha = 1;
+    /* l'heure, en grand dans une pastille */
+    y += 26 * K; const hh = hTxt(deb.getHours() * 60 + deb.getMinutes()); cx.font = POLICE_H().replace("{f}", 40 * K); const hw = largeurFixe(cx, hh).w + 56 * K, hph = 74 * K;
+    cx.fillStyle = pil; rond(cx, W / 2 - hw / 2, y, hw, hph, hph / 2); cx.fill(); cx.fillStyle = t; cx.textBaseline = "middle"; ecritFixe(cx, hh, W / 2, y + hph / 2 + 2, "center");
+    cx.textBaseline = "middle"; cx.globalAlpha = .55; cx.font = `400 ${11 * K}px Jost, sans-serif`; cx.fillText("loginail.fr", W / 2, CB - 18 * K); cx.globalAlpha = 1;
+    { cx.font = `400 ${11 * K}px Jost, sans-serif`; const ici = RESA() === "insta" ? TXT_INSTA : "réserve ici :", tw = cx.measureText(ici).width, pw2 = tw + 24 * K, ph = 25 * K, px = X + 4 * K, py = Math.min(CB + 16 * K, 1500);
+      cx.save(); cx.shadowColor = "rgba(30,20,22,.22)"; cx.shadowBlur = 24; cx.shadowOffsetY = 8; cx.fillStyle = carte; rond(cx, px, py, pw2, ph, ph / 2); cx.fill(); cx.restore();
+      cx.fillStyle = t; cx.textAlign = "left"; cx.fillText(ici, px + 12 * K, py + ph / 2 + 1); }
+    return c;
+  }
+  window.__dispoUne = { dessine: dessineUne, partage: async deb => {
+    const c = await dessineUne(deb), blob = await new Promise((ok, ko) => { try { c.toBlob(b => b ? ok(b) : ko(new Error("vide")), "image/jpeg", .93); } catch (e) { ko(e); } });
+    if (RESA() === "ligne") copie();
+    const nom = `nouvelle-dispo-${deb.getDate()}-${MOIS[deb.getMonth()]}-${deb.getHours()}h${String(deb.getMinutes()).padStart(2, "0")}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "") + ".jpg", M = MEDIA();
+    if (!M) return partageFichier(blob, nom, "Image enregistrée ✓");
+    try { await M.savePhoto({ path: await enDataUrl(blob), fileName: nom.replace(/\.jpg$/, "") }); dit("Image enregistrée dans tes photos ✓"); }
+    catch (err) { const m = String((err && err.message) || err || ""); if (/denied|refus|permission|authori/i.test(m)) dit("Autorise Loginail dans Réglages › Loginail › Photos"); else partageFichier(blob, nom, "Image enregistrée ✓"); } } };
+
   /* ---------- 5 · la feuille d'aperçu ---------- */
   const lien = () => S.site && S.site.en_ligne && S.site.slug ? lienDuSite(S.site) : "";
   const copie = () => { const u = lien(); if (!u) return Promise.resolve(false); try { return navigator.clipboard.writeText(u).then(() => true, () => false); } catch (e) { return Promise.resolve(false); } };

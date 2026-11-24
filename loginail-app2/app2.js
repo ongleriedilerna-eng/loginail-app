@@ -371,7 +371,10 @@ function nFin() {
   const i = document.getElementById("n-h"), t = document.getElementById("n-h-t"), b = document.querySelector('.fc [data-a="nouveau-ok"]'); if (!i || !b) return;
   const [h, m] = (i.value || "09:00").split(":").map(Number), deb = h * 60 + m, f = deb + ((N.presta && N.presta.duree) || 0), hx = x => Math.floor(x / 60) % 24 + ":" + String(x % 60).padStart(2, "0");
   if (t) t.textContent = hx(deb);
-  b.innerHTML = N.presta ? `Enregistrer <span style="opacity:.6;font-size:.9em">· ${hx(deb)} – ${hx(f)}</span>` : "Enregistrer";
+  /* 24/11 nuit (Marie : « je dois encore appuyer 2 fois sur Enregistrer ») : on ne réécrit le bouton que si son texte change vraiment
+     (réécrit sous le doigt, l'iPhone perd le toucher) */
+  const hNeuf = N.presta ? `Enregistrer <span style="opacity:.6;font-size:.9em">· ${hx(deb)} – ${hx(f)}</span>` : "Enregistrer";
+  if (b._h !== hNeuf) { b._h = hNeuf; b.innerHTML = hNeuf; }
 }
 document.addEventListener("input", e => { if (e.target.id === "n-h") nFin(); });
 document.addEventListener("change", e => { if (e.target.id === "n-h") nFin(); });

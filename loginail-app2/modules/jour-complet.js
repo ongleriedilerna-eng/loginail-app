@@ -20,6 +20,7 @@
 #E .jc.ferme{background:#F3ECEA}#E .jc.ferme svg{flex:none;width:15px;height:15px;color:#9A5B62}
 #E .jc.pop{animation:jc-in .25s ease-out}
 #E .pap.jc-ferme .pl{background-image:repeating-linear-gradient(135deg,rgba(30,28,27,.045) 0 6px,transparent 6px 12px)}
+#E .semaine button.on.jc-off{background:#CDC6C0!important}#E .semaine button.on.jc-off b{color:#fff}
 #E .av-col.jc-ferme{background-image:repeating-linear-gradient(135deg,rgba(30,28,27,.05) 0 5px,transparent 5px 10px)}
 #E .jc-l{margin:12px 0 0;padding:0;list-style:none;border-radius:16px;background:#fff;text-align:left}
 #E .jc-l li{display:flex;gap:10px;padding:10px 14px;font-size:13.5px;line-height:1.35;border-bottom:1px solid #F1ECE7}#E .jc-l li:last-child{border:0}
@@ -75,6 +76,8 @@
       if (e.k !== "ouvert") pap.classList.add("jc-ferme");
       anime = "";
     }
+    /* 24/11 nuit (Marie : « le jour où je suis fermée, le carré au lieu de noir, grisé ») : un jour fermé dans ses horaires, choisi = carré gris */
+    f.querySelectorAll(".semaine button[data-jour]").forEach(b => { if (horaireFerme(new Date(b.dataset.jour))) b.classList.add("jc-off"); });
     f.querySelectorAll(".av-col[data-av-j]").forEach(c => { if (etat(new Date(c.dataset.avJ)).k !== "ouvert") c.classList.add("jc-ferme"); });
     return f.innerHTML;
   };

@@ -124,8 +124,20 @@
     if (dem) { const c = dem.nextElementSibling; h += dem.outerHTML + (c ? c.outerHTML : ""); }
     if (ici) h += `<div class="k">En ce moment au salon</div><div class="v-maint" data-rdv="${ici.id}"><span class="v-pulse"></span><div>${esc(nomRdv(ici))}<small>${esc(titreRdv(ici))}</small></div><div class="v-jq">jusqu’à<br>${hh(new Date(ici.fin))}</div></div>`;
     if (libres.length) h += `<div class="k">Encore libre aujourd’hui</div><div class="v-creneaux">${libres.map(l => `<button class="v-cr" data-su="libre" data-m="${l.m}"><b>${esc(l.t.replace(/(\d+)h(\d\d)/g, "$1:$2"))}</b><span>+ Rendez-vous</span></button>`).join("")}</div>`;
-    h += `<div class="k">Toute la journée <a data-go="ag">Agenda ›</a></div>`;
-    if (auj.length) { const L = S.accTout ? auj : auj.slice(0, 5);
+    /* 24/11 nuit (Marie : « une fois ma journée passée, ça sert plus à rien… écris "pour demain" ») : journée finie → les clientes de demain */
+    let liste = auj, titre = "Toute la journée", videDemain = false;
+    { const HO = ((S.site && S.site.donnees && S.site.donnees.horaires) || ((typeof brouillon === "function" && brouillon()) || {}).horaires || [])[(now.getDay() + 6) % 7],
+        mnH = t => +String(t).slice(0, 2) * 60 + +String(t).slice(3, 5), nowM = now.getHours() * 60 + now.getMinutes(),
+        ferme = HO && HO.f ? mnH(HO.f) : null, der = cli.length ? Math.max(...cli.map(r => +new Date(r.fin))) : null;
+      const finie = (der == null || +now >= der) && (ferme != null ? nowM >= ferme : der != null || HO === null);
+      if (finie) { const dm = plusJours(new Date(now.getFullYear(), now.getMonth(), now.getDate()), 1), vus = new Map();
+        (S.tous || []).concat(S.rdv || []).forEach(r => vus.set(r.id, r));
+        liste = [...vus.values()].filter(r => memeJour(new Date(r.debut), dm) && r.statut !== "annule" && !(window.__estVerrou && __estVerrou(r)))
+          .map(r => r.clientes || !r.cliente_id ? r : Object.assign({}, r, { clientes: S.clientes.find(c => c.id === r.cliente_id) })).sort((x, y) => x.debut.localeCompare(y.debut));
+        titre = `Demain · ${JOURS[(dm.getDay() + 6) % 7].toLowerCase()} ${dm.getDate()}`; videDemain = !liste.length; } }
+    h += `<div class="k">${esc(titre)} <a data-go="ag">Agenda ›</a></div>`;
+    if (videDemain) h += `<div class="blanche vide2"><div class="t"><b>Pas de rendez-vous demain</b><span>Les réservations de ton site arrivent ici toutes seules.</span></div></div>`;
+    else if (liste.length) { const auj = liste, L = S.accTout ? auj : auj.slice(0, 5);
       h += `<div class="liste v-liste">${L.map(r => { const d = new Date(r.debut), passe = new Date(r.fin) <= now || r.statut === "fini" || r.statut === "absente";
         return `<div class="v-l${passe ? " passe" : ""}${r.cliente_id ? "" : " bloc"}" data-rdv="${r.id}"><span class="v-h">${hh(d)}</span><div class="v-t">${esc(nomRdv(r))}${r.source === "en_ligne" ? '<span class="v-pastille">en ligne</span>' : ""}<small>${esc(titreRdv(r)) || (r.cliente_id ? "" : "Créneau bloqué")}${r.statut === "absente" ? " · pas venue" : ""}</small></div>${r.prix ? `<span class="v-p">${euros(r.prix)}</span>` : ""}</div>`; }).join("")}
         ${auj.length > 5 ? `<button class="acc-plus" data-su="acc-plus">${S.accTout ? "Voir moins" : "Voir les " + (auj.length - 5) + " autres rendez-vous"}</button>` : ""}</div>`; }

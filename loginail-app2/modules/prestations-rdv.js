@@ -192,12 +192,18 @@
 
   /* 24/11 : la descente automatique vers « Et avec ça ? ». Un doigt posé l'annule ; un toucher sur un bouton pendant la descente compte quand même. */
   const DEF = { t: 0, fin: 0 };
-  addEventListener("touchstart", e => { if (e.target.closest && e.target.closest(".feuille")) clearTimeout(DEF.t); }, { capture: true, passive: true });
+  /* 24/11 nuit : un toucher sur « Enregistrer » compte TOUJOURS du premier coup, même si la feuille défile ou si le bouton change sous le doigt :
+     on retient le bouton touché ; au lever du doigt (sans avoir glissé), on l'appuie nous-mêmes et on empêche le clic de l'iPhone (pas de double). */
+  const OKS = '.feuille .fc [data-a="nouveau-ok"], .feuille .fc [data-cs-ok="presta"]';
+  let TB = null;
+  addEventListener("touchstart", e => { if (e.target.closest && e.target.closest(".feuille")) clearTimeout(DEF.t);
+    const b = e.touches.length === 1 && e.target.closest && e.target.closest(OKS); TB = b ? { b, x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() } : null; }, { capture: true, passive: true });
+  addEventListener("touchmove", e => { if (TB && Math.hypot(e.touches[0].clientX - TB.x, e.touches[0].clientY - TB.y) > 10) TB = null; }, { capture: true, passive: true });
   addEventListener("touchend", e => {
-    if (Date.now() > DEF.fin || e.changedTouches.length !== 1) return;
-    const b = e.target.closest && e.target.closest('.feuille .fc [data-a="nouveau-ok"]'); if (!b || b.disabled) return;
-    const p = e.changedTouches[0], r = b.getBoundingClientRect(); if (p.clientX < r.left || p.clientX > r.right || p.clientY < r.top || p.clientY > r.bottom) return;
-    DEF.fin = 0; e.preventDefault(); b.click();   /* preventDefault : pas de 2e clic si l'iPhone l'envoie quand même */
+    const t = TB; TB = null; if (!t || e.changedTouches.length !== 1 || Date.now() - t.t > 900) return;
+    const b = t.b; if (!b.isConnected || b.disabled) return;
+    const p = e.changedTouches[0], r = b.getBoundingClientRect(); if (p.clientX < r.left - 6 || p.clientX > r.right + 6 || p.clientY < r.top - 6 || p.clientY > r.bottom + 6) return;
+    DEF.fin = 0; e.preventDefault(); b.click();
   }, { capture: true, passive: false });
   addEventListener("scrollend", e => { if (e.target.classList && e.target.classList.contains("feuille")) DEF.fin = 0; }, true);
 

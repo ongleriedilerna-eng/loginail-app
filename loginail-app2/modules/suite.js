@@ -183,7 +183,8 @@
     BL = { m, d: 60, base: Math.floor(m / 60) * 60, apM: m, apres: avant && avant.r.cliente_id ? String(nomRdv(avant.r)).split(" ")[0] : "" };
     ouvre(`<h3 id="s5-h">${hC(m)}</h3><div class="sous" style="text-transform:capitalize">${JOURS[(j.getDay() + 6) % 7]} ${j.getDate()} ${MOIS[j.getMonth()]}<span id="s5-ap" style="text-transform:none">${BL.apres ? " · juste après " + esc(BL.apres) : ""}</span></div>
       <div class="s5-quarts">${[0, 15, 30, 45].map(q => `<button data-s5="quart" data-m="${BL.base + q}" class="${BL.base + q === m ? "on" : ""}">${hC(BL.base + q)}</button>`).join("")}</div>
-      <button class="btn" data-s5="rdv" style="margin-top:16px">Nouveau rendez-vous</button><button class="btn clair" data-s5="bloquer" style="margin-top:8px">Bloquer ce créneau</button>`); };
+      <button class="btn" data-s5="rdv" style="margin-top:16px">Nouveau rendez-vous</button><button class="btn clair" data-s5="bloquer" style="margin-top:8px">Bloquer ce créneau</button>
+      <button class="btn clair s5-part" data-s5p style="margin-top:8px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M5 13v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg>Partager cette dispo</button>`); };
   { const st = document.createElement("style"); st.textContent = `
 .s5-quarts{display:flex;gap:7px;margin-top:14px}
 .s5-quarts button{flex:1;min-width:0;height:42px;border-radius:999px;border:1px solid rgba(30,28,27,.14);background:#fff;font:inherit;font-size:15px;font-weight:500;color:#1E1C1B;padding:0;font-variant-numeric:tabular-nums;transition:transform .1s,background .15s,color .15s;-webkit-tap-highlight-color:transparent}
@@ -197,6 +198,14 @@
       ${BL.libre ? `<div class="lab2">Jusqu’à</div><input class="champ" id="bl-fin" type="time" step="300" value="${hM(Math.min(23 * 60 + 55, BL.m + BL.d)).replace("h", ":").padStart(5, "0")}" style="font-size:16px;width:100%;box-sizing:border-box;-webkit-appearance:none;appearance:none;display:block">` : ""}
       <div class="lab2">Pourquoi ? <small style="text-transform:none;letter-spacing:0;opacity:.6">facultatif</small></div><input class="champ" id="bl-n" maxlength="40" placeholder="Pause, médecin, formation…" value="${esc(BL.n || "")}" style="font-size:16px;width:100%;box-sizing:border-box">
       <button class="btn" data-s5="bl-ok" style="margin-top:16px">Bloquer</button>`);
+
+  /* 24/11 nuit (Marie) : « Partager cette dispo » → l'image « Nouvelle dispo · mardi 16 décembre · 10H30 » (dispos.js) */
+  { const st = document.createElement("style"); st.textContent = `#E .s5-part{display:flex;align-items:center;justify-content:center;gap:8px}`; document.head.appendChild(st); }
+  document.addEventListener("click", async e => { const b = e.target.closest && e.target.closest("[data-s5p]"); if (!b) return; e.stopPropagation(); e.preventDefault();
+    if (b.disabled || !window.__dispoUne) return; const q = E.querySelector('.fc [data-s5="quart"].on'), m = q ? +q.dataset.m : BL.m, d = new Date(S.jour); d.setHours(0, m, 0, 0);
+    const avant = b.innerHTML; b.disabled = true; b.textContent = "Un instant…";
+    try { await __dispoUne.partage(d); } catch (x) { console.error(x); dit("Oups, l’image ne s’est pas faite. Réessaie."); }
+    if (b.isConnected) { b.disabled = false; b.innerHTML = avant; } }, true);
 
   /* 3 · un petit dessin devant chaque ligne des Réglages */
   const sv = d => `<span class="s5-ic"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${d}</svg></span>`;

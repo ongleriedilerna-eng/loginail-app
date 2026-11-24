@@ -87,7 +87,7 @@
     const j = new Date(S.jour); j.setHours(0, 0, 0, 0);
     L = liste(j); ouvert = -1; tous = false;
     if (!L.length) return;
-    fc.querySelector('[data-s5="bloquer"]').insertAdjacentHTML("afterend", '<div class="ar-z"></div>');
+    (fc.querySelector("[data-s5p]") || fc.querySelector('[data-s5="bloquer"]')).insertAdjacentHTML("afterend", '<div class="ar-z"></div>');
     redessine();
   }).observe(E, { childList: true, subtree: true });
 
