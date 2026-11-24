@@ -105,9 +105,9 @@
     envoi = true; ok.disabled = true; ok.textContent = "Un instant…";
     try {
       /* relu juste avant : une cliente a pu réserver en ligne pendant ce temps */
-      const { data: pris, error: e1 } = await sb.from("rendez_vous").select("id,statut").lt("debut", fin.toISOString()).gt("fin", deb.toISOString());
+      const { data: pris, error: e1 } = await sb.from("rendez_vous").select("id,statut,titre,cliente_id").lt("debut", fin.toISOString()).gt("fin", deb.toISOString());
       if (e1) throw e1;
-      if ((pris || []).some(r => r.statut !== "annule")) { await chargeSemaine(); ferme(); rendu(); return dit("Ce créneau vient d’être pris"); }
+      if ((pris || []).some(r => r.statut !== "annule" && !(window.__estVerrou && __estVerrou(r)))) { await chargeSemaine(); ferme(); rendu(); return dit("Ce créneau vient d’être pris"); }
       const { error } = await sb.from("rendez_vous").insert({ cliente_id: x.c.id, prestation_id: x.der.prestation_id || null, titre: x.der.titre || null, debut: deb.toISOString(), fin: fin.toISOString(), prix: x.der.prix ?? null });
       if (error) throw error;
       ferme(); await chargeSemaine(); chargeVisites(); rendu();

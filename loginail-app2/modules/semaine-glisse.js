@@ -85,9 +85,9 @@
     g.el.classList.remove("sg-tient");
     try {
       /* relu juste avant : une cliente a pu réserver en ligne pendant qu'elle glissait */
-      const { data: pris, error: e1 } = await sb.from("rendez_vous").select("id,statut").lt("debut", c.fin.toISOString()).gt("fin", c.deb.toISOString());
+      const { data: pris, error: e1 } = await sb.from("rendez_vous").select("id,statut,titre,cliente_id").lt("debut", c.fin.toISOString()).gt("fin", c.deb.toISOString());
       if (e1) throw e1;
-      if ((pris || []).some(x => x.id !== g.r.id && x.statut !== "annule")) { await chargeSemaine(); rendu(); return dit("Ce créneau vient d’être pris"); }
+      if ((pris || []).some(x => x.id !== g.r.id && x.statut !== "annule" && !(window.__estVerrou && __estVerrou(x)))) { await chargeSemaine(); rendu(); return dit("Ce créneau vient d’être pris"); }
       const { data, error } = await sb.from("rendez_vous").update({ debut: c.deb.toISOString(), fin: c.fin.toISOString() })
         .eq("id", g.r.id).eq("debut", g.r.debut).eq("statut", "prevu").select("id");   /* seulement s'il n'a pas bougé entre-temps */
       if (error || !data || !data.length) throw error || new Error("pas trouvé");
