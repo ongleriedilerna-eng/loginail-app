@@ -99,6 +99,37 @@
       N().montre(); rendu(); dit(`${prenom(c)} t’a payé ${eu(+x.m)} ✓`);
     }
   }, true);
+  /* ---------- 24/11 (Marie : « faut que ça le mette quelque part d'autre pour que je m'en souvienne ») : le jour où elle revient ----------
+     Maquette maquettes/retours-2411/dette-annul.html. « 💸 15 € à récupérer » sur son rendez-vous (Accueil, agenda Jour, Semaine) et en haut du rendez-vous ouvert,
+     avec « Elle m'a payé ». La somme n'est PAS ajoutée à « Encaisser » : le ticket détaille ce qui a été fait ce jour-là. */
+  const st2 = document.createElement("style");
+  st2.textContent = `#E .dt-pi{display:inline-block;margin-top:4px;padding:2px 9px;border-radius:99px;background:#F7E9EC;color:#9A5B62;font-size:12px;font-weight:400;line-height:1.5;white-space:nowrap}
+#E .dt-ban{display:flex;align-items:center;gap:10px;margin-top:12px;padding:11px 13px;border-radius:16px;background:#F7E9EC;text-align:left}
+#E .dt-ban>span{flex:none;font-size:17px}#E .dt-ban>div{flex:1;min-width:0}#E .dt-ban b{display:block;font-weight:500;color:#9A5B62;font-size:14.5px}#E .dt-ban small{display:block;font-size:12.5px;color:#776D64;overflow-wrap:anywhere}
+#E .dt-ban button{flex:none;height:34px;padding:0 12px;border-radius:99px;border:1px solid rgba(30,28,27,.15);background:#fff;color:#4F4643;font:inherit;font-size:12.5px;cursor:pointer}
+#E .dt-ag{margin-left:4px;font-style:normal}`;
+  document.head.appendChild(st2);
+  const cliDe = r => r && r.cliente_id && S.clientes.find(c => c.id === r.cliente_id);
+  const duPour = r => { const c = cliDe(r); return c && r.statut !== "annule" ? total(dettes(c)) : 0; };
+  const acc0 = VUES.acc;
+  VUES.acc = () => { const h = acc0(), f = document.createElement("div"); f.innerHTML = h; let n = 0;
+    f.querySelectorAll(".v-l[data-rdv]").forEach(l => { const r = (S.rdv || []).find(x => x.id === l.dataset.rdv), m = duPour(r); if (!m) return; const t = l.querySelector(".v-t"); if (t) { t.insertAdjacentHTML("beforeend", `<span class="dt-pi">💸 ${eu(m)} à récupérer</span>`); n++; } });
+    return n ? f.innerHTML : h; };
+  const ag1 = VUES.ag;
+  VUES.ag = () => { const h = ag1(), f = document.createElement("div"); f.innerHTML = h; let n = 0;
+    f.querySelectorAll(".pr[data-rdv] > b, .av-b[data-rdv] .av-n").forEach(b => { const el = b.closest("[data-rdv]"), r = (S.rdv || []).find(x => x.id === el.dataset.rdv); if (!duPour(r)) return; b.insertAdjacentHTML("beforeend", '<i class="dt-ag" title="À récupérer">💸</i>'); n++; });
+    return n ? f.innerHTML : h; };
+  const fr0 = feuilleRdv;
+  feuilleRdv = function (id) { const v = fr0.apply(this, arguments);
+    try { const r = S.rdv.find(x => x.id === id) || (S.cloche || []).find(x => x.id === id), c = cliDe(r), l = c ? dettes(c) : [], z = E.querySelector(".fc .fiche-t");
+      if (l.length && z && r.statut !== "annule") z.insertAdjacentHTML("afterend", l.map((d, i) => `<div class="dt-ban"><span>💸</span><div><b>Elle te doit ${esc(eu(+d.m))}</b><small>${esc(d.q || "")}${d.j ? (d.q ? " · " : "") + "noté le " + court(d.j) : ""}</small></div><button data-dtb="${i}" data-c="${esc(c.id)}">Elle m’a payé</button></div>`).join("")); } catch (e) { console.error(e); }
+    return v; };
+  document.addEventListener("click", async e => { const b = e.target.closest && e.target.closest("[data-dtb]"); if (!b) return; e.stopPropagation(); e.preventDefault();
+    const c = S.clientes.find(x => x.id === b.dataset.c), i = +b.dataset.dtb, x = c && dettes(c)[i]; if (!x) return; b.disabled = true;
+    if (!(await change(c, l => { l.splice(i, 1); return l; }))) { b.disabled = false; return; }
+    const ban = b.closest(".dt-ban"); if (ban) ban.remove(); E.querySelectorAll(".fc [data-dtb]").forEach((y, k) => { y.dataset.dtb = k; });
+    rendu(); dit(`${prenom(c)} t’a payé ${eu(+x.m)} ✓`); }, true);
+
   document.addEventListener("input", e => { if (e.target.matches && e.target.matches("[data-dt-m]") && SA) { SA.v = e.target.value; SA.touche = true; } });
   document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches && e.target.matches("[data-dt-m]")) { e.preventDefault(); E.querySelector('[data-dt="ok"]')?.click(); } });
 })();
