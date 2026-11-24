@@ -73,18 +73,43 @@
     if (pap) {
       const j = debutJ(S.jour), e = etat(j);
       if (e.k !== "ouvert") pap.classList.add("jc-ferme");
-      if (j >= auj && !(e.k === "ouvert" && horaireFerme(j))) {
-        const cle = j.toDateString() + e.k, pop = anime === cle ? " pop" : "";
-        const ligne = e.k === "ferme" ? `<div class="jc ferme${pop}">${CAD}<span>Journée fermée, ton site ne prend plus personne</span><button data-jc="rouvre">Rouvrir</button></div>`
-          : e.k === "complet" ? `<div class="jc ferme${pop}">${CAD}<span>Complet · ${e.n} cliente${e.n > 1 ? "s" : ""}${e.max != null ? " sur " + e.max : ""}, ton site ne prend plus personne</span><button data-jc="reglage">Changer</button></div>`
-          : `<div class="jc${pop}">${e.max != null && e.max <= 12 ? `<span class="pts" aria-hidden="true">${Array.from({ length: e.max }, (_, i) => `<i class="${i < e.n ? "on" : ""}"></i>`).join("")}</span>` : ""}<span>${e.n} cliente${e.n > 1 ? "s" : ""}${e.max != null ? " sur " + e.max : ""}</span><button data-jc="ferme">Fermer ma journée</button></div>`;
-        pap.insertAdjacentHTML("beforebegin", ligne);
-      }
       anime = "";
     }
     f.querySelectorAll(".av-col[data-av-j]").forEach(c => { if (etat(new Date(c.dataset.avJ)).k !== "ouvert") c.classList.add("jc-ferme"); });
     return f.innerHTML;
   };
+
+  /* ---------- 24/11 soir (Marie : « ça prend trop de place… un petit rond à côté du + ») : le cadenas à gauche du « + » ----------
+     Ouvert = rond blanc, cadenas ouvert ; fermée ou complète = rond foncé, cadenas fermé. Toucher = la question (fermer / rouvrir / le maximum). */
+  const st2 = document.createElement("style");
+  st2.textContent = `#E .jc-rond{position:absolute;z-index:69;right:calc(max(20px,calc((100% - 560px)/2 + 20px)) + 52px);bottom:calc(max(24px,env(safe-area-inset-bottom)) + 78px);width:42px;height:42px;border-radius:50%;border:0;padding:0;background:#fff;color:var(--v-fonce,#1E1C1B);display:grid;place-items:center;box-shadow:0 6px 16px -8px rgba(0,0,0,.35);cursor:pointer;transition:background .2s,color .2s,transform .12s}
+#E .jc-rond:active{transform:scale(.94)}#E .jc-rond[hidden]{display:none}
+#E .jc-rond svg{width:19px;height:19px}
+#E .jc-rond.ferme{background:var(--v-fonce,#1E1C1B);color:#fff}
+#E .jc-rond:before{content:"";position:absolute;inset:-5px;border-radius:50%}
+@media (max-width:350px){#E .jc-rond{width:36px;height:36px;right:calc(max(20px,calc((100% - 560px)/2 + 20px)) + 46px)}#E .jc-rond svg{width:17px;height:17px}#E .jc-rond:before{inset:-6px}}
+#E .jc-etat{margin-top:12px;padding:12px 14px;border-radius:16px;background:#fff;font-size:14px;line-height:1.45;text-align:left;color:#4F4643}
+#E .jc-etat .pts{display:flex;gap:4px;margin-bottom:6px}#E .jc-etat .pts i{width:9px;height:9px;border-radius:50%;background:#E6DCD6}#E .jc-etat .pts i.on{background:#C98A97}
+#E .jc-lien{display:block;margin:12px auto 0;border:0;background:none;font:inherit;font-size:13px;color:#6B625C;text-decoration:underline;text-underline-offset:3px;cursor:pointer}`;
+  document.head.appendChild(st2);
+  const CAD_O = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 7.6-1.7"/></svg>';
+  const CAD_F = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+  let ROND = null;
+  const majRond = () => {
+    if (!E.querySelector(".ong")) return;
+    if (!ROND || !ROND.isConnected) { ROND = document.createElement("button"); ROND.className = "jc-rond"; ROND.dataset.jc = "rond"; E.appendChild(ROND); }
+    const j = debutJ(S.jour), auj = debutJ(new Date()), jourVue = S.onglet === "ag" && !!E.querySelector(".vue.on .pap"), e = jourVue ? etat(j) : null;
+    ROND.hidden = !jourVue || j < auj || (e.k === "ouvert" && horaireFerme(j));
+    if (ROND.hidden) return;
+    const f = e.k !== "ouvert";
+    ROND.classList.toggle("ferme", f); ROND.innerHTML = f ? CAD_F : CAD_O;
+    ROND.setAttribute("aria-label", f ? (e.k === "ferme" ? "Journée fermée" : "Journée complète") : "Fermer ma journée");
+  };
+  const rr0 = rendu; rendu = function () { const v = rr0.apply(this, arguments); try { majRond(); } catch (x) { console.error(x); } return v; };
+  addEventListener("resize", () => { try { majRond(); } catch (x) {} });
+  setTimeout(() => { try { majRond(); } catch (x) {} }, 800);
+  const pts = e => e.max != null && e.max <= 12 ? `<div class="pts" aria-hidden="true">${Array.from({ length: e.max }, (_, i) => `<i class="${i < e.n ? "on" : ""}"></i>`).join("")}</div>` : "";
+  const cl = n => `${n} cliente${n > 1 ? "s" : ""}`;
 
   /* ---------- Fermer / Rouvrir ---------- */
   let occupe = false;
@@ -145,6 +170,15 @@
     if (k === "pj") { R.parJour = !R.parJour; if (R.parJour && R.jours.every(x => x == null) && R.max != null) R.jours = Array(7).fill(R.max); return reglage(); }
     if (k === "ok") return enregistre(a);
     const j = debutJ(S.jour), nom = `${JRS[(j.getDay() + 6) % 7].toLowerCase()} ${j.getDate()}`;
+    if (k === "rond") { const e = etat(j), Nom = nom.charAt(0).toUpperCase() + nom.slice(1);
+      if (e.k === "ferme") return ouvre(`<h3>${esc(Nom)} est fermé</h3><div class="sous">Ton site ne prend plus personne ce jour-là</div><div class="jc-etat">${pts(e)}${cl(e.n)}${e.max != null ? " sur " + e.max : ""}. Toi, tu peux toujours ajouter quelqu’un.</div>
+        <button class="btn" data-jc="rouvre" style="margin-top:16px;width:100%">Rouvrir ma journée</button><button class="btn clair" data-a="fermer" style="margin-top:8px;width:100%">Laisser fermée</button>`);
+      if (e.k === "complet") return ouvre(`<h3>${esc(Nom)} est complet</h3><div class="sous">Tu as atteint ton maximum</div><div class="jc-etat">${pts(e)}Ta journée contient ${cl(e.n)}${e.max != null ? " sur " + e.max : ""} : ton site ne prend plus personne. Toi, tu peux toujours ajouter quelqu’un.</div>
+        <button class="btn" data-jc="reglage" style="margin-top:16px;width:100%">Changer mon maximum</button><button class="btn clair" data-a="fermer" style="margin-top:8px;width:100%">C’est bon</button>`);
+      return ouvre(`<h3>Fermer ${esc(nom)} ?</h3><div class="sous">${e.max != null ? `Ta journée contient ${cl(e.n)} sur ${e.max}` : e.n ? `Ta journée contient ${cl(e.n)}` : "Personne pour l’instant"}</div>
+        <div class="jc-etat">${pts(e)}Si tu la fermes, ${e.n ? (e.n > 1 ? "tes clientes gardent leur rendez-vous" : "ta cliente garde son rendez-vous") + ", " : ""}ton site ne prend plus personne ce jour-là. Toi, tu peux toujours ajouter quelqu’un.</div>
+        <button class="btn" data-jc="ferme-ok" style="margin-top:16px;width:100%">Fermer ma journée</button><button class="btn clair" data-a="fermer" style="margin-top:8px;width:100%">Laisser ouverte</button>
+        <button class="jc-lien" data-jc="reglage">${e.max != null ? "Changer mon maximum de clientes" : "Mettre un maximum de clientes par jour"}</button>`); }
     if (k === "ferme") { const n = nbDe(j);
       return ouvre(`<h3>Fermer ${esc(nom)} ?</h3><div class="sous">${n ? `Tu as ${n} cliente${n > 1 ? "s" : ""}` : "Personne pour l’instant"}</div>
         <ul class="jc-l">${n ? `<li><span>✓</span>Elle${n > 1 ? "s gardent leur" : " garde son"} rendez-vous</li>` : ""}<li><span>🔒</span>Ton site ne prend plus personne ce jour-là</li><li><span>＋</span>Toi, tu peux toujours ajouter quelqu’un</li></ul>
@@ -155,7 +189,7 @@
       try { if (k === "ferme-ok") await fermer(j); else await rouvrir(j); anime = j.toDateString() + (k === "rouvre" ? "ouvert" : "ferme"); }
       catch (err) { console.error(err); a.disabled = false; occupe = false; return dit("Oups, ça n’a pas marché. Réessaie."); }
       occupe = false;
-      if (k === "ferme-ok") ferme();
+      ferme();
       try { await chargeSemaine(); } catch (err) { console.error(err); }
       rendu(); dit(k === "ferme-ok" ? `${nom.charAt(0).toUpperCase() + nom.slice(1)} fermé ✓` : `${nom.charAt(0).toUpperCase() + nom.slice(1)} rouvert ✓`);
     }

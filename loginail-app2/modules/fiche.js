@@ -151,13 +151,14 @@
   function pageFiche(c) { if (!RDV) return `<div class="sous" style="padding:30px 0">Un instant…</div>`;
     const now = new Date().toISOString(), ok = RDV.filter(r => r.statut !== "annule"), proch = ok.filter(r => r.fin >= now && r.statut === "prevu").sort((a, b) => a.debut.localeCompare(b.debut)), hist = ok.filter(r => r.fin < now || r.statut === "fini" || r.statut === "absente");
     const venues = hist.filter(r => r.statut !== "absente"), e = etatFid(venues.length + litNotes(c).fp), d = x => new Date(x), jj = x => `${JOURS3[d(x).getDay()]} ${jourCourt(x)}`;
-    let h = window.__detteFiche ? window.__detteFiche(c) : "";
+    let h = "";
     if (proch[0]) { const x = d(proch[0].debut), pn = (proch[0].prestations && proch[0].prestations.nom) || proch[0].titre;
       h += `<div class="fi-noire"><small>Prochain rendez-vous</small><b class="fi-jour">${JOURS[(x.getDay() + 6) % 7]} ${x.getDate()} ${MOIS[x.getMonth()]}</b><span class="fi-h">à ${x.getHours()}h${String(x.getMinutes()).padStart(2, "0")}${pn ? " · " + esc(pn) : ""}</span>
         <div class="fi-bts"><button data-a="decaler" data-id="${proch[0].id}">Déplacer</button><button data-rdv="${proch[0].id}">Voir</button></div></div>`; }
     else h += `<div class="fi-carte"><div class="fi-lg"><div>Pas de rendez-vous prévu<span>${venues.length ? "Sa dernière visite : " + jourCourt(venues[0].debut) : "Elle n’est pas encore venue"}</span></div></div></div>`;
     if (proch.length > 1) h += `<div class="sous" style="text-align:left;margin:8px 2px 0">Et aussi : ${proch.slice(1, 3).map(r => jj(r.debut) + " à " + hm(d(r.debut))).join(" · ")}</div>`;
     h += `<button class="fi-prdv" data-fi="prdv"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4M12 12.5v5M9.5 15h5"/></svg>Prendre un rendez-vous</button>`;
+    if (window.__detteFiche) h += window.__detteFiche(c);   /* 24/11 soir (Marie) : « Elle me doit » sous « Prendre un rendez-vous » */
     h += `<div class="fi-t3"><div><small>Visites</small><b>${venues.length}</b></div>${e.f.on ? `<div><small>Fidélité</small><b>${e.fait} <em>/ ${e.f.n}</em></b></div>` : ""}<div><small>Dernière</small><b>${venues.length ? jourCourt(venues[0].debut) : "—"}</b></div></div>`;
     if (window.__annulFiche) h += window.__annulFiche(c, RDV);   /* 24/11 : annulations au dernier moment (modules/annulations.js) */
     if (e.f.on) { const txt = e.pret ? `Bonjour ${c.prenom || ""}, votre carte de fidélité est complète : ${e.f.cadeau} à votre prochain rendez-vous ! ${S.profil.nom_salon || ""}`.trim() : `Bonjour ${c.prenom || ""}, vous en êtes à ${e.fait} visite${e.fait > 1 ? "s" : ""} sur ${e.f.n} sur votre carte de fidélité. Encore ${e.reste} avant votre cadeau : ${e.f.cadeau}. ${S.profil.nom_salon || ""}`.trim();
