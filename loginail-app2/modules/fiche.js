@@ -116,9 +116,9 @@
   /* ---------- les notes ---------- */
   /* s = [{q, r}] : r = "oui" / "non" (Oui/Non), le choix, ou le texte (métier) ; {r} sans q = écrit à la main (ligne ✦).
      Les anciennes réponses écrites à la main sous une question (avant le 21/11 : « Oui, mariée ») deviennent des lignes ✦. */
-  const litNotes = c => { const t = c.notes || ""; let o = null; if (t[0] === "{") try { o = JSON.parse(t); } catch (e) {} if (!o || !o.v) return { t, s: [], fp: 0 };
+  const litNotes = c => { const t = c.notes || ""; let o = null; if (t[0] === "{") try { o = JSON.parse(t); } catch (e) {} if (!o || !o.v) return { t, s: [], fp: 0, d: [] };
     const s = []; (o.s || []).forEach(x => { if (!x || !x.r) return; const q = x.q && Qde(x.q); if (q && valide(q, x.r)) { if (!s.some(y => y.q === x.q)) s.push({ q: x.q, r: x.r }); } else s.push({ r: String(x.r) }); });
-    return { t: o.t || "", s, fp: +o.fp || 0 }; };
+    return { t: o.t || "", s, fp: +o.fp || 0, d: Array.isArray(o.d) ? o.d.filter(x => x && +x.m > 0) : [] }; };   /* 24/11 : d = ce qu'elle doit (modules/dettes.js) */
   window.__fiParler = c => { const s = litNotes(c).s, x = s.find(x => PARLER[x.q] && x.r !== "non"); return x ? PARLER[x.q] : "Demande-lui ce qu’elle a fait de beau ces derniers temps."; };
 
   /* ---------- l'ordre des carrés : rangé par elle, gardé dans son COMPTE (user_metadata.fiche_ordre), vaut pour toutes ses clientes ---------- */
@@ -131,8 +131,9 @@
   const carres = c => { const s = litNotes(c).s, ord = litOrdre() || QS.map(q => q[0]), pos = k => { const i = ord.indexOf(k); return i < 0 ? 900 + QS.findIndex(q => q[0] === k) : i; };
     const a = s.filter(x => x.q).sort((x, y) => pos(x.q) - pos(y.q)).map(x => { const q = Qde(x.q); return { id: x.q, ic: x.q, non: q[2] === "on" && x.r === "non", t: motCarre(q, x.r), v: x.r }; });
     s.forEach((x, i) => { if (!x.q) a.push({ id: "L" + i, ic: "autre", t: x.r, v: x.r, libre: true }); }); return a; };
-  async function ecritNotes(id, o) { const c0 = S.clientes.find(x => x.id === id), fp = o.fp != null ? o.fp : (c0 ? litNotes(c0).fp : 0); const notes = (o.s.length || fp) ? JSON.stringify({ v: 1, t: o.t, s: o.s, fp }) : (o.t || null); const c = S.clientes.find(x => x.id === id); if (c) c.notes = notes;
-    const { error } = await sb.from("clientes").update({ notes }).eq("id", id); if (error) dit("Pas enregistré, réessaie"); }
+  async function ecritNotes(id, o) { const c0 = S.clientes.find(x => x.id === id), fp = o.fp != null ? o.fp : (c0 ? litNotes(c0).fp : 0), d = o.d || (c0 ? litNotes(c0).d : []); const notes = (o.s.length || fp || d.length) ? JSON.stringify(Object.assign({ v: 1, t: o.t, s: o.s, fp }, d.length ? { d } : {})) : (o.t || null); const c = S.clientes.find(x => x.id === id); if (c) c.notes = notes;
+    const { error } = await sb.from("clientes").update({ notes }).eq("id", id); if (error) dit("Pas enregistré, réessaie"); return !error; }
+  window.__notes = { lit: c => litNotes(c), ecrit: (id, o) => ecritNotes(id, o), montre: () => { if (ONG === "fiche" && E.classList.contains("fe") && $(".fi-sw", E)) montre(true); } };
 
   /* ---------- la fiche ---------- */
   let ID = null, ONG = "fiche", RDV = null, TOUT = false, SAISIE = null, OUV = null, RANGE = false, TOUS = false, DRAG = null, ORD = null, VUS = new Set();
@@ -150,7 +151,7 @@
   function pageFiche(c) { if (!RDV) return `<div class="sous" style="padding:30px 0">Un instant…</div>`;
     const now = new Date().toISOString(), ok = RDV.filter(r => r.statut !== "annule"), proch = ok.filter(r => r.fin >= now && r.statut === "prevu").sort((a, b) => a.debut.localeCompare(b.debut)), hist = ok.filter(r => r.fin < now || r.statut === "fini" || r.statut === "absente");
     const venues = hist.filter(r => r.statut !== "absente"), e = etatFid(venues.length + litNotes(c).fp), d = x => new Date(x), jj = x => `${JOURS3[d(x).getDay()]} ${jourCourt(x)}`;
-    let h = "";
+    let h = window.__detteFiche ? window.__detteFiche(c) : "";
     if (proch[0]) { const x = d(proch[0].debut), pn = (proch[0].prestations && proch[0].prestations.nom) || proch[0].titre;
       h += `<div class="fi-noire"><small>Prochain rendez-vous</small><b class="fi-jour">${JOURS[(x.getDay() + 6) % 7]} ${x.getDate()} ${MOIS[x.getMonth()]}</b><span class="fi-h">à ${x.getHours()}h${String(x.getMinutes()).padStart(2, "0")}${pn ? " · " + esc(pn) : ""}</span>
         <div class="fi-bts"><button data-a="decaler" data-id="${proch[0].id}">Déplacer</button><button data-rdv="${proch[0].id}">Voir</button></div></div>`; }
