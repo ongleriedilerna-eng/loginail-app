@@ -148,7 +148,9 @@
     const de = fc.querySelector(".pr-der"); if (de) de.classList.toggle("fait", !!NS.der && JSON.stringify(NS.der) === JSON.stringify(choisis()));
     if (typeof nFin === "function") nFin();
     /* la pose choisie : on descend un peu pour montrer « Et avec ça ? » */
-    if (auto && ap && !avant && ap.classList.contains("vu")) setTimeout(() => { const f = E.querySelector(".feuille"); if (f) f.scrollBy({ top: 150, behavior: "smooth" }); }, 250);
+    /* 24/11 (Marie : « je dois appuyer 2 fois sur Enregistrer ») : sur iPhone, toucher pendant que la feuille défile ne fait qu'arrêter le défilement.
+       Si elle touche avant, on ne descend plus ; pendant la descente, « Enregistrer » marche du premier coup (voir plus bas). */
+    if (auto && ap && !avant && ap.classList.contains("vu")) { clearTimeout(DEF.t); DEF.t = setTimeout(() => { const f = E.querySelector(".feuille"); if (!f) return; DEF.fin = Date.now() + 700; f.scrollBy({ top: 150, behavior: "smooth" }); }, 250); }
   }
   function poseNouveau() {
     const fc = E.querySelector(".feuille .fc"), chips = fc && fc.querySelector(".chips.n-glisse"); if (!chips) return;
@@ -187,6 +189,17 @@
   }
   ["input", "change"].forEach(t => document.addEventListener(t, e => { if (e.target.id === "n-cli") pourCliente(); }));
   document.addEventListener("click", e => { if (e.target.closest && e.target.closest("#n-sug")) setTimeout(pourCliente, 0); });
+
+  /* 24/11 : la descente automatique vers « Et avec ça ? ». Un doigt posé l'annule ; un toucher sur un bouton pendant la descente compte quand même. */
+  const DEF = { t: 0, fin: 0 };
+  addEventListener("touchstart", e => { if (e.target.closest && e.target.closest(".feuille")) clearTimeout(DEF.t); }, { capture: true, passive: true });
+  addEventListener("touchend", e => {
+    if (Date.now() > DEF.fin || e.changedTouches.length !== 1) return;
+    const b = e.target.closest && e.target.closest('.feuille .fc [data-a="nouveau-ok"]'); if (!b || b.disabled) return;
+    const p = e.changedTouches[0], r = b.getBoundingClientRect(); if (p.clientX < r.left || p.clientX > r.right || p.clientY < r.top || p.clientY > r.bottom) return;
+    DEF.fin = 0; e.preventDefault(); b.click();   /* preventDefault : pas de 2e clic si l'iPhone l'envoie quand même */
+  }, { capture: true, passive: false });
+  addEventListener("scrollend", e => { if (e.target.classList && e.target.classList.contains("feuille")) DEF.fin = 0; }, true);
 
   /* les gestes ; sur window, avant app2.js (qui ne garderait qu'une prestation) et rdv.js */
   addEventListener("click", e => {
