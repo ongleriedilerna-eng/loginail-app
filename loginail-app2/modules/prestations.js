@@ -37,8 +37,8 @@
 #E .pr-rien button{display:block;min-height:44px;margin:4px auto 0;border:0;background:none;font:inherit;text-decoration:underline;color:var(--noir);cursor:pointer}`;
   document.head.appendChild(st);
 
-  let q = "", choix = "tout", y = 0;
-  const remet = () => { q = ""; choix = "tout"; y = 0; };
+  let q = "", choixMenu = "tout", y = 0;
+  const remet = () => { q = ""; choixMenu = "tout"; y = 0; };
   const feuille = () => E.querySelector(".feuille");
 
   /* ce qu'elle a tapé, si elle ne l'a pas déjà mot pour mot */
@@ -50,6 +50,8 @@
   function trie() {
     const fc = E.querySelector(".feuille .fc"), haut = fc && fc.querySelector(".pr-haut"); if (!haut) return;
     const mots = plat(q).split(" ").filter(Boolean), lignes = [...fc.querySelectorAll(LIGNE)];
+    /* 25/11 (D121) : avec les onglets « Prestations · Petits plus », c'est l'onglet qui trie */
+    const ong = fc.querySelector(".cs-ong"), choix = ong ? (ong.dataset.cur === "plus" ? "art" : "presta") : choixMenu;
     let vues = 0, ailleurs = 0, fin = null;
     lignes.forEach(l => {
       const t = l.querySelector(".t"), nom = t && t.firstChild && t.firstChild.nodeType === 3 ? t.firstChild.textContent : "";
@@ -61,7 +63,7 @@
     if (fin) fin.classList.add("pr-fin");
     haut.querySelector("[data-pr-x]").hidden = !q;
     const plus = haut.querySelector(".pr-plus");
-    if (plus) { const neuf = aAjouter(lignes), mot = neuf ? `+ Ajouter « ${neuf} »` : "+ Ajouter une prestation"; if (plus.textContent !== mot) plus.textContent = mot; }
+    if (plus) { const neuf = aAjouter(lignes), mot = neuf ? `+ Ajouter « ${neuf} »` : choix === "art" ? "+ Ajouter un petit plus" : "+ Ajouter une prestation"; if (plus.textContent !== mot) plus.textContent = mot; }
     haut.querySelectorAll("[data-pr-f]").forEach(b => { const on = b.dataset.prF === choix; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
     /* le rond devient foncé quand la liste est triée, comme dans Clientes */
     haut.querySelector("[data-pr-tri]").classList.toggle("plein", choix !== "tout");
@@ -78,6 +80,7 @@
     const rien = fc.querySelector(".pr-rien"); rien.hidden = !!vues; if (vues) return;
     const ou = choix === "art" ? " dans Petits plus" : choix === "presta" ? " dans Prestations" : "";
     rien.textContent = mots.length ? `Rien pour « ${q.trim()} »${ou}.` : choix === "art" ? "Pas encore de petit plus dans ta liste." : `Rien${ou}.`;
+    if (mots.length && ailleurs && ong) { const b = document.createElement("button"); b.dataset.csOng = choix === "art" ? "presta" : "plus"; b.textContent = "La voir dans " + (choix === "art" ? "Prestations" : "Petits plus"); rien.appendChild(b); return; }
     if (mots.length && ailleurs) { const b = document.createElement("button"); b.dataset.prF = "tout"; b.textContent = ailleurs > 1 ? `Voir les ${ailleurs} dans Tout` : "La voir dans Tout"; rien.appendChild(b); }
   }
 
@@ -94,7 +97,9 @@
     liste.insertAdjacentHTML("beforebegin", `<div class="pr-haut"><div class="pr-rang"><label class="cherche">${I.lo}<input data-pr-q type="search" autocapitalize="sentences" enterkeyhint="search" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Rechercher une prestation" placeholder="Rechercher une prestation"><button type="button" class="cherche-x" data-pr-x aria-label="Effacer la recherche" hidden><svg viewBox="0 0 24 24" width="9" height="9"><path d="M7 7l10 10M17 7L7 17"/></svg></button></label><button type="button" class="v-rondb" data-pr-tri aria-label="Trier mes prestations" aria-expanded="false"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 7h16M7 12h10M10 17h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button><div class="pr-menu tris" hidden>${FILTRES.map(f => `<button type="button" data-pr-f="${f[0]}">${f[1]}<span></span></button>`).join("")}</div></div></div>`);
     ([...fc.querySelectorAll(".cs-sec")].pop() || liste).insertAdjacentHTML("afterend", '<div class="pr-rien" role="status" hidden></div>');
     const plus = fc.querySelector(LISTE); plus.classList.add("pr-plus"); fc.querySelector(".pr-haut").appendChild(plus);
-    fc.querySelector("[data-pr-q]").value = q; trie();
+    const qi = fc.querySelector("[data-pr-q]"); qi.value = q;
+    if (fc.querySelector('.cs-ong[data-cur="plus"]')) { qi.placeholder = "Rechercher un petit plus"; qi.setAttribute("aria-label", qi.placeholder); }
+    trie();
     feuille().scrollTop = y;   /* après une modification, elle retrouve sa place dans la liste */
   }
   new MutationObserver(pose).observe(E, { childList: true, subtree: true });
@@ -110,7 +115,7 @@
     const b = t.closest("[data-pr-f]"), x = t.closest("[data-pr-x]");
     if (b || x) {
       e.preventDefault(); e.stopPropagation();
-      if (b) { choix = b.dataset.prF; menu(false); } else { q = ""; const i = f.querySelector("[data-pr-q]"); i.value = ""; i.focus({ preventScroll: true }); }
+      if (b) { choixMenu = b.dataset.prF; menu(false); } else { q = ""; const i = f.querySelector("[data-pr-q]"); i.value = ""; i.focus({ preventScroll: true }); }
       y = 0; trie(); f.scrollTop = 0; return;
     }
     if (!f.querySelector(".pr-haut")) return;

@@ -11,6 +11,17 @@
 .cs-h b{font-weight:400;font-size:14px}.cs-h .cs-hr{grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--gris)}
 .cs-h .cs-hr input{flex:1;min-width:0;border:0;border-radius:10px;background:#F4F0EB;padding:8px 9px;font:inherit;font-size:14px;color:var(--noir)}
 .cs-h.ferme .cs-hr{display:none}.cs-p{background:#fff;border-radius:16px;margin-top:12px;padding:12px 14px;text-align:left}.cs-p .r{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px}.cs-p .r span{display:block;font-size:12px;color:var(--gris);margin-top:2px}.cs-p .cs-hr{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--gris);margin-top:10px}.cs-p .cs-hr input{flex:1;min-width:0;border:0;border-radius:10px;background:#F4F0EB;padding:8px 9px;font:inherit;font-size:14px;color:var(--noir)}.cs-p:not(.on) .cs-hr{display:none}.cs-h .cs-f{font-size:12px;color:var(--gris)}
+/* 25/11 (Marie, D121) : deux onglets « Prestations · Petits plus », le même interrupteur que « Fiche · Notes » */
+#E .cs-ong{position:relative;display:flex;background:#fff;border-radius:999px;padding:4px;margin:14px 0 4px}
+#E .cs-ong button{position:relative;z-index:1;flex:1;border:0;background:none;border-radius:999px;padding:11px 0;font:inherit;font-size:13.5px;font-weight:500;color:#8A847E;cursor:pointer;transition:color .2s}
+#E .cs-ong button.on{color:#fff}#E .cs-ong button small{font-size:11.5px;font-weight:400;opacity:.75;margin-left:5px}
+#E .cs-ong i{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:999px;background:#1E1C1B;transition:transform .26s cubic-bezier(.3,.7,.2,1)}
+#E .cs-ong[data-cur="plus"] i{transform:translateX(100%)}
+@media (prefers-reduced-motion:reduce){#E .cs-ong i{transition:none}}
+#E .fc:has(.cs-ong[data-cur="presta"]) :is([data-cs-sec="plus"],[data-cs-sec="prets"]),#E .fc:has(.cs-ong[data-cur="plus"]) [data-cs-sec="presta"]{display:none!important}
+#E .fc:has(.cs-ong) [data-cs-sec="presta"]>.cs-st,#E .fc:has(.cs-ong) [data-cs-sec="plus"]>.cs-st,#E .fc:has(.cs-ong) [data-pr-tri]{display:none}
+#E .fc:has(.cs-ong) [data-cs-sec="presta"]>.cs-sp,#E .fc:has(.cs-ong) [data-cs-sec="plus"]>.cs-sp{margin-top:12px}
+#E .cs-fam[hidden]{display:none}
 #E .cs-sec{text-align:left}#E .cs-sec .liste{margin-top:0!important}
 #E .cs-st{margin:18px 2px 2px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#776D64}
 #E .cs-sp{margin:0 2px 8px;font-size:12.5px;line-height:1.4;color:#776D64}
@@ -52,18 +63,20 @@
   /* 23/11 (Marie, D109-D110) : deux familles, « Prestations » et « Petits plus », et les petits plus « Déjà écrits pour toi » (il ne reste que le prix) */
   const LP=window.LOGI_PRESTA;
   const ligneP=(p,i)=>{const plus=LP.estPlus(p);return `<div class="ligne${plus?" cs-pl":""}" data-cs-p="${i}">${plus?`<span class="cs-em" aria-hidden="true">${LP.esc(LP.emo(p))}</span>`:""}<div class="t">${LP.esc(p.nom)}<span>${plus?LP.esc(LP.duree(+p.duree||10)+(LP.parOngle(p)?" · par ongle":"")):LP.esc(LP.meta({...p,duree:+p.duree||60}))}</span></div>${plus?`<em>${LP.type(p)==="devis"?"sur devis":(LP.type(p)==="des"?"dès ":"+")+LP.esc(String(p.prix).replace(".",","))+" €"}</em>`:""}<span class="fl">›</span></div>`};
+  let ONG="presta";   /* l'onglet ouvert ; il reste après un enregistrement */
+  const ongHtml=(nB,nA)=>`<div class="cs-ong" data-cur="${ONG}" role="tablist" aria-label="Prestations ou petits plus"><i aria-hidden="true"></i><button type="button" role="tab" data-cs-ong="presta" class="${ONG==="presta"?"on":""}" aria-selected="${ONG==="presta"}">Prestations<small>${nB}</small></button><button type="button" role="tab" data-cs-ong="plus" class="${ONG==="plus"?"on":""}" aria-selected="${ONG==="plus"}">Petits plus<small>${nA}</small></button></div>`;
   MSF["ms-presta"]=()=>{const l=lit().prestations||[],I=l.map((p,i)=>i),B=I.filter(i=>!LP.estPlus(l[i])),A=I.filter(i=>LP.estPlus(l[i])),deja=new Set(l.map(p=>LP.plat(p.nom)).concat(A.map(i=>(LP.pretDe(l[i].nom)||{}).nom).filter(Boolean).map(LP.plat))),prets=LP.PRETS.map((x,k)=>k).filter(k=>!deja.has(LP.plat(LP.PRETS[k].nom)));
-    return croix+`<h3>Prestations et prix</h3><div class="sous">${l.length} prestation${l.length>1?"s":""} · la même liste pour ton agenda et ton site</div>
+    return croix+`<h3>Prestations et prix</h3><div class="sous">La même liste pour ton agenda et ton site</div>${ongHtml(B.length,A.length)}
     <div class="cs-sec" data-cs-sec="presta"><div class="cs-st">Prestations</div><p class="cs-sp">Ce que la cliente réserve : les poses, les déposes, les soins.</p>
     <div class="liste">${B.map(i=>ligneP(l[i],i)).join("")||'<div class="ligne"><div class="t">Aucune prestation pour l’instant</div></div>'}</div></div>
     <div class="cs-sec" data-cs-sec="plus"><div class="cs-st">Petits plus</div><p class="cs-sp">Ce qui s’ajoute à une prestation : nail art, chrome, strass… Proposés juste après, dans « Et avec ça ? ».</p>
     ${A.length?`<div class="liste">${A.map(i=>ligneP(l[i],i)).join("")}</div>`:""}</div>
     ${prets.length?`<div class="cs-sec cs-prets" data-cs-sec="prets"><div class="cs-st">Déjà écrits pour toi</div><p class="cs-sp">Touche celui que tu fais : il ne reste que le prix à mettre.</p><div class="cs-pills">${prets.map(k=>`<button type="button" class="cs-pill" data-cs-pret="${k}" data-nom="${LP.esc(LP.PRETS[k].nom)}"><span class="p" aria-hidden="true">+</span><span class="e" aria-hidden="true">${LP.PRETS[k].emo}</span><span class="n">${LP.esc(LP.PRETS[k].nom)}</span></button>`).join("")}</div></div>`:""}
-    <button class="btn" data-cs-p="-1" style="width:100%;margin-top:14px">Ajouter une prestation</button>`};
+    <button class="btn" data-cs-p="-1" style="width:100%;margin-top:14px">${ONG==="plus"?"Ajouter un petit plus":"Ajouter une prestation"}</button>`};
   /* la fiche : « Une prestation / Un petit plus » (rangé tout seul d'après le nom, elle peut changer) et « Prix par ongle » pour un petit plus */
   let FAM=null;   /* { choisi: elle a touché, ou la fiche existe déjà } */
-  const famHtml=(p,i,pre)=>{const plus=LP.estPlus(p);FAM={choisi:i>=0||!!pre};
-    return `<div class="cs-fam" role="group" aria-label="Famille"><button type="button" data-cs-fam="presta" class="${plus?"":"on"}" aria-pressed="${!plus}">Une prestation</button><button type="button" data-cs-fam="plus" class="${plus?"on":""}" aria-pressed="${plus}">Un petit plus</button></div><div class="cs-auto" data-cs-auto>${pre?"✓ Déjà rempli : mets juste ton prix":""}</div>
+  const famHtml=(p,i,pre)=>{const plus=LP.estPlus(p);FAM={choisi:true};   /* D121 : à la création, c'est l'onglet qui décide */
+    return `<div class="cs-fam" role="group" aria-label="Famille"${i<0?" hidden":""}><button type="button" data-cs-fam="presta" class="${plus?"":"on"}" aria-pressed="${!plus}">Une prestation</button><button type="button" data-cs-fam="plus" class="${plus?"on":""}" aria-pressed="${plus}">Un petit plus</button></div><div class="cs-auto" data-cs-auto>${pre?"✓ Déjà rempli : mets juste ton prix":""}</div>
     <button type="button" class="cs-ongle${LP.parOngle(p)?" on":""}" data-cs-ongle aria-pressed="${LP.parOngle(p)}"${plus?"":" hidden"}><i aria-hidden="true"></i>Prix par ongle <small>(ex. 1 € × 3 ongles)</small></button>`};
   const metFam=(fc,f)=>{fc.querySelectorAll("[data-cs-fam]").forEach(b=>{const on=b.dataset.csFam===f;b.classList.toggle("on",on);b.setAttribute("aria-pressed",on)});const o=fc.querySelector("[data-cs-ongle]");if(o)o.hidden=f!=="plus"};
   document.addEventListener("input",e=>{if(!e.target.matches||!e.target.matches("[data-cs-nom]")||!FAM||FAM.choisi)return;const fc=e.target.closest(".fc");if(!fc||!fc.querySelector("[data-cs-fam]"))return;
@@ -79,14 +92,14 @@
   const ouvreEmo=fc=>{const E=panneau();if(!E)return;const nom=(fc.querySelector("[data-cs-nom]")||{}).value||"";E.querySelector(".cs-ep h4").textContent=nom.trim()?`Ton emoji pour « ${nom.trim()} »`:"Ton emoji";E.querySelectorAll("[data-cs-echoix]").forEach(b=>b.classList.toggle("on",b.dataset.csEchoix===EMO.val));E.querySelector("[data-cs-emien]").value="";E.querySelector(".cs-ev").classList.add("on");E.querySelector(".cs-ep").classList.add("on")};
   const fermeEmo=()=>{const E=document.getElementById("E");if(!E)return;E.querySelectorAll(".cs-ev,.cs-ep").forEach(x=>x.classList.remove("on"));const m=E.querySelector("[data-cs-emien]");if(m)m.blur()};
   const choisitEmo=v=>{EMO={val:v,perso:true};carre(document.querySelector("#E .fc"),v,true);fermeEmo()};
-  const pedit=(i,pre)=>{const p=i>=0?(lit().prestations||[])[i]||{}:(pre||{});
-    EMO={val:p.emo||devine(p.nom),perso:i>=0&&!!p.emo&&p.emo!==devine(p.nom)};return croix+`<h3>${i>=0?LP.esc(p.nom):pre?LP.esc(pre.emo+" "+pre.nom):"Nouvelle prestation"}</h3><div class="form" style="margin-top:12px">
+  const pedit=(i,pre)=>{const p=i>=0?(lit().prestations||[])[i]||{}:(pre||{famille:ONG});
+    EMO={val:p.emo||devine(p.nom),perso:i>=0&&!!p.emo&&p.emo!==devine(p.nom)};return croix+`<h3>${i>=0?LP.esc(p.nom):pre?LP.esc(pre.emo+" "+pre.nom):ONG==="plus"?"Nouveau petit plus":"Nouvelle prestation"}</h3><div class="form" style="margin-top:12px">
     <div class="cs-nl"><label class="cs-emo" data-cs-emo>${LP.esc(EMO.val)}<i aria-hidden="true">✎</i><input class="cs-emo-in" id="cs-emo-in" data-cs-emien autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" aria-label="Ajouter mon emoji"></label><label><input data-cs-nom value="${esc(p.nom)}" aria-label="Nom" placeholder="Son nom, par exemple : Pose américaine"></label></div><label class="cs-emo-aide" for="cs-emo-in">Ajouter mon emoji <small>(touche 😀 sur ton clavier)</small></label>
     </div>${famHtml(p,i,pre)}${__prestaFiche.haut(p,i)}
     <div class="lab" style="margin-top:12px">Durée</div><div class="chips ch-dur" data-cs-dur>${dureesPour(p.duree).map(d=>`<button class="chip${d===(+p.duree||60)?" on":""}" data-cs-d="${d}">${duree(d)}</button>`).join("")}</div>
     ${__prestaFiche.bas(p)}
     <button class="btn" data-cs-ok="presta" data-i="${i}" style="width:100%;margin-top:10px">Enregistrer</button>
-    ${i>=0?`<button class="cs-sup" data-cs-sup="${i}">Supprimer cette prestation</button>`:""}`};
+    ${i>=0?`<button class="cs-sup" data-cs-sup="${i}">Supprimer ${LP.estPlus(p)?"ce petit plus":"cette prestation"}</button>`:""}`};
   /* --- Horaires --- */
   MSF["ms-horaires"]=()=>{const h=lit().horaires||Array(7).fill(null),hp=h.find(x=>x&&x.pd&&x.pf);/* 21/11 (Marie) : « Je ferme le midi », une pause pour tous les jours ouverts */return croix+`<h3>Horaires</h3><div class="sous">Ils s’affichent sur ton site</div>
     <div class="cs-p${hp?" on":""}" data-cs-midi><div class="r"><div>Je ferme le midi<span>Pas de réservation pendant la pause</span></div><button class="sw${hp?" on":""}" data-cs-psw aria-label="Je ferme le midi"></button></div><div class="cs-hr">Pause de<input type="time" data-cs-pd value="${hp?hp.pd:"12:00"}">à<input type="time" data-cs-pf value="${hp?hp.pf:"14:00"}"></div></div>
@@ -141,7 +154,14 @@
     if(fc.contains(ok))fc.innerHTML=MSF["ms-presta"]();
     toast(e,"Prestation enregistrée ✓ · ton site est à jour");return true;
   }
+  /* D121 : changer d'onglet ; une nouvelle ouverture de la liste repart sur « Prestations » */
+  const metOng=(fc,o)=>{ONG=o;const s=fc.querySelector(".cs-ong");if(!s)return;s.dataset.cur=o;s.querySelectorAll("[data-cs-ong]").forEach(b=>{const on=b.dataset.csOng===o;b.classList.toggle("on",on);b.setAttribute("aria-selected",on)});
+    const q=fc.querySelector("[data-pr-q]");if(q){const m=o==="plus"?"Rechercher un petit plus":"Rechercher une prestation";q.placeholder=m;q.setAttribute("aria-label",m);q.dispatchEvent(new Event("input",{bubbles:true}))}
+    const f=fc.closest(".feuille");if(f)f.scrollTop=0};
+  window.__prestaOnglet=()=>ONG;
+  document.addEventListener("click",ev=>{const t=ev.target;if(t.closest&&!t.closest(".feuille")&&t.closest("[data-a]"))ONG="presta"},true);
   document.addEventListener("click",ev=>{const t=ev.target;const fc=t.closest(".fc"),e=t.closest(".ecran");
+    const on=t.closest("[data-cs-ong]");if(on&&fc){ev.stopPropagation();metOng(fc,on.dataset.csOng);return}
     const op=t.closest("[data-cs-p]");if(op&&fc){ev.stopPropagation();fc.innerHTML=pedit(+op.dataset.csP);return}
     const fm=t.closest("[data-cs-fam]");if(fm&&fc){ev.stopPropagation();if(FAM)FAM.choisi=true;metFam(fc,fm.dataset.csFam);const z=fc.querySelector("[data-cs-auto]");if(z)z.textContent="";return}
     const og=t.closest("[data-cs-ongle]");if(og){ev.stopPropagation();const on=!og.classList.contains("on");og.classList.toggle("on",on);og.setAttribute("aria-pressed",on);return}
