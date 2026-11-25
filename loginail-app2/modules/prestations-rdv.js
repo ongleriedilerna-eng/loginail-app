@@ -3,7 +3,7 @@
    1 · Nouveau rendez-vous : « Comme la dernière fois », « Quelle prestation ? » (une pose et/ou une dépose, une seule de chaque),
        puis « Et avec ça ? » dès qu'une pose est choisie (4 petits plus les plus pris, « Voir les X autres » + recherche),
        « par ongle » = − n + dans la case ; le total en bas saute quand il change.
-   2 · Fin du rendez-vous : « Elle a pris autre chose ? » au-dessus des boutons ; le détail (prévu, petits plus, acompte, reste)
+   2 · Fin du rendez-vous (D120, 25/11) : la prestation prévue dans une carte avec un rond + ; il fait descendre « Elle a pris autre chose ? » et tous les petits plus en 2 colonnes ; le détail (prévu, petits plus, acompte, reste)
        et [C'est fini] [Encaisser · reste] collés en bas ; le ticket détaille chaque petit plus (note détaillée obligatoire).
    La famille vient de LOGI_PRESTA.estPlus (loginail-creer/prestations-detail.js), la même règle que le site des clientes.
    Titre d'un rendez-vous : « Pose américaine + Chrome + Strass et bijoux ×3 » (LOGI_PRESTA.morceaux le relit). */
@@ -59,10 +59,36 @@
 #E .pr-tot b.saute,#E .fr-bas .btn.saute{transform:scale(1.15)}
 #E .feuille:has(.pr-bas){padding-bottom:0!important}
 /* fin du rendez-vous */
-#E .fr-box{margin-top:14px;padding:12px;border-radius:20px;background:#fff;text-align:left}
-#E .fr-box .pr-lab{margin-top:2px}
-#E .fr-box .pr-ca{background:var(--v-c,#FBF8F5)}
-#E .fr-box .pr-ca.on{background:var(--v-fonce,#1E1C1B)}
+/* 25/11 (D120, Marie : « les cases sont trop grosses ») : la prestation prévue dans une carte, un petit rond + à droite ;
+   le toucher fait descendre « Elle a pris autre chose ? » et tous les petits plus en 2 colonnes ; ouvert, le + devient × */
+#E .fr-box{margin-top:14px;padding:4px 7px 4px 16px;border-radius:20px;background:#fff;text-align:left}
+#E .fr-ligne{display:flex;align-items:center;gap:10px;min-height:52px;font-size:15px}
+#E .fr-ligne b{flex:1;min-width:0;font-weight:500;overflow-wrap:anywhere;line-height:1.25}
+#E .fr-ligne .fr-px{flex:none;color:var(--noir,#1E1C1B)}
+#E .fr-rond{flex:none;width:34px;height:34px;margin:0;padding:0;border:0;border-radius:50%;background:var(--v-fonce,#1E1C1B);color:#fff;font:inherit;font-size:21px;line-height:1;display:grid;place-items:center;cursor:pointer;transition:transform .28s cubic-bezier(.2,.85,.25,1),background .2s;-webkit-tap-highlight-color:transparent;position:relative}
+#E .fr-rond::after{content:"";position:absolute;inset:-6px}
+#E .fr-rond:active{transform:scale(.9)}
+#E .fr-box.ouvert .fr-rond{transform:rotate(45deg);background:#8A8079}
+#E .fr-ex{display:flex;align-items:center;gap:10px;min-height:32px;padding-right:44px;font-size:14px;animation:pr-ap .25s ease both}
+#E .fr-ex span{flex:1;min-width:0;overflow-wrap:anywhere}
+#E .fr-ex .em{flex:none;font-size:15px}
+#E .fr-ex b{flex:none;font-weight:400}
+#E .fr-ex:last-of-type{margin-bottom:6px}
+#E .fr-tir{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .35s cubic-bezier(.2,.85,.25,1),opacity .25s}
+#E .fr-box.ouvert .fr-tir{grid-template-rows:1fr;opacity:1}
+#E .fr-tir>div{overflow:hidden;min-height:0}
+#E .fr-box:not(.ouvert) .fr-tir .pr-ca{visibility:hidden}
+#E .fr-dedans{margin-top:4px;padding:12px 9px 12px 0;border-top:1px solid rgba(30,28,27,.08)}
+#E .fr-q{margin:0 0 10px;font-size:15px;font-weight:500;color:var(--noir,#1E1C1B)}
+#E #pr-plus-f{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#E #pr-plus-f .pr-ca{display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:8px;row-gap:4px;min-height:52px;height:100%;padding:7px 10px;border-radius:16px;background:var(--v-c,#FBF8F5)}
+#E #pr-plus-f .pr-ca.on{background:var(--v-fonce,#1E1C1B)}
+#E #pr-plus-f .pr-ca .em{grid-row:1/3;font-size:17px}
+#E #pr-plus-f .pr-ca>span:last-child{grid-column:2;grid-row:1}
+#E #pr-plus-f .pr-ca b{font-size:14px;line-height:1.2;overflow-wrap:normal;word-break:normal;hyphens:none}
+#E #pr-plus-f .pr-ca small{margin-top:1px;font-size:12px}
+#E #pr-plus-f .pr-cpt{position:static;grid-column:2;grid-row:2;gap:2px}
+#E #pr-plus-f .pr-cpt u{width:28px;height:28px;font-size:16px}
 #E .fr-bas{position:sticky;bottom:calc(-1 * (env(safe-area-inset-bottom,0px) + 22px));z-index:3;margin:14px -24px 0;padding:10px 24px calc(env(safe-area-inset-bottom,0px) + 22px);background:var(--v-c,#FBF8F5);box-shadow:0 -10px 20px -14px rgba(30,28,27,.25)}
 #E .feuille:has(.fr-bas){padding-bottom:0!important}
 #E .fr-l{display:flex;justify-content:space-between;gap:10px;padding:3px 4px;font-size:13.5px;color:#776D64}
@@ -86,7 +112,7 @@
 #E #pr-plus-n .pr-cpt{position:static;order:3;margin-left:4px;gap:1px}
 #E #pr-plus-n .pr-cpt u{width:28px;height:28px;font-size:16px}
 #E #pr-plus-n+.pr-voir{display:none!important}
-@media (prefers-reduced-motion:reduce){#E .pr-ap,#E .pr-cases.tout .pr-ca.autre,#E .pr-der,#E .pr-tot b,#E .fr-btns .btn{transition:none;animation:none}}`;
+@media (prefers-reduced-motion:reduce){#E .pr-ap,#E .pr-cases.tout .pr-ca.autre,#E .pr-der,#E .pr-tot b,#E .fr-btns .btn,#E .fr-tir,#E .fr-rond,#E .fr-ex{transition:none;animation:none}}`;
   document.head.appendChild(st);
 
   /* ---------- les morceaux communs ---------- */
@@ -269,8 +295,12 @@
   const acompteDe = r => r.acompte_paye ? +r.acompte || 0 : 0;
   function majFin() {
     const fc = E.querySelector(".feuille .fc"); if (!FX || !fc || !fc.querySelector(".fr-box")) return;
-    majCases(fc.querySelector(".fr-box"), FX.plus);
+    const box = fc.querySelector(".fr-box"); majCases(box, FX.plus);
     const r = FX.r, b = baseDe(r), p0 = prixDe(b.prix), x = extras(), sx = sommeExtras(), ac = acompteDe(r), connu = p0 != null && sx != null && !prixBouge(Object.assign({}, r, { prix: b.prix, titre: b.titre }));
+    /* les petits plus choisis restent écrits sous la pose (emoji, nom, prix), ouvert ou fermé */
+    box.querySelectorAll(".fr-ex").forEach(e => e.remove());
+    box.querySelector(".fr-tir").insertAdjacentHTML("beforebegin", x.map(([p, n]) => { const px = prixDe(p.prix);
+      return `<div class="fr-ex"><span class="em" aria-hidden="true">${esc(LP.emo(p))}</span><span>${esc(p.nom + (n > 1 ? " ×" + n : ""))}</span><b>${px == null ? "sur devis" : esc(montant(px * n))}</b></div>`; }).join(""));
     const total = connu ? p0 + sx : null, reste = total == null ? null : Math.max(0, total - ac);
     fc.querySelector(".fr-lignes").innerHTML = `<div class="fr-l"><span>Prévu · ${esc(b.titre || titreRdv(r) || "Rendez-vous")}</span><b>${p0 == null ? "" : esc(montant(p0))}</b></div>`
       + (x.length ? `<div class="fr-l plus"><span>+ ${esc(x.map(([p, n]) => p.nom + (n > 1 ? " ×" + n : "")).join(", "))}</span><b>${sx == null ? "" : esc(montant(sx))}</b></div>` : "")
@@ -283,10 +313,13 @@
     FX = null; const fc = E.querySelector(".feuille .fc"); if (!fc) return;
     const r = S.rdv.find(x => x.id === id) || (S.cloche || []).find(x => x.id === id); if (!r || !r.cliente_id || r.statut !== "prevu") return;
     const en = fc.querySelector('[data-a="encaisser"][data-id]'), fini = fc.querySelector('[data-a="statut"][data-s="fini"]'); if (!fini && !en) return;
-    const box = blocPlus("Elle a pris autre chose ?", "sur place", "pr-plus-f"); if (!box) return;
-    FX = { r, plus: {}, ordre: [] }; baseDe(r);
-    const z = document.createElement("div"); z.className = "fr-box"; z.innerHTML = box;
-    (en || fini).before(z);
+    /* D120 : tous les petits plus (les plus pris d'abord), sans « Voir les autres » ni recherche */
+    const l = P(), u = usages(), I = l.map((p, i) => i).filter(i => LP.estPlus(l[i])).sort((a, c) => u[c] - u[a] || a - c); if (!I.length) return;
+    FX = { r, plus: {}, ordre: [] }; const b = baseDe(r), p0 = prixDe(b.prix);
+    const z = document.createElement("div"); z.className = "fr-box";
+    z.innerHTML = `<div class="fr-ligne"><b>${esc(b.titre || titreRdv(r) || "Rendez-vous")}</b><span class="fr-px">${p0 == null ? "" : esc(montant(p0))}</span><button type="button" class="fr-rond" aria-expanded="false" aria-label="Elle a pris autre chose ?">+</button></div>`
+      + `<div class="fr-tir"><div><div class="fr-dedans"><p class="fr-q">Elle a pris autre chose ?</p><div class="pr-cases" id="pr-plus-f">${I.map(i => casePlus(l[i], i, false)).join("")}</div></div></div></div>`;
+    (en || fini).before(z);   /* puis remontée sous « Modifier / Déplacer », au-dessus de la fidélité (maquette D, voir plus bas) */
     const bas = document.createElement("div"); bas.className = "fr-bas"; bas.innerHTML = '<div class="fr-lignes" aria-live="polite"></div><div class="fr-btns"></div>';
     fc.appendChild(bas);
     const btns = bas.querySelector(".fr-btns");
@@ -300,12 +333,22 @@
     const r0 = S.rdv.find(x => x.id === id); if (r0 && r0._neuf && r0._d109) { r0.titre = r0._d109.titre; r0.prix = r0._d109.prix; delete r0._neuf; }
     const v = fr0.apply(this, arguments); try { poseFin(id); } catch (x) { console.error(x); } return v; };
   /* le petit texte de fidélité (suite.js le met au-dessus de « C'est fini ») reste dans la page, pas dans la barre du bas */
-  new MutationObserver(() => { const n = E.querySelector(".fr-bas .rv-fid-n"), b = n && E.querySelector(".fr-bas"); if (b) b.before(n); }).observe(E, { childList: true, subtree: true });
+  new MutationObserver(() => { const n = E.querySelector(".fr-bas .rv-fid-n"), b = n && E.querySelector(".fr-bas"); if (b) b.before(n);
+    /* D120 : la carte de la pose vient sous « Modifier / Déplacer » (rdv.js les pose juste après) et au-dessus de la fidélité */
+    const c = E.querySelector(".fc .fr-box"); if (!c) return; const f = E.querySelector(".fc .rv-fid"), d = E.querySelector(".fc .rv-duo");
+    if (f && f.previousElementSibling !== c) f.before(c); else if (!f && d && d.nextElementSibling !== c) d.after(c); }).observe(E, { childList: true, subtree: true });
 
   /* toucher un petit plus ; « Encaisser » et « C'est fini » emportent les petits plus (sur window : avant app2.js, rdv.js et suite.js) */
   let rejoue = false;
   addEventListener("click", async e => {
     const t = e.target; if (!t.closest || !FX) return; const fc = t.closest(".feuille .fc"); if (!fc || !fc.querySelector(".fr-box")) return;
+    const rond = t.closest(".fr-box .fr-rond");
+    if (rond) { e.stopPropagation(); e.preventDefault(); const box = rond.closest(".fr-box"), o = box.classList.toggle("ouvert");
+      rond.setAttribute("aria-expanded", o); rond.setAttribute("aria-label", o ? "Fermer" : "Elle a pris autre chose ?");
+      /* ouvert : on montre la liste entière si elle passe sous les boutons du bas */
+      if (o) setTimeout(() => { if (!box.isConnected || !box.classList.contains("ouvert")) return; const f = box.closest(".feuille"), bas = fc.querySelector(".fr-bas"); if (!f || !bas) return;
+        const trop = box.getBoundingClientRect().bottom - bas.getBoundingClientRect().top + 12; if (trop > 0) f.scrollBy({ top: Math.min(trop, box.getBoundingClientRect().top - f.getBoundingClientRect().top - 8), behavior: "smooth" }); }, 360);
+      return; }
     if (t.closest(".fr-box .pr-ca[data-pr]")) { e.stopPropagation(); e.preventDefault(); touchePlus(t, FX.plus, FX.ordre); return majFin(); }
     const r = FX.r, b = baseDe(r);
     if (t.closest('[data-a="encaisser"]')) {   /* la caisse s'ouvre avec le prix et les lignes à jour ; rien n'est écrit tant qu'elle n'encaisse pas */
