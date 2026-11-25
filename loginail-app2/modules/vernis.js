@@ -114,8 +114,9 @@
     const nouv = clocheListe(now), vu = clocheVu(), nonvu = nouv.filter(x => new Date(x.t) > vu).length;
     let h = `<div class="v-haut v-haut-acc">${etoiles("acc")}<div class="tete"><div><h1 style="--n:${(JOURS[(now.getDay() + 6) % 7] + " " + now.getDate() + " " + MOIS[now.getMonth()]).length}">${JOURS[(now.getDay() + 6) % 7]} <em>${now.getDate()} ${MOIS[now.getMonth()]}</em></h1></div><div class="v-btns"><button class="ai-b v-cloche${nonvu ? " sonne" : ""}" data-v-cloche aria-label="Réservations en ligne${nonvu ? " : " + nonvu + " nouvelle" + (nonvu > 1 ? "s" : "") : ""}">${CLOCHE}${nonvu ? `<span class="v-badge">${nonvu}</span>` : ""}</button>${ai ? ai.outerHTML : ""}</div></div>`;
     h += bienvenue();
+    h += annivHaut(now, salon);
     if (proch) { const d = new Date(proch.debut), mn = Math.round((d - now) / 60000), tel = (proch.clientes && proch.clientes.telephone || "").replace(/\s/g, "");
-      h += `<div class="v-prochain" data-rdv="${proch.id}"><div class="v-lab">Prochaine cliente</div><div class="v-grand"><b>${hh(d)}</b><span>dans ${mn >= 60 ? duree(mn) : mn + " min"}</span></div>
+      h += `<div class="v-prochain" data-rdv="${proch.id}"><div class="v-lab">Prochaine cliente</div><div class="v-grand"><b>${hh(d)}</b></div><div class="v-rond" data-debut="${esc(proch.debut)}" data-depuis="${new Date(Math.max(...cli.filter(r => r !== proch && r.statut !== "annule" && new Date(r.fin) <= d).map(r => +new Date(r.fin)), +d - 2 * 3600000)).toISOString()}" aria-label="dans ${mn >= 60 ? duree(mn) : mn + " min"}"><svg viewBox="0 0 100 100" aria-hidden="true"><g class="tr">${Array.from({ length: 24 }, (_, i) => { const a = i / 24 * 2 * Math.PI, s = Math.sin(a), c = Math.cos(a), r2 = i % 6 ? 41.5 : 39.8; return `<line class="${i % 6 ? "" : "g"}" x1="${(50 + 45 * s).toFixed(2)}" y1="${(50 - 45 * c).toFixed(2)}" x2="${(50 + r2 * s).toFixed(2)}" y2="${(50 - r2 * c).toFixed(2)}"/>`; }).join("")}</g><path class="p"/><circle class="bl" r="3.6"/></svg><div class="t"><b></b><small></small></div></div>
         <div class="v-cli"><span class="v-av">${esc(((proch.clientes && proch.clientes.prenom) || nomRdv(proch) || "?")[0].toUpperCase())}</span><div>${esc(nomRdv(proch))}<small>${esc(titreRdv(proch))}${proch.prix ? " · " + euros(proch.prix) : ""}</small></div></div>
         ${tel ? `<div class="v-actions"><button class="v-btn" data-href="tel:${esc(tel)}">Appeler</button><button class="v-btn plein" data-href="sms:${esc(tel)}">Message</button></div>` : ""}</div>`; }
     h += "</div>";
@@ -142,13 +143,7 @@
         return `<div class="v-l${passe ? " passe" : ""}${r.cliente_id ? "" : " bloc"}" data-rdv="${r.id}"><span class="v-h">${hh(d)}</span><div class="v-t">${esc(nomRdv(r))}${r.source === "en_ligne" ? '<span class="v-pastille">en ligne</span>' : ""}<small>${esc(titreRdv(r)) || (r.cliente_id ? "" : "Créneau bloqué")}${r.statut === "absente" ? " · pas venue" : ""}</small></div>${r.prix ? `<span class="v-p">${euros(r.prix)}</span>` : ""}</div>`; }).join("")}
         ${auj.length > 5 ? `<button class="acc-plus" data-su="acc-plus">${S.accTout ? "Voir moins" : "Voir les " + (auj.length - 5) + " autres rendez-vous"}</button>` : ""}</div>`; }
     else if (vide) h += vide.outerHTML;
-    const md = p2(now.getMonth() + 1) + "-" + p2(now.getDate()), anv = S.clientes.filter(c => c.anniversaire && String(c.anniversaire).slice(5, 10) === md);
-    /* 24/11 (Marie, maquette anniv-resa) : la carte du matin « 🎂 Aujourd'hui : Lina et Inès » ; dessous, seulement celles qui n'ont pas de SMS (bouton Écrire) */
-    const sms = anv.filter(c => c.ok_sms_anniv), off = window.__annivCoupe && window.__annivCoupe(), noms = l => l.map(c => c.prenom || nomCli(c)).join(", ").replace(/, ([^,]*)$/, " et $1");
-    if (anv.length) h += `<div class="k">Anniversaires</div><button class="an-carte" data-a="ms-anniv"><span class="g">🎂</span><div><b>Aujourd’hui : ${esc(noms(anv))}</b><small>${off ? "C’est leur anniversaire · SMS coupés" : sms.length === anv.length ? (anv.length > 1 ? "Leur SMS part tout seul à 11 h" : "Son SMS part tout seul à 11 h") : sms.length ? `SMS à 11 h pour ${esc(noms(sms))}` : "Pas de SMS : elle n’a pas dit oui"}</small></div><span class="fl">›</span></button>`;
-    const sans = anv.filter(c => off || !c.ok_sms_anniv);
-    if (sans.length) h += `<div class="liste v-liste">${sans.map(c => { const tel = (c.telephone || "").replace(/\s/g, ""), txt = encodeURIComponent(`Joyeux anniversaire ${c.prenom || ""} ! Très belle journée de la part de ${salon}.`);
-      return `<div class="v-l"><span class="v-av petit">${esc((c.prenom || "?")[0].toUpperCase())}</span><div class="v-t">${esc(nomCli(c))}<small>${tel ? "Un petit mot lui fera plaisir" : "Ajoute son numéro pour lui écrire"}</small></div>${tel ? `<a class="v-btn plein petit" href="sms:${esc(tel)}&body=${txt}">Écrire</a>` : ""}</div>`; }).join("")}</div>`;
+    /* 25/11 (Marie) : les anniversaires ne sont plus en bas, ils sont tout en haut, au-dessus de « Prochaine cliente » (voir annivHaut) */
     if (caisse) { const on = caisse.classList.contains("on");
       h += `<div class="k">Ma caisse</div><div class="liste v-liste"><div class="v-l"><div class="v-t">Noter ce que j’encaisse<small>${on ? "Pratique si on te paie en espèces" : "Arrêtée : active-la pour suivre tes encaissements"}</small></div><button class="sw${on ? " on" : ""}" data-su="acc-caisse" aria-label="Utiliser la caisse"></button><button class="v-x" data-su="acc-caisse-x" aria-label="Masquer">×</button></div></div>`; }
     if (notif) h += notif.closest(".acc-caisse").outerHTML;
@@ -443,7 +438,19 @@
 #E .noire{border-radius:24px}
 
 /* ----- Accueil ----- */
-#E .v-prochain{background:#fff;border-radius:24px;padding:20px;margin-top:20px;box-shadow:0 18px 40px -26px rgba(120,40,55,.45);cursor:pointer}
+#E .v-prochain{background:#fff;border-radius:24px;padding:20px;margin-top:20px;box-shadow:0 18px 40px -26px rgba(120,40,55,.45);cursor:pointer;position:relative}
+/* 25/11 (Marie, idée A) : le grand rond du temps qui reste avant la prochaine cliente ; plein à 1 h ou plus, il se vide ; sous 10 min, rouge et il bat */
+#E .v-rond{position:absolute;top:18px;right:18px;width:88px;height:88px;pointer-events:none}
+#E .v-rond svg{width:100%;height:100%;overflow:visible}
+#E .v-rond .tr line{stroke:color-mix(in srgb,var(--v-acc) 16%,#fff);stroke-width:2;stroke-linecap:round}#E .v-rond .tr line.g{stroke:color-mix(in srgb,var(--v-acc) 28%,#fff);stroke-width:2.6}
+#E .v-rond .p{fill:none;stroke:color-mix(in srgb,var(--v-acc) 62%,#fff);stroke-width:4.5;stroke-linecap:round;transition:stroke .6s}
+#E .v-rond .bl{fill:#fff;stroke:color-mix(in srgb,var(--v-acc) 62%,#fff);stroke-width:2.4;transition:stroke .6s}
+#E .v-rond .t{position:absolute;inset:0;display:grid;place-content:center;text-align:center;line-height:1}
+#E .v-rond .t b{font:500 29px/1 'Cormorant Garamond',Georgia,serif;font-variant-numeric:lining-nums}#E .v-rond .t b.h{font-size:23px}#E .v-rond .t small{display:block;font-size:11px;color:var(--gris);margin-top:2px}#E .v-rond .t small:empty{display:none}
+#E .v-rond.vite .p,#E .v-rond.vite .bl{stroke:#E58A8A}#E .v-rond.vite{animation:vRond 2.4s ease-in-out infinite}
+@keyframes vRond{50%{transform:scale(1.03)}}
+@media (prefers-reduced-motion:reduce){#E .v-rond.vite{animation:none}}
+#E .v-prochain .v-cli{padding-right:4px}
 #E .v-lab{font-size:12.5px;color:var(--gris)}
 #E .v-grand{display:flex;align-items:baseline;gap:10px;margin:2px 0 12px}
 #E .v-grand b{font:500 52px/1 'Cormorant Garamond',Georgia,serif;font-variant-numeric:lining-nums}
@@ -472,7 +479,7 @@
 #E .v-pulse{width:8px;height:8px;border-radius:50%;background:#3D8B66;box-shadow:0 0 0 4px rgba(61,139,102,.15);flex:none;animation:vPulse 2s ease-in-out infinite}
 @keyframes vPulse{50%{box-shadow:0 0 0 7px rgba(61,139,102,.06)}}
 #E .v-jq{margin-left:auto;font-size:12.5px;color:var(--gris);text-align:right}
-#E .v-creneaux{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -22px;padding:0 22px 2px;scroll-snap-type:x proximity}
+#E .v-creneaux{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -22px;padding:0 22px 2px;scroll-snap-type:x proximity;scroll-padding-inline:22px}#E .v-creneaux::after{content:"";flex:none;width:14px}
 #E .v-creneaux::-webkit-scrollbar{display:none}
 #E .v-cr{flex:none;border-radius:16px;padding:12px 14px;border:1px dashed color-mix(in srgb,var(--v-acc) 45%,transparent);background:color-mix(in srgb,var(--v-rose) 40%,transparent);font:inherit;text-align:left;color:inherit;cursor:pointer;scroll-snap-align:start;transition:transform .12s}
 #E .v-cr b{display:block;font-weight:500;font-size:14.5px;font-variant-numeric:lining-nums}
@@ -651,3 +658,50 @@
 `;
   document.head.appendChild(st);
 })();
+
+/* 25/11 (Marie, idée A, « un rond qui fait le temps », plus doux) : le cadran part de la fin de la cliente d'avant (sinon 2 h avant) et se vide jusqu'à la prochaine */
+(function () {
+  const pt = (r, f) => [50 + r * Math.sin(f * 2 * Math.PI), 50 - r * Math.cos(f * 2 * Math.PI)];
+  const met = () => document.querySelectorAll("#E .v-rond[data-debut]").forEach(r => {
+    const deb = +new Date(r.dataset.debut), dep = +new Date(r.dataset.depuis || deb - 7200000), now = Date.now(), mn = Math.max(0, Math.round((deb - now) / 60000));
+    let f = Math.max(0, Math.min(1, (deb - now) / Math.max(60000, deb - dep))); if (f > .9999) f = .9999;
+    const b = r.querySelector(".t b"), u = r.querySelector(".t small"), p = r.querySelector(".p"), bl = r.querySelector(".bl"), R = 43.2, [x, y] = pt(R, f);
+    const t = mn >= 60 ? Math.floor(mn / 60) + "h" + (mn % 60 ? String(mn % 60).padStart(2, "0") : "") : String(mn);
+    if (b.textContent !== t) b.textContent = t; b.classList.toggle("h", mn >= 60); u.textContent = mn >= 60 ? "" : "min";
+    p.setAttribute("d", f > 0 ? `M50 ${50 - R} A${R} ${R} 0 ${f > .5 ? 1 : 0} 1 ${x.toFixed(2)} ${y.toFixed(2)}` : "");
+    bl.setAttribute("cx", x.toFixed(2)); bl.setAttribute("cy", y.toFixed(2)); bl.style.display = f > 0 ? "" : "none";
+    r.classList.toggle("vite", mn <= 10); r.setAttribute("aria-label", "dans " + (mn >= 60 ? t.replace("h", " h ") : mn + " min")); });
+  new MutationObserver(() => { if (document.querySelector("#E .v-rond[data-debut] .t b:empty")) met(); }).observe(document.documentElement, { childList: true, subtree: true });
+  setInterval(met, 20000); document.addEventListener("visibilitychange", () => { if (!document.hidden) met(); });
+})();
+
+/* 25/11 (Marie : « en bas on ne le voit pas ») : l'anniversaire du jour tout en haut de l'Accueil, au-dessus de « Prochaine cliente ».
+   Une petite croix : « c'est bon, je l'ai vu » → la carte disparaît pour aujourd'hui (gardé dans le téléphone). Toucher la carte → réglages des SMS d'anniversaire. */
+const ANV_CLE = "loginail-anniv-vu", anvJour = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+function annivHaut(now, salon) {
+  try { if (localStorage.getItem(ANV_CLE) === anvJour(now)) return ""; } catch (x) {}
+  const md = anvJour(now).slice(5), anv = S.clientes.filter(c => c.anniversaire && String(c.anniversaire).slice(5, 10) === md); if (!anv.length) return "";
+  const off = window.__annivCoupe && window.__annivCoupe(), sms = anv.filter(c => !off && c.ok_sms_anniv), noms = l => l.map(c => c.prenom || nomCli(c)).join(", ").replace(/, ([^,]*)$/, " et $1");
+  const sous = off ? "SMS d’anniversaire coupés" : sms.length === anv.length ? (anv.length > 1 ? "Leur SMS part tout seul à 11 h" : "Son SMS part tout seul à 11 h") : sms.length ? `SMS à 11 h pour ${noms(sms)}` : (anv.length > 1 ? "Envoie-leur un petit mot" : "Envoie-lui un petit mot, elle va adorer");
+  const ecrire = anv.filter(c => (off || !c.ok_sms_anniv) && (c.telephone || "").trim()).map(c => { const tel = c.telephone.replace(/\s/g, ""), txt = encodeURIComponent(`Joyeux anniversaire ${c.prenom || ""} ! Très belle journée de la part de ${salon}.`);
+    return `<a class="anh-e" href="sms:${esc(tel)}&body=${txt}">Écrire${anv.length > 1 ? " à " + esc(c.prenom || nomCli(c)) : ""}</a>`; }).join("");
+  return `<div class="anh" data-a="ms-anniv" role="button"><span class="anh-g" aria-hidden="true">🎂</span><div class="anh-t"><b>Aujourd’hui, c’est l’anniversaire de ${esc(noms(anv))}</b><small>${esc(sous)}</small>${ecrire ? `<div class="anh-es">${ecrire}</div>` : ""}</div><button type="button" class="anh-x" data-anh-x aria-label="C’est vu, enlever">×</button></div>`;
+}
+{ const st = document.createElement("style"); st.textContent = `
+#E .anh{position:relative;display:flex;align-items:flex-start;gap:12px;margin-top:18px;padding:13px 40px 13px 13px;border-radius:20px;background:linear-gradient(135deg,#fff,color-mix(in srgb,var(--v-rose) 55%,#fff));box-shadow:0 14px 32px -26px rgba(120,40,55,.5);cursor:pointer;animation:anhIn .35s cubic-bezier(.2,.9,.3,1) both;transition:opacity .25s,transform .25s}
+#E .anh-g{flex:none;width:42px;height:42px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:21px;box-shadow:0 4px 10px -6px rgba(120,40,55,.4)}
+#E .anh-t{flex:1;min-width:0;padding-top:2px}#E .anh-t b{display:block;font-weight:500;font-size:15px;line-height:1.25;overflow-wrap:anywhere}#E .anh-t small{display:block;font-size:12.5px;color:#776D64;margin-top:3px}
+#E .anh-es{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+#E .anh-e{height:32px;padding:0 14px;border-radius:999px;background:var(--v-fonce,#1E1C1B);color:#fff;font-size:13px;display:inline-flex;align-items:center;text-decoration:none}
+#E .anh-x{position:absolute;top:6px;right:6px;width:32px;height:32px;border:0;border-radius:50%;background:none;color:#9A9089;font-size:20px;line-height:1;padding:0;cursor:pointer;display:grid;place-items:center}
+#E .anh-x:active{background:rgba(30,28,27,.06)}
+#E .anh.part{opacity:0;transform:translateY(-6px) scale(.98)}
+#E .anh+.v-prochain{margin-top:12px}
+@keyframes anhIn{from{opacity:0;transform:translateY(6px)}}
+@media (prefers-reduced-motion:reduce){#E .anh{animation:none;transition:none}}`; document.head.appendChild(st); }
+document.addEventListener("click", e => { const x = e.target.closest && e.target.closest("[data-anh-x]"); if (!x) return; e.stopPropagation(); e.preventDefault();
+  try { localStorage.setItem(ANV_CLE, anvJour(new Date())); } catch (z) {}
+  const c = x.closest(".anh"); if (!c) return; c.style.height = c.offsetHeight + "px"; c.classList.add("part");
+  setTimeout(() => { c.style.transition = "height .25s,margin .25s,padding .25s"; c.style.height = "0px"; c.style.marginTop = "0px"; c.style.paddingTop = c.style.paddingBottom = "0px"; c.style.overflow = "hidden"; }, 200);
+  setTimeout(() => c.remove(), 480); }, true);
+document.addEventListener("click", e => { const a = e.target.closest && e.target.closest(".anh-e"); if (a) e.stopPropagation(); }, true);

@@ -16,6 +16,8 @@
 #E .pr-lab{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:14px 2px 8px;font-size:12.5px;color:#776D64;text-transform:none;letter-spacing:0}
 #E .pr-lab b{font-weight:500;font-size:15px;color:var(--noir,#1E1C1B)}
 #E .pr-cases{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+/* 25/11 (Marie, idée A) : nombre impair → la dernière prend toute la ligne, en plus fin (nom et prix sur une ligne) */
+#E .pr-z>.pr-cases>.pr-ca.seule{grid-column:1/-1;min-height:50px}#E .pr-z>.pr-cases>.pr-ca.seule>span{display:flex;align-items:baseline;justify-content:center;gap:10px;flex-wrap:wrap;text-align:center}#E .pr-ca.seule small{margin:0}
 #E .pr-ca{position:relative;display:flex;flex-direction:column;justify-content:space-between;gap:6px;min-width:0;min-height:78px;box-sizing:border-box;margin:0;padding:12px;border:1px solid rgba(30,28,27,.12);border-radius:18px;background:#fff;color:inherit;font:inherit;text-align:left;cursor:pointer;transition:background .18s,color .18s,border-color .18s,transform .12s;-webkit-user-select:none;user-select:none}
 #E .pr-ca.sans{min-height:66px;justify-content:center}
 #E .pr-ca:active{transform:scale(.96)}
@@ -391,4 +393,12 @@
   if (typeof mf0 === "function") window.majFinal = majFinal = function () { const v = mf0.apply(this, arguments); try { lignesApercu(); } catch (x) { console.error(x); } return v; };
   const fe0 = window.feuilleEncaisser;
   if (typeof fe0 === "function") window.feuilleEncaisser = feuilleEncaisser = function () { const v = fe0.apply(this, arguments); try { lignesApercu(); } catch (x) { console.error(x); } return v; };
+})();
+
+/* 25/11 (Marie, idée A) : la dernière case seule sur sa ligne quand il y en a un nombre impair (on ne compte que les cases visibles) */
+(function () {
+  const range = () => document.querySelectorAll("#E .pr-z>.pr-cases").forEach(z => {
+    const v = [...z.children].filter(b => b.classList.contains("pr-ca") && getComputedStyle(b).display !== "none"), der = v.length % 2 ? v[v.length - 1] : null;
+    z.querySelectorAll(".pr-ca").forEach(b => { const on = b === der; if (b.classList.contains("seule") !== on) b.classList.toggle("seule", on); }); });
+  let f = 0; new MutationObserver(() => { cancelAnimationFrame(f); f = requestAnimationFrame(range); }).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
 })();
