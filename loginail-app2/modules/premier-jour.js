@@ -1,14 +1,12 @@
 /* ===== 25/11 (Marie, D119, maquettes/retours-2411/premier-jour.html, téléphone A) : le premier jour d'une nouvelle prothésiste =====
    Remplace, tant qu'elle n'a pas touché « C'est bon, c'est mon salon », la carte « Bienvenue chez toi » et l'ancien « Pour bien démarrer » :
-   · pas de grand titre : la date en petit, puis « Pour bien démarrer, choisis tes réglages ↓ » sur UNE ligne ;
+   · la date du jour comme tous les jours (Marie, 25/11 : « tu mets quand même la date d'aujourd'hui, comme si on était dans le truc »), puis « Pour bien démarrer, choisis tes réglages ↓ » sur UNE ligne ;
    · « Mon salon, à ma façon » + « Tu pourras toujours tout modifier dans Réglages » ; 7 réglages en Oui / Non qui agissent pour de vrai ;
    · « Ensuite » : les 3 premiers pas ; « Ma caisse » et « Partager mes dispos » cachés tant qu'ils ne sont pas faits.
    Même mémoire que l'ancien carré de bienvenue (user_metadata.bienvenue_vue) : une pro qui l'avait déjà fermé ne voit rien de nouveau. */
 (function () {
   const st = document.createElement("style");
-  st.textContent = `#E .vue:has(.pj) .tete h1{font:400 14px/1.3 Jost,sans-serif!important;color:#776D64!important;letter-spacing:0}
-#E .vue:has(.pj) .tete h1 *{font:inherit!important;color:inherit!important}
-#E .pj{text-align:left}
+  st.textContent = `#E .pj{text-align:left}
 #E .pj-l1{margin:2px 2px 4px;white-space:nowrap;font-size:clamp(14px,4.4vw,16.5px);color:#4F4643}
 #E .pj-l1 b{font-weight:400;color:var(--v-acc,#B5475E)}
 #E .pj .k{margin-top:16px}
