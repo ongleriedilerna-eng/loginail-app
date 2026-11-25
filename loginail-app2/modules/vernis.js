@@ -449,7 +449,7 @@
 #E .v-rond svg{width:100%;height:100%;transform:rotate(-90deg)}
 #E .v-rond circle{fill:none;stroke-width:7}#E .v-rond .f{stroke:var(--v-rose)}#E .v-rond .p{stroke:var(--v-acc);stroke-linecap:round;stroke-dasharray:276.46;transition:stroke-dashoffset .8s cubic-bezier(.2,.9,.3,1)}
 #E .v-rond .t{position:absolute;inset:0;display:grid;place-content:center;text-align:center;line-height:1}
-#E .v-rond .t b{font:500 29px/1 'Cormorant Garamond',Georgia,serif;font-variant-numeric:lining-nums}#E .v-rond .t small{display:block;font-size:11px;color:var(--gris);margin-top:2px}#E .v-rond .t small:empty{display:none}
+#E .v-rond .t b{font:500 29px/1 'Cormorant Garamond',Georgia,serif;font-variant-numeric:lining-nums}#E .v-rond .t b.h{font-size:23px}#E .v-rond .t small{display:block;font-size:11px;color:var(--gris);margin-top:2px}#E .v-rond .t small:empty{display:none}
 #E .v-rond.vite .p{stroke:#D9534F}#E .v-rond.vite{animation:vRond 1.6s ease-in-out infinite}
 @keyframes vRond{50%{transform:scale(1.05)}}
 @media (prefers-reduced-motion:reduce){#E .v-rond.vite{animation:none}}
@@ -668,7 +668,7 @@
   const met = () => document.querySelectorAll("#E .v-rond[data-debut]").forEach(r => {
     const mn = Math.max(0, Math.round((new Date(r.dataset.debut) - Date.now()) / 60000)), p = r.querySelector(".p"), b = r.querySelector(".t b"), u = r.querySelector(".t small");
     const t = mn >= 60 ? Math.floor(mn / 60) + "h" + (mn % 60 ? String(mn % 60).padStart(2, "0") : "") : String(mn);
-    if (b.textContent !== t) b.textContent = t; u.textContent = mn >= 60 ? "" : "min";
+    if (b.textContent !== t) b.textContent = t; b.classList.toggle("h", mn >= 60); u.textContent = mn >= 60 ? "" : "min";
     p.style.strokeDashoffset = (C * (1 - Math.min(mn, 60) / 60)).toFixed(1); r.classList.toggle("vite", mn <= 10);
     r.setAttribute("aria-label", "dans " + (mn >= 60 ? t.replace("h", " h ") : mn + " min")); });
   new MutationObserver(() => { if (document.querySelector("#E .v-rond[data-debut] .t b:empty")) met(); }).observe(document.documentElement, { childList: true, subtree: true });
