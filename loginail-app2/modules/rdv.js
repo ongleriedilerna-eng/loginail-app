@@ -21,6 +21,8 @@
 .rv-pas{display:flex;gap:8px;flex:none}
 .rv-pas button{width:46px;height:46px;border-radius:50%;background:#fff;border:1px solid rgba(30,28,27,.14);font-size:22px;line-height:1;color:inherit;transition:transform .12s,opacity .2s}
 .rv-pas button:active{transform:scale(.9)}.rv-pas button:disabled{opacity:.3}
+.fc .fiche-t .rv-ct{margin:6px 0 0;text-align:left;color:var(--gris);font-size:13px;line-height:1.45;-webkit-user-select:text;user-select:text;overflow-wrap:anywhere}
+.fc .fiche-t .ronds.rv-ca{display:grid;grid-template-columns:repeat(2,40px);gap:8px;flex:none}.fc .fiche-t .ronds.rv-ca button{width:40px;height:40px}
 .rv-lim{margin:6px 0 0 4px;color:var(--gris);font-size:12.5px}
 @media(prefers-reduced-motion:reduce){.rv-hor b span.pop{animation:none}}`;
   document.head.appendChild(st);
@@ -39,7 +41,18 @@
   /* 2 · le rendez-vous : Modifier, la note, le nom qui ouvre la fiche, remplacer s'il est annulé */
   new MutationObserver(() => { const z = document.querySelector(".fc .fiche-t"); if (!z || z.dataset.rvx) return; z.dataset.rvx = "1";
     const id = (document.querySelector('.fc [data-a="statut"]') || document.querySelector('.fc [data-a="decaler"]') || document.querySelector('.fc [data-a="rdv-suppr"]') || {}).dataset?.id; const r = id && (S.rdv.find(x => x.id === id) || (S.cloche || []).find(x => x.id === id)); if (!r) return;
-    const h = z.querySelector("h3"); if (h && r.cliente_id) { h.dataset.cli = r.cliente_id; const so = h.nextElementSibling; (so || h).insertAdjacentHTML("afterend", `<button class="lien-t" data-cli="${r.cliente_id}" style="display:block;margin:4px 0 0;padding:2px 0;text-align:left;font-size:13px">Voir sa fiche ›</button>`); }
+    const h = z.querySelector("h3"); if (h && r.cliente_id) { h.dataset.cli = r.cliente_id;   /* 25/11 (Marie) : plus de « Voir sa fiche › », toucher le nom suffit */
+      const so = h.nextElementSibling;
+      /* 25/11 (Marie) : ses contacts sous son nom, comme sur sa fiche (numéro, @Insta) + les ronds Appeler / Message / Instagram.
+         On lit la fiche complète (S.clientes) : le rendez-vous ne porte que le téléphone, et parfois rien (réservé en ligne). */
+      const c = S.clientes.find(y => y.id === r.cliente_id) || r.clientes || {}, t = String(c.telephone || "").replace(/[^\d+]/g, ""), ig = String(c.prenom || "")[0] === "@" && !c.nom ? "" : (c.instagram || "");
+      const lig = [c.telephone ? esc(c.telephone) : "", ig ? "@" + esc(ig) : "", !c.telephone && !c.instagram && c.email ? esc(c.email) : ""].filter(Boolean);
+      (so || h).insertAdjacentHTML("afterend", `<div class="rv-ct">${lig.length ? lig.join("<br>") : "Pas de numéro"}</div>`);
+      const rd = z.querySelector(".ronds"), IG = '<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1.1" fill="#1E1C1B" stroke="none"/></svg>';
+      let b = (t ? `<button data-href="tel:${esc(t)}" aria-label="Appeler">${I.tel}</button><button data-href="sms:${esc(t)}" aria-label="Message">${I.msg}</button>` : "")
+        + (c.instagram ? `<button data-href="https://www.instagram.com/${encodeURIComponent(c.instagram)}/" data-neuf aria-label="Son Instagram">${IG}</button>` : "")
+        + (!t && c.email ? `<button data-href="mailto:${esc(c.email)}" aria-label="Lui écrire un e-mail">${I.msg}</button>` : "");
+      if (b) { if (rd) rd.innerHTML = b; else z.insertAdjacentHTML("beforeend", `<div class="ronds">${b}</div>`); const rr = z.querySelector(".ronds"); rr.classList.toggle("rv-ca", rr.children.length > 2); } }
     let x = ""; if (r.note) x += `<div class="rv-note"><b>Note</b>${esc(r.note)}</div>`;
     if (r.statut === "annule" && r.cliente_id) x += `<button class="btn" data-rv="remplacer" data-id="${r.id}" style="margin-top:14px">Mettre une autre cliente à la place</button>`;
     /* 22/11 (Marie) : deux pilules sur la même ligne, « Modifier » et « Déplacer » */
