@@ -288,8 +288,6 @@
         c.insertAdjacentHTML("afterend", `<div class="v-chemin"><div class="v-ch-k">Ce mois sur ton site</div><div class="v-ch-l"><div><b>${V.visite}</b><span>visite${V.visite > 1 ? "s" : ""}</span></div><i>›</i><div><b>${V.reserver}</b><span>ont touché « Réserver »</span></div><i>›</i><div><b>${resa}</b><span>réservation${resa > 1 ? "s" : ""}</span></div></div>${V.visite ? (src.length ? `<div class="v-ch-s">dont ${src.map(x => x[0] + " venue" + (x[0] > 1 ? "s" : "") + (/^[AEIOU]/.test(x[1]) ? " d’" : " de ") + x[1]).join(" · ")}</div>` : "") : `<div class="v-ch-s">Les visites se comptent depuis le 18 novembre.</div>`}</div>`); } }
     f.querySelectorAll(".ligne").forEach(l => { const k = l.dataset.v || l.dataset.a; if (LIG[k] && !l.querySelector(".v-ico")) l.insertAdjacentHTML("afterbegin", `<span class="v-ico">${svg(LIG[k])}</span>`);
       if (k === "perso") { const sp = l.querySelector(".t span"); if (sp) sp.textContent = sp.textContent.replace(/^La forme, le fond, les couleurs, l’écriture · /, ""); } });
-    const lp = f.querySelector('.ligne[data-a="ms-photos"]'), ph = (b.photos || []).filter((p, i) => i !== b.salon && p && p.url).slice(0, 3);
-    if (lp && ph.length) { lp.classList.add("v-avecvign"); lp.insertAdjacentHTML("beforeend", `<div class="v-vign">${ph.map(p => `<i style="background-image:url('${String(p.url).replace(/^\.\.\//, "").replace(/'/g, "%27")}')"></i>`).join("")}</div>`); }
     enHaut(f, "si", [te, f.querySelector(".v-apercu"), pe]);
     return enTexte(f); };
   document.addEventListener("click", async e => { const p = e.target.closest && e.target.closest("[data-v-partage]"); if (!p) return; e.stopPropagation();
@@ -632,9 +630,6 @@
 #E .v-bas .v-btn{height:38px;font-size:13px;flex:none}
 #E .btn.v-large{width:100%;height:50px;margin:14px 0 0}
 #E .vue[data-p="si"] .v-chiffres{margin-top:0}
-#E .ligne.v-avecvign{flex-wrap:wrap}
-#E .v-vign{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%;padding:0 0 14px}
-#E .v-vign i{aspect-ratio:1;border-radius:12px;background:var(--v-rose) center/cover}
 /* ----- Réglages ----- */
 #E .v-teinte{flex-wrap:wrap;padding-bottom:12px}
 #E .v-ronds-t{display:flex;justify-content:space-between;width:100%;padding:4px 2px 2px}
