@@ -65,7 +65,8 @@
   document.head.appendChild(st);
 
   const min = d => d.getHours() * 60 + d.getMinutes();
-  const qui = r => (r.clientes ? (r.clientes.prenom || nomCli(r.clientes)) : r.titre) || "Bloqué";
+  /* 25/11 (Marie) : en semaine, le prénom + la 1re lettre du nom (« Léa D. »), pour ne pas confondre deux Léa */
+  const qui = r => (r.clientes ? (r.clientes.prenom ? r.clientes.prenom + ((r.clientes.nom || "").trim() ? " " + r.clientes.nom.trim()[0].toUpperCase() + "." : "") : nomCli(r.clientes)) : r.titre) || "Bloqué";
   const iso = d => esc(d.toISOString());
 
   /* la case est étroite : le mot qui compte passe en premier (« Pose gel - Remplissage » → « Rempli. gel ») */
