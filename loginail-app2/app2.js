@@ -169,6 +169,12 @@ async function chargeSemaine() {
     .gte("debut", de.toISOString()).lt("debut", a.toISOString()).order("debut");
   if (+de !== +S.lundi) return;   /* 22/11 : la réponse d'une semaine déjà quittée n'écrase pas celle affichée */
   if (error) throw error; S.rdv = (data || []).filter(r => !SUPP[r.id]); if (Object.keys(SUPP).length) suppPasse();
+  /* 25/11 (Marie : « 2 fois, l'accueil ne mettait ni la prochaine cliente ni celle en cours ») : S.rdv ne contenait que la semaine
+     affichée dans l'Agenda. Si elle avait regardé une autre semaine (ou le dimanche → « Demain »), aujourd'hui n'y était pas et
+     l'accueil était vide. On ajoute donc toujours aujourd'hui et demain (l'agenda trie par jour : ça ne change rien à ce qu'il montre). */
+  const j0 = new Date(); j0.setHours(0, 0, 0, 0); const j2 = plusJours(j0, 2);
+  if (j0 < de || j2 > a) { const r = await sb.from("rendez_vous").select("*, clientes(id,prenom,nom,telephone), prestations(id,nom)").gte("debut", j0.toISOString()).lt("debut", j2.toISOString()).order("debut");
+    if (!r.error) { const deja = new Set(S.rdv.map(x => x.id)); S.rdv = S.rdv.concat((r.data || []).filter(x => !SUPP[x.id] && !deja.has(x.id))); } }
   /* 16/11 : la cloche de l'accueil (réservations en ligne et annulations des clientes depuis hier), quelle que soit la semaine du rendez-vous */
   try { const hier = new Date(Date.now() - 864e5).toISOString(), sel = "*, clientes(id,prenom,nom,telephone), prestations(id,nom)";
     const [a, b] = await Promise.all([sb.from("rendez_vous").select(sel).eq("source", "en_ligne").gt("cree_le", hier), sb.from("rendez_vous").select(sel).eq("statut", "annule").gt("annule_le", hier)]);
