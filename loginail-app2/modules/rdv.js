@@ -70,35 +70,77 @@
      Le + s'arrête au rendez-vous suivant ; changer de prestation remet la durée prévue. */
   let MD = null;
   const hh = d => d.getHours() + ":" + String(d.getMinutes()).padStart(2, "0");
-  const prevue = () => MD.sel.length ? somme(MD.sel).duree + (window.plusCliente ? plusCliente(S.clientes.find(c => c.id === MD.r.cliente_id)) : 0) : MD.d0;   /* + le temps en plus de la cliente (D114) */
+  const prevue = () => MD.sel.length ? somme(MD.sel).duree + (window.plusCliente ? plusCliente(MD.cli || S.clientes.find(c => c.id === MD.r.cliente_id)) : 0) : MD.d0;   /* + le temps en plus de la cliente (D114) */
+  /* 25/11 (Marie : « quand j'appuie sur Modifier, je veux pouvoir changer la personne qui a le rendez-vous ») : la cliente en haut,
+     avec « Changer » → on tape la 1re lettre, comme dans « Nouveau rendez-vous » ; un nom inconnu crée la cliente à l'enregistrement.
+     Le rappel SMS part à la nouvelle cliente (le serveur lit son numéro au moment d'envoyer). */
+  { const st = document.createElement("style"); st.textContent = `
+#E .fc .rv-cl{display:flex;align-items:center;gap:11px;padding:8px 8px 8px 9px;border-radius:18px;background:#fff;border:1px solid rgba(30,28,27,.1);animation:rvcl .2s ease-out}
+#E .fc .rv-cl i{flex:none;width:36px;height:36px;border-radius:50%;background:#EFE9E2;display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:500;letter-spacing:.04em}
+#E .fc .rv-cl b{flex:1;min-width:0;font-weight:500;font-size:16px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+#E .fc .rv-cl b small{display:block;font-weight:400;font-size:12.5px;color:var(--gris,#8A847E);overflow:hidden;text-overflow:ellipsis}
+#E .fc .rv-cl button{flex:none;height:38px;padding:0 15px;border-radius:999px;border:1px solid rgba(30,28,27,.16);background:none;font:inherit;font-size:13.5px;color:inherit;transition:transform .12s}
+#E .fc .rv-cl button:active{transform:scale(.95)}
+#E .fc .rv-cl-f{position:relative;animation:rvcl .2s ease-out}
+#E .fc .rv-cl-f .champ{font-size:16px;width:100%;box-sizing:border-box;margin:0}
+#E .fc .rv-cl-g{display:block;margin:7px 2px 0 auto;padding:2px 0;border:0;background:none;font:inherit;font-size:12.5px;color:var(--gris,#8A847E);text-decoration:underline;text-underline-offset:3px}
+@keyframes rvcl{from{opacity:0;transform:translateY(3px)}}`; document.head.appendChild(st); }
+  const iniC = c => ((String(c.prenom || "").replace(/^@+/, ""))[0] || "") + ((c.nom || "")[0] || "");
+  const sansA = t => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim().replace(/^@+/, "");
+  const cliAvant = () => S.clientes.find(c => c.id === MD.r.cliente_id) || MD.r.clientes || { prenom: nomRdv(MD.r) };
+  const cliZone = cherche => { const z = document.querySelector("#rv-cl"); if (!z) return; const c = MD.cli || cliAvant(), change = MD.cli && MD.cli.id !== MD.r.cliente_id;
+    if (cherche) { z.innerHTML = `<div class="rv-cl-f"><input class="champ" id="rv-cli" placeholder="Tape la 1re lettre : A, B, C…" autocomplete="off" autocapitalize="words" enterkeyhint="done"><div id="rv-sug" class="n-sug n-sug-f"></div></div>
+      <button type="button" class="rv-cl-g" data-rv="cli-garder">Garder ${esc(nomCli(c))}</button>`; const i = z.querySelector("#rv-cli"); if (i) i.focus(); return; }
+    z.innerHTML = `<div class="rv-cl"><i>${esc(iniC(c).toUpperCase())}</i><b>${esc(nomCli(c))}<small>${change ? "à la place de " + esc(nomCli(cliAvant())) : esc(c.telephone || "")}</small></b><button type="button" data-rv="cli-changer">Changer</button></div>`; };
+  const cliPropose = () => { const i = document.querySelector("#rv-cli"), z = document.querySelector("#rv-sug"); if (!i || !z) return; const q = sansA(i.value); if (!q) { z.innerHTML = ""; return; }
+    const mots = c => { const ig = sansA(c.instagram); return [sansA(c.prenom), sansA(c.nom), sansA(nomCli(c)), ig, ...ig.split(/[^a-z0-9]+/)].filter(Boolean); };
+    const l = S.clientes.filter(c => q.length < 2 ? [sansA(c.prenom), sansA(c.instagram)].some(m => m && m.startsWith(q)) : mots(c).some(m => m.startsWith(q)))
+      .sort((a, b) => (sansA(b.prenom).startsWith(q) - sansA(a.prenom).startsWith(q)) || sansA(nomCli(a)).localeCompare(sansA(nomCli(b)), "fr"));
+    z.innerHTML = l.slice(0, 4).map(c => `<button type="button" data-rv="cli-pick" data-c="${c.id}"><i>${esc(iniC(c).toUpperCase())}</i>${esc(nomCli(c))}</button>`).join("")
+      + (l.length > 4 ? `<div class="sous" style="font-size:12px;margin:2px 0 0">+ ${l.length - 4} autre${l.length - 4 > 1 ? "s" : ""} : tape la suite du prénom</div>` : "")
+      + (!l.length ? `<div class="sous" style="font-size:12.5px;text-align:left">Aucune cliente à ce nom : elle sera créée.</div>` : ""); };
+  document.addEventListener("input", e => { if (e.target.id === "rv-cli") cliPropose(); });
+  /* nouvelle cliente choisie : si la durée était « comme prévu », elle suit son temps en plus (D114) */
+  const cliChoisie = c => { const avant = prevue(), suit = MD.dur === avant; MD.cli = c; cliZone(false); if (suit && prevue() !== avant) { MD.dur = prevue(); horaire(true); } else horaire(); };
   const suivant = () => { const deb = new Date(MD.r.debut); return S.rdv.filter(x => x.id !== MD.r.id && x.statut !== "annule" && new Date(x.debut) >= deb && new Date(x.debut).toDateString() === deb.toDateString()).map(x => new Date(x.debut)).sort((a, b) => a - b)[0] || null; };
   const horaire = pop => { const z = document.querySelector("#rv-hor"); if (!z) return; const deb = new Date(MD.r.debut), fin = new Date(+deb + MD.dur * 60000), pv = prevue(), nx = suivant(), bloque = nx && +deb + (MD.dur + 15) * 60000 > +nx;
     z.innerHTML = `<div class="rv-hor"><div><b>${hh(deb)}<i>→</i><span${pop ? ' class="pop"' : ""}>${hh(fin)}</span></b>
       <small>${duree(MD.dur)}${MD.dur !== pv ? ` · prévu ${duree(pv)} · <button data-rv="dur" data-d="${pv}">remettre</button>` : " · comme prévu"}</small></div>
       <div class="rv-pas"><button data-rv="dur" data-d="${MD.dur - 15}" aria-label="15 minutes de moins"${MD.dur <= 15 ? " disabled" : ""}>−</button><button data-rv="dur" data-d="${MD.dur + 15}" aria-label="15 minutes de plus"${bloque ? " disabled" : ""}>+</button></div></div>
       ${bloque ? `<div class="rv-lim">${esc(nomRdv(S.rdv.find(x => +new Date(x.debut) === +nx && x.statut !== "annule" && x.id !== MD.r.id)) || "Le rendez-vous suivant")} arrive à ${hh(nx)}</div>` : ""}`; };
-  const feuilleModif = r => { const d0 = Math.max(15, Math.round((new Date(r.fin) - new Date(r.debut)) / 60000) || 60); MD = { r, sel: parTitre(r), d0, dur: d0 }; const t = somme(MD.sel);
-    ouvre(`<h3>Modifier le rendez-vous</h3><div class="sous">${esc(nomRdv(r))}</div>
+  const feuilleModif = r => { const d0 = Math.max(15, Math.round((new Date(r.fin) - new Date(r.debut)) / 60000) || 60); MD = { r, sel: parTitre(r), d0, dur: d0, cli: null }; const t = somme(MD.sel);
+    ouvre(`<h3>Modifier le rendez-vous</h3>
+      <div class="lab2">Cliente</div><div id="rv-cl"></div>
       <div class="lab2">Prestations <small style="text-transform:none;letter-spacing:0;opacity:.6">touches-en une ou plusieurs</small></div>
       <div class="chips">${P().map((p, i) => `<button class="chip${MD.sel.includes(i) ? " on" : ""}" data-rvp="${i}">${esc(p.nom)}<span>${duree(p.duree || 60)}</span></button>`).join("")}</div>
       <div class="lab2">Horaire</div><div id="rv-hor"></div>
       <div class="lab2">Prix</div><input class="champ" id="rv-prix" inputmode="decimal" value="${r.prix ?? t.prix ?? ""}" style="font-size:16px;width:100%;box-sizing:border-box">
       <div class="lab2">Note <small style="text-transform:none;letter-spacing:0;opacity:.6">facultatif</small></div><textarea class="msg" id="rv-note" style="height:80px" placeholder="Par exemple : veut du rouge, 10 minutes de retard la dernière fois">${esc(r.note || "")}</textarea>
-      <button class="btn" data-rv="ok" style="margin-top:14px">Enregistrer</button>`); horaire(); };
+      <button class="btn" data-rv="ok" style="margin-top:14px">Enregistrer</button>`); cliZone(false); horaire(); };
 
   document.addEventListener("click", async e => { const a = e.target.closest && e.target.closest("[data-rv],[data-rvp]"); if (!a) return; e.stopPropagation();
     if (a.dataset.rvp != null) { const i = +a.dataset.rvp, k = MD.sel.indexOf(i); if (k >= 0) MD.sel.splice(k, 1); else MD.sel.push(i); a.classList.toggle("on", k < 0); const p = document.querySelector("#rv-prix"); if (p && MD.sel.length) p.value = somme(MD.sel).prix; MD.dur = prevue(); horaire(true); return; }
     const k = a.dataset.rv, r = S.rdv.find(x => x.id === a.dataset.id) || (MD && MD.r);
     if (k === "dur") { if (a.disabled) return; MD.dur = Math.max(15, +a.dataset.d); horaire(true); return; }
+    if (k === "cli-changer") return cliZone(true);
+    if (k === "cli-garder") return cliChoisie(MD.cli && MD.cli.id !== MD.r.cliente_id ? MD.cli : null);
+    if (k === "cli-pick") { e.preventDefault(); const c = S.clientes.find(y => y.id === a.dataset.c); if (c) cliChoisie(c.id === MD.r.cliente_id ? null : c); return; }
     if (k === "modifier") feuilleModif(r);
     else if (k === "remplacer") { const d = new Date(r.debut); S.jour = new Date(d); S.jour.setHours(0, 0, 0, 0); feuilleNouveau(d.getHours() * 60 + d.getMinutes()); }
     else if (k === "ok") { const r0 = MD.r, t = MD.sel.length ? somme(MD.sel) : null, deb = new Date(r0.debut), prix = parseFloat(String(document.querySelector("#rv-prix").value).replace(",", ".")), note = document.querySelector("#rv-note").value.trim();
       const v = { prix: isNaN(prix) ? null : prix, fin: new Date(+deb + MD.dur * 60000).toISOString() }; if (t) Object.assign(v, { prestation_id: P()[MD.sel[0]].id, titre: t.nom });
       if (+new Date(v.fin) !== +new Date(r0.fin) && S.rdv.some(x => x.id !== r0.id && x.statut !== "annule" && new Date(x.debut) < new Date(v.fin) && new Date(x.fin) > deb)) return dit("La nouvelle durée déborde sur un autre rendez-vous");
-      a.disabled = true; let { error } = await sb.from("rendez_vous").update(Object.assign({}, v, { note: note || null })).eq("id", r0.id);
+      a.disabled = true;
+      /* la cliente : celle choisie, ou le nom tapé sans toucher la liste (trouvée par son nom, sinon créée) */
+      let cli = MD.cli; const ic = document.querySelector("#rv-cli"), tape = ic ? ic.value.trim() : "";
+      if (tape) { cli = S.clientes.find(c => sansA(nomCli(c)) === sansA(tape));
+        if (!cli) { const mots = tape.split(/\s+/), prenom = mots.shift(), rc = await sb.from("clientes").insert({ prenom, nom: mots.join(" ") || null }).select().single();
+          if (rc.error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessaie."); } cli = rc.data; S.clientes.push(cli); } }
+      const autre = cli && cli.id !== r0.cliente_id ? cli : null; if (autre) v.cliente_id = autre.id;
+      let { error } = await sb.from("rendez_vous").update(Object.assign({}, v, { note: note || null })).eq("id", r0.id);
       if (error && /note/.test(error.message || "")) { ({ error } = await sb.from("rendez_vous").update(v).eq("id", r0.id)); if (!error) dit("Enregistré (la note sera disponible bientôt)"); }
       if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessaie."); }
-      await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit("Rendez-vous modifié ✓"); } }, true);
+      await chargeSemaine(); chargeVisites(); ferme(); rendu(); dit(autre ? `Rendez-vous modifié ✓ · maintenant pour ${autre.prenom || nomCli(autre)}` : "Rendez-vous modifié ✓"); } }, true);
 
   /* 3 · l'agenda : « Pas venue » et « Annulé » écrits sur le rendez-vous ; la note en petit */
   const ag0 = VUES.ag;
