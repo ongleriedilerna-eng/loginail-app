@@ -597,7 +597,10 @@ E.addEventListener("click", async ev => {
       let cli = S.clientes.find(c => nomCli(c).toLowerCase() === saisie.toLowerCase());
       if (!cli && saisie) { const mots = saisie.split(/\s+/), prenom = mots.shift(); const { data, error } = await sb.from("clientes").insert({ prenom, nom: mots.join(" ") || null, telephone: ($("#n-tel", E) && $("#n-tel", E).value.trim()) || null }).select().single(); if (error) return oups(error); cli = data; S.clientes.push(data); }
       const tp = cli && p && window.plusCliente ? plusCliente(cli) : 0; if (tp) fin = new Date(+fin + tp * 60000);   /* 24/11 (D114) : le temps en plus de cette cliente */
-      if (S.rdv.some(r => r.statut !== "annule" && new Date(r.debut) < fin && new Date(r.fin) > deb)) return dit("Ce créneau est déjà pris");
+      /* 25/11 (Marie : « je finis à 21h… je veux pas "déjà pris", je veux "souhaitez-vous ajouter ce créneau ?" ») : on dit ce qui gêne et on demande */
+      const gene = S.rdv.filter(r => r.statut !== "annule" && new Date(r.debut) < fin && new Date(r.fin) > deb);
+      if (gene.length && !window.__forceCreneau) return window.__demandeCreneau ? window.__demandeCreneau(gene, deb, fin) : dit("Ce créneau est déjà pris");
+      window.__forceCreneau = false;
       const { error } = await sb.from("rendez_vous").insert({ cliente_id: cli?.id || null, prestation_id: p?.id || null, titre: cli ? (p?.nom || null) : (saisie || "Bloqué"), debut: deb.toISOString(), fin: fin.toISOString(), prix: p?.prix ?? null });
       if (error) return oups(error); ferme(); await chargeSemaine(); rendu(); dit(tp ? `Rendez-vous enregistré ✓ · + ${tp} min pour ${cli.prenom || "elle"}` : "Rendez-vous enregistré ✓"); }
     else if (k === "statut") { const { error } = await sb.from("rendez_vous").update(a.dataset.par === "cliente_salon" ? { statut: a.dataset.s, annule_par: "cliente_salon" } : { statut: a.dataset.s }).eq("id", a.dataset.id); if (error) return oups(error);

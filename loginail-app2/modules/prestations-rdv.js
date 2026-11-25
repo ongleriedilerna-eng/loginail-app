@@ -74,6 +74,18 @@
 #E .fr-btns .btn{flex:1 1 0;min-width:0;width:auto!important;margin:0!important;white-space:nowrap;transition:transform .2s}
 #E .fr-btns .btn.clair{flex:0 0 38%}
 #E .fr-btns .btn:only-child{flex:1 1 auto}
+/* 25/11 (Marie : « le "Et avec ça ?" faut le mettre en format ligne ») : dans Nouveau rendez-vous, les petits plus tiennent sur UNE ligne qui défile de côté ;
+   l'écran ne descend plus tout seul et rien ne bouge sous le doigt. Par ongle : − n + dans la pastille. */
+#E #pr-plus-n{display:flex!important;flex-wrap:nowrap;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;margin:0 -24px;padding:2px 24px 8px;scroll-padding:0 24px;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x}
+#E #pr-plus-n::-webkit-scrollbar{display:none}
+#E #pr-plus-n .pr-ca,#E #pr-plus-n .pr-ca.autre{display:flex!important;flex:none;flex-direction:row;align-items:center;justify-content:flex-start;gap:7px;min-height:0;height:46px;padding:0 15px 0 12px;border-radius:999px;white-space:nowrap;animation:none}
+#E #pr-plus-n .pr-ca .em{font-size:17px}
+#E #pr-plus-n .pr-ca>span:last-child{display:flex;align-items:baseline;gap:5px}
+#E #pr-plus-n .pr-ca b{font-size:14px;overflow-wrap:normal}
+#E #pr-plus-n .pr-ca small{margin:0;font-size:12px}
+#E #pr-plus-n .pr-cpt{position:static;order:3;margin-left:4px;gap:1px}
+#E #pr-plus-n .pr-cpt u{width:28px;height:28px;font-size:16px}
+#E #pr-plus-n+.pr-voir{display:none!important}
 @media (prefers-reduced-motion:reduce){#E .pr-ap,#E .pr-cases.tout .pr-ca.autre,#E .pr-der,#E .pr-tot b,#E .fr-btns .btn{transition:none;animation:none}}`;
   document.head.appendChild(st);
 
@@ -150,7 +162,7 @@
     /* la pose choisie : on descend un peu pour montrer « Et avec ça ? » */
     /* 24/11 (Marie : « je dois appuyer 2 fois sur Enregistrer ») : sur iPhone, toucher pendant que la feuille défile ne fait qu'arrêter le défilement.
        Si elle touche avant, on ne descend plus ; pendant la descente, « Enregistrer » marche du premier coup (voir plus bas). */
-    if (auto && ap && !avant && ap.classList.contains("vu")) { clearTimeout(DEF.t); DEF.t = setTimeout(() => { const f = E.querySelector(".feuille"); if (!f) return; DEF.fin = Date.now() + 700; f.scrollBy({ top: 150, behavior: "smooth" }); }, 250); }
+    /* 25/11 : plus de descente automatique : « Et avec ça ? » tient sur une ligne, juste sous les prestations */
   }
   function poseNouveau() {
     const fc = E.querySelector(".feuille .fc"), chips = fc && fc.querySelector(".chips.n-glisse"); if (!chips) return;
@@ -206,6 +218,28 @@
     DEF.fin = 0; e.preventDefault(); b.click();
   }, { capture: true, passive: false });
   addEventListener("scrollend", e => { if (e.target.classList && e.target.classList.contains("feuille")) DEF.fin = 0; }, true);
+
+  /* 25/11 : « Tu veux ajouter ce rendez-vous quand même ? » quand l'heure tombe sur un créneau bloqué ou déjà pris (app2.js, nouveau-ok) */
+  { const st2 = document.createElement("style"); st2.textContent = `#E .nc-conf{margin:0 0 10px;padding:12px 14px;border-radius:16px;background:#F7E9EC;text-align:left;animation:pr-ap .2s ease both}
+#E .nc-conf b{display:block;font-weight:500;font-size:14.5px;color:#9A5B62}#E .nc-conf small{display:block;margin-top:2px;font-size:12.5px;color:#776D64;line-height:1.35;overflow-wrap:anywhere}
+#E .nc-conf div{display:flex;gap:8px;margin-top:10px}#E .nc-conf button{flex:1;height:42px;border-radius:99px;border:1px solid rgba(30,28,27,.14);background:#fff;color:inherit;font:inherit;font-size:14px;cursor:pointer}
+#E .nc-conf button.oui{background:var(--v-fonce,#1E1C1B);color:#fff;border-color:transparent}`; document.head.appendChild(st2); }
+  const hmC = d => `${d.getHours()}h${String(d.getMinutes()).padStart(2, "0")}`.replace("h00", "h");
+  window.__demandeCreneau = (gene, deb, fin) => {
+    const fc = E.querySelector(".feuille .fc"), ok = fc && fc.querySelector('[data-a="nouveau-ok"]'); if (!ok) return dit("Ce créneau est déjà pris");
+    fc.querySelector(".nc-conf")?.remove();
+    const cli = gene.filter(r => r.cliente_id), qui = r => (r.clientes && (r.clientes.prenom || nomCli(r.clientes))) || (S.clientes.find(c => c.id === r.cliente_id) || {}).prenom || "une cliente";
+    const quoi = cli.length ? `Il y a déjà ${esc(qui(cli[0]))} (${hmC(new Date(cli[0].debut))} – ${hmC(new Date(cli[0].fin))})` : `Ce moment est bloqué${gene[0].titre && !/^🔒/.test(gene[0].titre) ? " (« " + esc(gene[0].titre) + " »)" : ""}`;
+    (ok.closest(".pr-bas") || ok).insertAdjacentHTML("beforebegin", `<div class="nc-conf" role="alert"><b>Tu veux ajouter ce rendez-vous quand même ?</b><small>${quoi}. ${hmC(deb)} – ${hmC(fin)}</small><div><button type="button" class="oui" data-ncf="oui">Oui, l’ajouter</button><button type="button" data-ncf="non">Non</button></div></div>`);
+    const z = fc.querySelector(".nc-conf"); if (z && z.scrollIntoView) z.scrollIntoView({ block: "nearest" });
+  };
+  addEventListener("click", e => {
+    const b = e.target.closest && e.target.closest("[data-ncf]"); if (!b) return; e.stopPropagation(); e.preventDefault();
+    const fc = b.closest(".fc"), z = b.closest(".nc-conf"); if (z) z.remove();
+    if (b.dataset.ncf === "oui") { const ok = fc && fc.querySelector('[data-a="nouveau-ok"]'); if (ok) { window.__forceCreneau = true; ok.click(); } }
+  }, true);
+  /* l'heure change : la question ne vaut plus */
+  document.addEventListener("input", e => { if (e.target.id === "n-h") { E.querySelector(".fc .nc-conf")?.remove(); window.__forceCreneau = false; } });
 
   /* les gestes ; sur window, avant app2.js (qui ne garderait qu'une prestation) et rdv.js */
   addEventListener("click", e => {
