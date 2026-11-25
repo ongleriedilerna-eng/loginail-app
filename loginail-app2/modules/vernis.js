@@ -472,7 +472,7 @@
 #E .v-pulse{width:8px;height:8px;border-radius:50%;background:#3D8B66;box-shadow:0 0 0 4px rgba(61,139,102,.15);flex:none;animation:vPulse 2s ease-in-out infinite}
 @keyframes vPulse{50%{box-shadow:0 0 0 7px rgba(61,139,102,.06)}}
 #E .v-jq{margin-left:auto;font-size:12.5px;color:var(--gris);text-align:right}
-#E .v-creneaux{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -22px;padding:0 22px 2px;scroll-snap-type:x proximity}
+#E .v-creneaux{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -22px;padding:0 22px 2px;scroll-snap-type:x proximity;scroll-padding-inline:22px}#E .v-creneaux::after{content:"";flex:none;width:14px}
 #E .v-creneaux::-webkit-scrollbar{display:none}
 #E .v-cr{flex:none;border-radius:16px;padding:12px 14px;border:1px dashed color-mix(in srgb,var(--v-acc) 45%,transparent);background:color-mix(in srgb,var(--v-rose) 40%,transparent);font:inherit;text-align:left;color:inherit;cursor:pointer;scroll-snap-align:start;transition:transform .12s}
 #E .v-cr b{display:block;font-weight:500;font-size:14.5px;font-variant-numeric:lining-nums}

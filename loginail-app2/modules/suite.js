@@ -106,7 +106,7 @@
     /* H : on retient le rendez-vous qu'elle vient de finir */
     const fini = t.closest('[data-a="statut"][data-s="fini"]'); if (fini) { const r = S.rdv.find(x => x.id === fini.dataset.id); if (r && r.cliente_id) setTimeout(() => { if (E.classList.contains("fe")) return; REP = { r, sem: 3 }; feuilleReprendre(); }, 900); return; }
     const a = t.closest("[data-su]"); if (!a) return; e.stopPropagation(); const k = a.dataset.su;
-    if (k === "libre") { S.jour = new Date(); S.lundi = lundiDe(S.jour); feuilleNouveau(+a.dataset.m); }
+    if (k === "libre") { S.jour = new Date(); S.lundi = lundiDe(S.jour); feuilleNouveau(+a.dataset.m); libreDuo(); }
     else if (k === "relance") feuilleRelance();
     else if (k === "msg") feuilleMsg();
     else if (k === "msg-ok") { const v = ($("#su-msg", E).value || "").trim(); if (!v) return dit("Écris ton message"); try { localStorage.setItem("loginail-msg-relance", v); } catch (x) {} ferme(); dit("C’est enregistré ✓"); }
@@ -798,3 +798,27 @@ h3 .lap{font-size:11px;vertical-align:4px}
     if (t.closest('.fc [data-an="non"]')) { e.stopPropagation(); e.preventDefault(); const q = t.closest(".an-conf"), z = q && q.previousElementSibling; if (z) z.style.display = ""; if (q) q.remove(); }
   }, true);
 })();
+
+/* ===== 25/11 (Marie) : un créneau de « Encore libre aujourd'hui » → sous « Enregistrer », « Proposer ce créneau » (message prêt) et « Partager en story » ===== */
+function libreDuo() {
+  const ok = document.querySelector('#E .fc [data-a="nouveau-ok"]'); if (!ok || document.querySelector("#E .fc .lb-duo")) return;
+  const SV = d => `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  ok.insertAdjacentHTML("afterend", `<div class="lb-ou">ou, s’il n’y a encore personne</div><div class="lb-duo">
+    <button type="button" data-lb="msg">${SV('<path d="M4 5h16v11H9l-5 4z"/>')}Proposer ce créneau</button>
+    <button type="button" data-lb="story">${SV('<rect x="5" y="3" width="14" height="18" rx="4"/><circle cx="12" cy="12" r="3.2"/>')}Partager en story</button></div>`);
+}
+{ const st = document.createElement("style"); st.textContent = `
+#E .lb-ou{margin:14px 0 8px;text-align:center;font-size:12px;color:#776D64}
+#E .lb-duo{display:flex;gap:8px;animation:lbIn .25s ease-out both}
+#E .lb-duo button{flex:1;min-width:0;height:46px;border-radius:999px;border:1px solid rgba(30,28,27,.14);background:#fff;color:#1E1C1B;font:inherit;font-size:13.5px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:7px;padding:0 8px;white-space:nowrap;cursor:pointer;transition:transform .1s;-webkit-tap-highlight-color:transparent}
+#E .lb-duo button:active{transform:scale(.95)}
+@keyframes lbIn{from{opacity:0;transform:translateY(6px)}}`; document.head.appendChild(st); }
+document.addEventListener("click", async e => { const b = e.target.closest && e.target.closest("[data-lb]"); if (!b) return; e.stopPropagation(); e.preventDefault();
+  const i = document.getElementById("n-h"), [h, m] = ((i && i.value) || "09:00").split(":").map(Number), d = new Date(); d.setHours(h, m, 0, 0);
+  if (b.dataset.lb === "msg") {
+    /* aux clientes : on les vouvoie (D67) */
+    const salon = (S.profil && S.profil.nom_salon) || "", t = `Bonjour ! Une place vient de se libérer aujourd’hui à ${h}h${m ? String(m).padStart(2, "0") : ""}${salon ? " chez " + salon : ""}. Elle vous intéresse ? 💅`;
+    location.href = "sms:" + (/iPhone|iPad|Mac/.test(navigator.userAgent) ? "&" : "?") + "body=" + encodeURIComponent(t); return; }
+  if (b.disabled || !window.__dispoUne) return; const avant = b.innerHTML; b.disabled = true; b.textContent = "Un instant…";
+  try { await __dispoUne.partage(d); } catch (x) { console.error(x); dit("Oups, l’image ne s’est pas faite. Réessaie."); }
+  if (b.isConnected) { b.disabled = false; b.innerHTML = avant; } }, true);

@@ -15,8 +15,8 @@
 #E .cs-st{margin:18px 2px 2px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#776D64}
 #E .cs-sp{margin:0 2px 8px;font-size:12.5px;line-height:1.4;color:#776D64}
 #E .ligne.cs-pl{gap:10px}#E .cs-em{flex:none;width:24px;font-size:18px;text-align:center}
-#E .cs-pills{display:flex;flex-wrap:wrap;gap:6px}
-#E .cs-pill{min-height:36px;padding:7px 11px;border:1px solid rgba(30,28,27,.12);border-radius:999px;background:#fff;color:inherit;font:inherit;font-size:13px;cursor:pointer;transition:transform .12s}#E .cs-pill:active{transform:scale(.95)}
+#E .cs-pills{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+#E .cs-pill{position:relative;min-width:0;min-height:78px;padding:10px 4px 9px;border:1px solid rgba(30,28,27,.1);border-radius:16px;background:#fff;color:inherit;font:inherit;font-size:12.5px;line-height:1.2;cursor:pointer;transition:transform .12s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center}#E .cs-pill .e{font-size:24px;line-height:1}#E .cs-pill .n{display:block;max-width:100%;overflow-wrap:anywhere}#E .cs-pill .p{position:absolute;top:5px;right:7px;font-size:13px;color:var(--v-acc,#9A5B62);opacity:.75}#E .cs-pill:active{transform:scale(.95)}
 #E .cs-auto{margin:5px 2px 0;font-size:12px;line-height:1.3;text-align:left;color:var(--v-acc,#9A5B62)}#E .cs-auto:empty{display:none}
 /* un petit plus : nom, prix, durée, « par ongle » (maquette) ; « C'est quoi ? » et les photos sont pour les prestations */
 #E .fc:has(.cs-fam [data-cs-fam="plus"].on) :is([data-pf-texte],.pf-magie,.pf-phl),#E .fc:has(.cs-fam [data-cs-fam="plus"].on) .pf-lab:has(+[data-pf-texte]){display:none!important}
@@ -30,11 +30,13 @@
 #E .cs-ongle.on i{background:var(--v-fonce,#1E1C1B);border-color:transparent}#E .cs-ongle.on i::after{content:"✓";color:#fff;font-size:13px;font-style:normal}
 .cs-sup{display:block;width:100%;margin-top:9px;border:0;background:none;color:#A04A4A;font:inherit;font-size:13px;text-decoration:underline;cursor:pointer}
 /* 24/11 (Marie, version A) : le carré de l'emoji d'un petit plus — elle choisit le sien */
-#E .cs-nl{display:flex;align-items:center;gap:10px}#E .cs-nl>label{flex:1;min-width:0}
+#E .cs-nl{display:flex;align-items:center;gap:10px}#E .cs-nl>label{flex:1;min-width:0}#E .cs-nl>label.cs-emo{flex:none}
 #E .cs-emo{flex:none;position:relative;width:52px;height:52px;border-radius:14px;background:#fff;border:1.5px dashed rgba(201,107,138,.7);display:grid;place-items:center;font-size:27px;line-height:1;padding:0;color:inherit;cursor:pointer;transition:transform .15s}
 #E .cs-emo:active{transform:scale(.92)}#E .cs-emo i{position:absolute;right:-5px;bottom:-5px;width:20px;height:20px;border-radius:50%;background:#C96B8A;color:#fff;font-size:11px;font-style:normal;display:grid;place-items:center;border:2px solid var(--creme,#FBF8F6)}
 #E .cs-emo.pop{animation:csPop .35s ease-out}@keyframes csPop{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
-#E .cs-emo-aide{font-size:12px;color:#776D64;margin:6px 0 0 62px}
+#E .cs-emo-aide{display:block;font-size:12.5px;color:var(--v-acc,#9A5B62);font-weight:500;margin:7px 0 0 2px;cursor:pointer}#E .cs-emo-aide small{font-weight:400;color:#776D64;font-size:11.5px}
+#E .cs-emo-in{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;margin:0;font-size:16px;color:transparent;caret-color:transparent;background:none;cursor:pointer}
+#E .cs-emo:focus-within{border-style:solid;box-shadow:0 0 0 3px color-mix(in srgb,#C96B8A 22%,transparent)}
 #E .fc:has([data-cs-fam="presta"].on) :is(.cs-emo,.cs-emo-aide){display:none}
 #E .cs-ev{position:absolute;inset:0;background:rgba(20,18,17,.35);opacity:0;pointer-events:none;transition:opacity .2s;z-index:90}#E .cs-ev.on{opacity:1;pointer-events:auto}
 #E .cs-ep{position:absolute;left:0;right:0;bottom:0;z-index:91;background:var(--creme,#FBF8F6);border-radius:26px 26px 0 0;padding:10px 16px calc(env(safe-area-inset-bottom) + 24px);transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.9,.3,1)}
@@ -56,7 +58,7 @@
     <div class="liste">${B.map(i=>ligneP(l[i],i)).join("")||'<div class="ligne"><div class="t">Aucune prestation pour l’instant</div></div>'}</div></div>
     <div class="cs-sec" data-cs-sec="plus"><div class="cs-st">Petits plus</div><p class="cs-sp">Ce qui s’ajoute à une prestation : nail art, chrome, strass… Proposés juste après, dans « Et avec ça ? ».</p>
     ${A.length?`<div class="liste">${A.map(i=>ligneP(l[i],i)).join("")}</div>`:""}</div>
-    ${prets.length?`<div class="cs-sec cs-prets" data-cs-sec="prets"><div class="cs-st">Déjà écrits pour toi</div><p class="cs-sp">Touche celui que tu fais : il ne reste que le prix à mettre.</p><div class="cs-pills">${prets.map(k=>`<button type="button" class="cs-pill" data-cs-pret="${k}" data-nom="${LP.esc(LP.PRETS[k].nom)}">+ ${LP.PRETS[k].emo} ${LP.esc(LP.PRETS[k].nom)}</button>`).join("")}</div></div>`:""}
+    ${prets.length?`<div class="cs-sec cs-prets" data-cs-sec="prets"><div class="cs-st">Déjà écrits pour toi</div><p class="cs-sp">Touche celui que tu fais : il ne reste que le prix à mettre.</p><div class="cs-pills">${prets.map(k=>`<button type="button" class="cs-pill" data-cs-pret="${k}" data-nom="${LP.esc(LP.PRETS[k].nom)}"><span class="p" aria-hidden="true">+</span><span class="e" aria-hidden="true">${LP.PRETS[k].emo}</span><span class="n">${LP.esc(LP.PRETS[k].nom)}</span></button>`).join("")}</div></div>`:""}
     <button class="btn" data-cs-p="-1" style="width:100%;margin-top:14px">Ajouter une prestation</button>`};
   /* la fiche : « Une prestation / Un petit plus » (rangé tout seul d'après le nom, elle peut changer) et « Prix par ongle » pour un petit plus */
   let FAM=null;   /* { choisi: elle a touché, ou la fiche existe déjà } */
@@ -70,7 +72,7 @@
   /* 24/11 (Marie, version A) : l'emoji d'un petit plus, c'est elle qui le choisit. Tant qu'elle n'a pas choisi, il suit le nom (deviné) ; choisi, il reste. */
   let EMO={val:"✦",perso:false};
   const EMOS="💅 ✨ 🤍 🌸 🌷 💎 🪩 💖 🦋 🍒 🍓 🌈 ⭐ 🌙 🔥 🎀 🐚 🫧 🍂 🍭 🧸 🖌️ 💧 🌿 🍯 🤎 🖤 ❤️ 💜 💙 💚 💛 🧡 ✦ 📏".split(" ");
-  const devine=nom=>LP.emo({nom});
+  const devine=nom=>{const e=LP.emo({nom});return e==="✦"?"💅":e};   /* 25/11 (Marie) : 💅 dans le carré tant qu'elle n'a rien choisi */
   const emoDe=v=>{const t=String(v||"");const seg=window.Intl&&Intl.Segmenter?[...new Intl.Segmenter().segment(t)].map(x=>x.segment):Array.from(t);return seg.find(x=>/\p{Extended_Pictographic}/u.test(x))||""};
   const carre=(fc,v,anime)=>{const c=fc&&fc.querySelector("[data-cs-emo]");if(!c)return;c.firstChild.nodeValue=v;if(anime){c.classList.remove("pop");void c.offsetWidth;c.classList.add("pop")}};
   const panneau=()=>{const E=document.getElementById("E");if(!E)return null;let v=E.querySelector(".cs-ev");if(!v){E.insertAdjacentHTML("beforeend",`<div class="cs-ev" data-cs-eferme></div><div class="cs-ep" role="dialog" aria-label="Choisir ton emoji"><div class="poig"></div><h4></h4><p>Il s’affiche dans ta liste et sur la réservation de tes clientes.</p><div class="cs-eg">${EMOS.map(x=>`<button type="button" data-cs-echoix="${x}">${x}</button>`).join("")}</div><div class="cs-em2"><span>😀 Le mien (clavier emoji de ton téléphone)</span><input data-cs-emien maxlength="16" placeholder="+" aria-label="Ton emoji" autocomplete="off"></div></div>`)}return E};
@@ -79,7 +81,7 @@
   const choisitEmo=v=>{EMO={val:v,perso:true};carre(document.querySelector("#E .fc"),v,true);fermeEmo()};
   const pedit=(i,pre)=>{const p=i>=0?(lit().prestations||[])[i]||{}:(pre||{});
     EMO={val:p.emo||devine(p.nom),perso:i>=0&&!!p.emo&&p.emo!==devine(p.nom)};return croix+`<h3>${i>=0?LP.esc(p.nom):pre?LP.esc(pre.emo+" "+pre.nom):"Nouvelle prestation"}</h3><div class="form" style="margin-top:12px">
-    <div class="cs-nl"><button type="button" class="cs-emo" data-cs-emo aria-label="Choisir ton emoji">${LP.esc(EMO.val)}<i aria-hidden="true">✎</i></button><label><input data-cs-nom value="${esc(p.nom)}" aria-label="Nom" placeholder="Son nom, par exemple : Pose américaine"></label></div><div class="cs-emo-aide">Touche le carré pour choisir ton emoji</div>
+    <div class="cs-nl"><label class="cs-emo" data-cs-emo>${LP.esc(EMO.val)}<i aria-hidden="true">✎</i><input class="cs-emo-in" id="cs-emo-in" data-cs-emien autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" aria-label="Ajouter mon emoji"></label><label><input data-cs-nom value="${esc(p.nom)}" aria-label="Nom" placeholder="Son nom, par exemple : Pose américaine"></label></div><label class="cs-emo-aide" for="cs-emo-in">Ajouter mon emoji <small>(touche 😀 sur ton clavier)</small></label>
     </div>${famHtml(p,i,pre)}${__prestaFiche.haut(p,i)}
     <div class="lab" style="margin-top:12px">Durée</div><div class="chips ch-dur" data-cs-dur>${dureesPour(p.duree).map(d=>`<button class="chip${d===(+p.duree||60)?" on":""}" data-cs-d="${d}">${duree(d)}</button>`).join("")}</div>
     ${__prestaFiche.bas(p)}
@@ -112,9 +114,9 @@
     if(e)e.classList.remove("fe");toast(e,t)};
   document.addEventListener("input",e=>{const t=e.target;if(!t.matches)return;
     if(t.matches("[data-cs-nom]")&&!EMO.perso){EMO.val=devine(t.value);carre(t.closest(".fc"),EMO.val,false);return}
-    if(t.matches("[data-cs-emien]")){const v=emoDe(t.value);if(v){t.value="";choisitEmo(v)}}});
+    if(t.matches("[data-cs-emien]")){const v=emoDe(t.value);t.value="";if(v)choisitEmo(v)}});
   document.addEventListener("click",ev=>{const t=ev.target;if(!t.closest)return;
-    const c=t.closest("[data-cs-emo]");if(c){ev.stopPropagation();ouvreEmo(c.closest(".fc"));return}
+    const c=t.closest("[data-cs-emo]");if(c){ev.stopPropagation();return}   /* 25/11 (Marie) : plus de grille de 35 emojis, le carré ouvre directement le clavier */
     const x=t.closest("[data-cs-echoix]");if(x){ev.stopPropagation();choisitEmo(x.dataset.csEchoix);return}
     if(t.closest("[data-cs-eferme]")){ev.stopPropagation();fermeEmo();return}
     if(t.closest(".cs-ep")){ev.stopPropagation();return}},true);

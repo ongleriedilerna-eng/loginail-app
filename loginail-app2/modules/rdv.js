@@ -39,7 +39,7 @@
   /* 2 · le rendez-vous : Modifier, la note, le nom qui ouvre la fiche, remplacer s'il est annulé */
   new MutationObserver(() => { const z = document.querySelector(".fc .fiche-t"); if (!z || z.dataset.rvx) return; z.dataset.rvx = "1";
     const id = (document.querySelector('.fc [data-a="statut"]') || document.querySelector('.fc [data-a="decaler"]') || document.querySelector('.fc [data-a="rdv-suppr"]') || {}).dataset?.id; const r = id && (S.rdv.find(x => x.id === id) || (S.cloche || []).find(x => x.id === id)); if (!r) return;
-    const h = z.querySelector("h3"); if (h && r.cliente_id) { h.dataset.cli = r.cliente_id; const so = h.nextElementSibling; (so || h).insertAdjacentHTML("afterend", `<button class="lien-t" data-cli="${r.cliente_id}" style="display:block;margin:4px 0 0;padding:2px 0;text-align:left;font-size:13px">Voir sa fiche ›</button>`); }
+    const h = z.querySelector("h3"); if (h && r.cliente_id) h.dataset.cli = r.cliente_id;   /* 25/11 (Marie) : plus de « Voir sa fiche › », toucher le nom suffit */
     let x = ""; if (r.note) x += `<div class="rv-note"><b>Note</b>${esc(r.note)}</div>`;
     if (r.statut === "annule" && r.cliente_id) x += `<button class="btn" data-rv="remplacer" data-id="${r.id}" style="margin-top:14px">Mettre une autre cliente à la place</button>`;
     /* 22/11 (Marie) : deux pilules sur la même ligne, « Modifier » et « Déplacer » */
