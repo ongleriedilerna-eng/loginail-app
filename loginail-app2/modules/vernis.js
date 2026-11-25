@@ -115,7 +115,7 @@
     let h = `<div class="v-haut v-haut-acc">${etoiles("acc")}<div class="tete"><div><h1 style="--n:${(JOURS[(now.getDay() + 6) % 7] + " " + now.getDate() + " " + MOIS[now.getMonth()]).length}">${JOURS[(now.getDay() + 6) % 7]} <em>${now.getDate()} ${MOIS[now.getMonth()]}</em></h1></div><div class="v-btns"><button class="ai-b v-cloche${nonvu ? " sonne" : ""}" data-v-cloche aria-label="Réservations en ligne${nonvu ? " : " + nonvu + " nouvelle" + (nonvu > 1 ? "s" : "") : ""}">${CLOCHE}${nonvu ? `<span class="v-badge">${nonvu}</span>` : ""}</button>${ai ? ai.outerHTML : ""}</div></div>`;
     h += bienvenue();
     if (proch) { const d = new Date(proch.debut), mn = Math.round((d - now) / 60000), tel = (proch.clientes && proch.clientes.telephone || "").replace(/\s/g, "");
-      h += `<div class="v-prochain" data-rdv="${proch.id}"><div class="v-lab">Prochaine cliente</div><div class="v-grand"><b>${hh(d)}</b><span>dans ${mn >= 60 ? duree(mn) : mn + " min"}</span></div>
+      h += `<div class="v-prochain" data-rdv="${proch.id}"><div class="v-lab">Prochaine cliente</div><div class="v-grand"><b>${hh(d)}</b></div><div class="v-rond" data-debut="${esc(proch.debut)}" aria-label="dans ${mn >= 60 ? duree(mn) : mn + " min"}"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="f" cx="50" cy="50" r="44"/><circle class="p" cx="50" cy="50" r="44"/></svg><div class="t"><b></b><small></small></div></div>
         <div class="v-cli"><span class="v-av">${esc(((proch.clientes && proch.clientes.prenom) || nomRdv(proch) || "?")[0].toUpperCase())}</span><div>${esc(nomRdv(proch))}<small>${esc(titreRdv(proch))}${proch.prix ? " · " + euros(proch.prix) : ""}</small></div></div>
         ${tel ? `<div class="v-actions"><button class="v-btn" data-href="tel:${esc(tel)}">Appeler</button><button class="v-btn plein" data-href="sms:${esc(tel)}">Message</button></div>` : ""}</div>`; }
     h += "</div>";
@@ -443,7 +443,17 @@
 #E .noire{border-radius:24px}
 
 /* ----- Accueil ----- */
-#E .v-prochain{background:#fff;border-radius:24px;padding:20px;margin-top:20px;box-shadow:0 18px 40px -26px rgba(120,40,55,.45);cursor:pointer}
+#E .v-prochain{background:#fff;border-radius:24px;padding:20px;margin-top:20px;box-shadow:0 18px 40px -26px rgba(120,40,55,.45);cursor:pointer;position:relative}
+/* 25/11 (Marie, idée A) : le grand rond du temps qui reste avant la prochaine cliente ; plein à 1 h ou plus, il se vide ; sous 10 min, rouge et il bat */
+#E .v-rond{position:absolute;top:18px;right:18px;width:88px;height:88px;pointer-events:none}
+#E .v-rond svg{width:100%;height:100%;transform:rotate(-90deg)}
+#E .v-rond circle{fill:none;stroke-width:7}#E .v-rond .f{stroke:var(--v-rose)}#E .v-rond .p{stroke:var(--v-acc);stroke-linecap:round;stroke-dasharray:276.46;transition:stroke-dashoffset .8s cubic-bezier(.2,.9,.3,1)}
+#E .v-rond .t{position:absolute;inset:0;display:grid;place-content:center;text-align:center;line-height:1}
+#E .v-rond .t b{font:500 29px/1 'Cormorant Garamond',Georgia,serif;font-variant-numeric:lining-nums}#E .v-rond .t small{display:block;font-size:11px;color:var(--gris);margin-top:2px}#E .v-rond .t small:empty{display:none}
+#E .v-rond.vite .p{stroke:#D9534F}#E .v-rond.vite{animation:vRond 1.6s ease-in-out infinite}
+@keyframes vRond{50%{transform:scale(1.05)}}
+@media (prefers-reduced-motion:reduce){#E .v-rond.vite{animation:none}}
+#E .v-prochain .v-cli{padding-right:4px}
 #E .v-lab{font-size:12.5px;color:var(--gris)}
 #E .v-grand{display:flex;align-items:baseline;gap:10px;margin:2px 0 12px}
 #E .v-grand b{font:500 52px/1 'Cormorant Garamond',Georgia,serif;font-variant-numeric:lining-nums}
@@ -650,4 +660,17 @@
 @media (prefers-reduced-motion:reduce){#E .v-pulse,#E .v-fab{animation:none}}
 `;
   document.head.appendChild(st);
+})();
+
+/* 25/11 (Marie, idée A) : le rond de la prochaine cliente se met à jour tout seul */
+(function () {
+  const C = 2 * Math.PI * 44;
+  const met = () => document.querySelectorAll("#E .v-rond[data-debut]").forEach(r => {
+    const mn = Math.max(0, Math.round((new Date(r.dataset.debut) - Date.now()) / 60000)), p = r.querySelector(".p"), b = r.querySelector(".t b"), u = r.querySelector(".t small");
+    const t = mn >= 60 ? Math.floor(mn / 60) + "h" + (mn % 60 ? String(mn % 60).padStart(2, "0") : "") : String(mn);
+    if (b.textContent !== t) b.textContent = t; u.textContent = mn >= 60 ? "" : "min";
+    p.style.strokeDashoffset = (C * (1 - Math.min(mn, 60) / 60)).toFixed(1); r.classList.toggle("vite", mn <= 10);
+    r.setAttribute("aria-label", "dans " + (mn >= 60 ? t.replace("h", " h ") : mn + " min")); });
+  new MutationObserver(() => { if (document.querySelector("#E .v-rond[data-debut] .t b:empty")) met(); }).observe(document.documentElement, { childList: true, subtree: true });
+  setInterval(met, 20000); document.addEventListener("visibilitychange", () => { if (!document.hidden) met(); });
 })();
