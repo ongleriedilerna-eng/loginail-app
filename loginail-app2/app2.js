@@ -607,7 +607,7 @@ E.addEventListener("click", async ev => {
       const gene = S.rdv.filter(r => r.statut !== "annule" && new Date(r.debut) < fin && new Date(r.fin) > deb);
       if (gene.length && !window.__forceCreneau) return window.__demandeCreneau ? window.__demandeCreneau(gene, deb, fin) : dit("Ce créneau est déjà pris");
       window.__forceCreneau = false;
-      const { error } = await sb.from("rendez_vous").insert({ cliente_id: cli?.id || null, prestation_id: p?.id || null, titre: cli ? (p?.nom || null) : (saisie || "Bloqué"), debut: deb.toISOString(), fin: fin.toISOString(), prix: p?.prix ?? null });
+      const { error } = await sb.from("rendez_vous").insert({ cliente_id: cli?.id || null, prestation_id: p?.id || null, titre: cli ? (p?.nom || null) : (saisie || "Bloqué"), debut: deb.toISOString(), fin: fin.toISOString(), prix: p?.prix ?? null, note: (cli && $("#n-note", E) && $("#n-note", E).value.trim()) || null });
       if (error) return oups(error); ferme(); await chargeSemaine(); rendu(); dit(tp ? `Rendez-vous enregistré ✓ · + ${tp} min pour ${cli.prenom || "elle"}` : "Rendez-vous enregistré ✓"); }
     else if (k === "statut") { const { error } = await sb.from("rendez_vous").update(a.dataset.par === "cliente_salon" ? { statut: a.dataset.s, annule_par: "cliente_salon" } : { statut: a.dataset.s }).eq("id", a.dataset.id); if (error) return oups(error);
       const r0 = (S.rdv || []).concat(S.tous || []).find(x => x.id === a.dataset.id), c0 = r0 && r0.cliente_id && (S.clientes || []).find(x => x.id === r0.cliente_id);

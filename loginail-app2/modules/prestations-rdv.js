@@ -202,7 +202,9 @@
     z.innerHTML = `<button type="button" class="pr-der" hidden><i aria-hidden="true">↺</i><span><b>Comme la dernière fois</b><small></small></span></button>`
       + (B.length ? `<div class="pr-lab"><b>Quelle prestation ?</b><span>${deps.length && poses.length ? "une pose et/ou une dépose" : "touche-la"}</span></div>
       <div class="pr-cases">${poses.concat(deps).map(i => `<button type="button" class="pr-ca sans" data-pr="${i}" data-np="${i}"><span><b>${esc(l[i].nom)}</b><small class="px"></small></span></button>`).join("")}</div>` : "")
-      + `<div class="pr-ap${B.length ? "" : " vu"}"><div>${blocPlus("Et avec ça ?", "facultatif", "pr-plus-n").replace('class="pr-lab"', 'class="pr-lab" style="margin-top:20px"')}</div></div>`;
+      + `<div class="pr-ap${B.length ? "" : " vu"}"><div>${blocPlus("Et avec ça ?", "facultatif", "pr-plus-n").replace('class="pr-lab"', 'class="pr-lab" style="margin-top:20px"')}</div></div>`
+      /* 25/11 (Marie) : une note pour CE rendez-vous, sous « Et avec ça ? » (la même que « Modifier › Note », visible dans la fiche du RDV) */
+      + `<div class="pr-lab" style="margin-top:20px"><b>Une note ?</b><span>facultatif</span></div><textarea class="msg" id="n-note" rows="2" style="font-size:16px;height:64px;width:100%;box-sizing:border-box" placeholder="Par exemple : veut du rouge, ongle cassé à refaire"></textarea>`;
     if (lab && lab.classList.contains("lab2")) lab.remove();
     chips.replaceWith(z);
     if (ok) { const bas = document.createElement("div"); bas.className = "pr-bas"; bas.innerHTML = '<div class="pr-tot" aria-live="polite"></div>'; ok.replaceWith(bas); bas.appendChild(ok); }
