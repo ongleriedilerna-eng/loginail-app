@@ -8,6 +8,9 @@
   /* 21/11 : c'est le CONTENU qui descend, le fond rose de la page reste en place (sinon on voyait un trait là où il s'arrêtait) */
   st.textContent = `#E .vue{overscroll-behavior-y:none}
   #E .vue.tire-x>*{translate:0 var(--tire,0px)}
+  /* 25/11 (Marie : « le trait il reste pas comme le fond ») : avec « Afficher mon fond en haut », le fond ne descend pas avec la page,
+     sinon il laissait une bande rose en haut ; il reste en place et le contenu glisse dessus */
+  #E .vue.tire-x>.v-ban{translate:none}
   #E .vue.tire-r>*{transition:translate .42s cubic-bezier(.2,.9,.25,1)}
   .roue{position:absolute;left:50%;top:0;z-index:60;width:28px;height:28px;margin-left:-14px;pointer-events:none;opacity:0}
   .roue i{position:absolute;left:12.5px;top:0;width:3px;height:8.5px;border-radius:2px;background:var(--v-acc,#B5475E);transform-origin:1.5px 14px;opacity:0}
