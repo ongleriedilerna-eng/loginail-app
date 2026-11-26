@@ -119,6 +119,7 @@
     env: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/><path d="M6 12v6.5A1.5 1.5 0 0 0 7.5 20h9a1.5 1.5 0 0 0 1.5-1.5V12"/></svg>',
     sol: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>',
     lune: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17h18M6.5 17a5.5 5.5 0 0 1 11 0M12 6.5v2M5 9.5l1.4 1.4M19 9.5l-1.4 1.4"/></svg>',
+    story: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="3"/><circle cx="12" cy="12" r="3.2"/></svg>',
     crayon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>' };
   const FILTRES = [[1, "Matin", IC.sol], [2, "Après-midi", IC.lune], [3, "Sur mesure", IC.crayon]];
   const ab = d => MOISC[d.getMonth()];
@@ -135,15 +136,17 @@
       const T = j ? j.t.filter(t => garde(t, d)) : [];
       return `<div class="md-cj${ferme ? " gris" : ""}"><div class="md-cjt${auj ? " auj" : ""}">${auj ? "auj." : JC[(d.getDay() + 6) % 7]}<b>${d.getDate()}</b></div><div class="md-cjc" style="height:${(H1 - H0) * H}px">${Array.from({ length: H1 - H0 }, (_, i) => `<i style="top:${i * H}px"></i>`).join("")}${T.map(t => {
         const on = D.sel.has(cle(j.d, t));
-        return `<button data-md="heure" data-j="${j.i}" data-t="${t}" class="md-bl${on ? " on" : ""}" aria-pressed="${on}" aria-label="${nomJour(d)} à ${hh(t)}" style="top:${(t / 60 - H0) * H}px;height:${Math.max(dm, PAS) / 60 * H - 2}px">${hh(t)}</button>`; }).join("")}</div></div>`;
+        return `<button data-md="heure" data-j="${j.i}" data-t="${t}" class="md-bl${on ? " on" : ""}" aria-pressed="${on}" aria-label="${nomJour(d)} à ${hh(t)}" style="top:${(t / 60 - H0) * H}px;height:${Math.max(dm, PAS) / 60 * H - 2}px">${hh(t)}${dm >= 60 ? `<small>${duree(dm)}</small>` : ""}</button>`; }).join("")}</div></div>`;
     }).join("") + "</div>";
     return g;
   }
   function dessine() {
     if (!ouverte()) return;
-    const pr = z("[data-md=presta]"), p = D.P[D.p];
-    if (pr) pr.innerHTML = p ? `Pour<b>${esc(p.nom)}</b><i>· ${duree(p.duree)}</i>${IC.chev}` : "Pour<b>un trou d’une heure</b>";
-    z(".md-menu").innerHTML = D.P.map((x, i) => `<button data-md="choix" data-i="${i}" class="${i === D.p ? "on" : ""}">${esc(x.nom)}<span>${duree(x.duree)}</span></button>`).join("");
+    /* 26/11 (Marie : « sur mesure, pose américaine… faudrait plutôt mettre ça en avant ») : les prestations en puces, toujours visibles */
+    const pu = z(".md-puces");
+    if (pu && pu.dataset.p !== String(D.p)) { pu.dataset.p = D.p;
+      pu.innerHTML = D.P.length ? D.P.map((x, i) => `<button role="tab" data-md="choix" data-i="${i}" class="${i === D.p ? "on" : ""}" aria-selected="${i === D.p}">${esc(x.nom)}<small>${duree(x.duree)}</small></button>`).join("") : '<span class="md-pt">Pour un trou d’une heure</span>';
+      const on = pu.querySelector(".on"); if (on) on.scrollIntoView({ block: "nearest", inline: "center" }); }
     z(".md-filtres").innerHTML = FILTRES.map(([i, t, ic]) => `<button data-md="filtre" data-i="${i}" class="${i === D.f ? "on" : ""}" aria-pressed="${i === D.f}">${ic}<span>${t}</span></button>`).join("");
     z(".md-resume").innerHTML = D.f === 3 ? `<span>Elle est libre : ${resume()}</span><button data-md="regles">Modifier</button>` : "";
     const li = z(".md-liste"), y = li.scrollTop;
@@ -170,10 +173,10 @@
     let garde0 = null; try { garde0 = localStorage.getItem(CLE); } catch (e) {}
     D = { P, p: P.length ? Math.max(0, P.findIndex(p => p.nom === garde0)) : -1, f: 0, reg: [momentNeuf()], wk: 0, sel: new Map(), L: [], occ: [], auj: new Date(new Date().setHours(0, 0, 0, 0)), etat: "charge", pret: false, lecture: 0 };
     ouvre(`<div class="md"><h3>Mes dispos</h3>
-      <button class="md-presta" data-md="presta" ${P.length ? 'aria-haspopup="true"' : "disabled"}></button><div class="md-menu" role="menu"></div>
+      <div class="md-puces" role="tablist" aria-label="Pour quelle prestation ?"></div>
       <div class="md-filtres"></div><div class="md-resume"></div>
       <div class="md-liste"></div>
-      <div class="md-bas"><p class="md-choisi" aria-live="polite"></p><button class="md-envoi" data-md="envoie"></button><button class="md-noter" data-md="noter" hidden>Elle a dit oui ? Noter le RDV</button></div>
+      <div class="md-bas"><p class="md-choisi" aria-live="polite"></p><button class="md-envoi" data-md="envoie"></button><button class="md-story" data-md="story">${IC.story}Partager en story</button><button class="md-noter" data-md="noter" hidden>Elle a dit oui ? Noter le RDV</button></div>
       <div class="md-regles" role="dialog" aria-label="Quand est-elle libre ?"><div class="md-rh"><h4>Quand est-elle libre ?</h4><p>Note ce qu’elle t’a dit : les jours, puis les heures.</p></div><div class="md-rl md-liste"></div><div class="md-rb"><button class="md-envoi" data-md="voir">Voir ses créneaux</button></div></div></div>`);
     charge();
   }
@@ -190,6 +193,26 @@
     if (navigator.share) { try { navigator.share({ text: txt }).catch(x => { if (!x || x.name !== "AbortError") copie(); }); return; } catch (e) {} }
     copie();
   }
+
+  /* 26/11 (Marie : « si je swipe à gauche ou à droite ça change la semaine ») : la semaine suit le doigt, puis la suivante arrive de l'autre côté */
+  function versSemaine(sens) {
+    const n = Math.max(0, Math.min(derniere(), D.wk + sens)), sg = z(".md-sg");
+    if (n === D.wk) { if (sg) { sg.style.transition = "transform .25s cubic-bezier(.2,.8,.2,1)"; sg.style.transform = ""; } return; }
+    D.wk = n; D.sel.clear(); z(".md-liste").scrollTop = 0; dessine();
+    const s2 = z(".md-sg"); if (!s2 || matchMedia("(prefers-reduced-motion:reduce)").matches) return;
+    s2.style.transition = "none"; s2.style.transform = `translateX(${sens * 40}%)`; s2.style.opacity = "0"; s2.getBoundingClientRect();
+    s2.style.transition = "transform .3s cubic-bezier(.2,.8,.2,1),opacity .22s"; s2.style.transform = ""; s2.style.opacity = "";
+  }
+  { let x0 = null, y0 = 0, dx = 0, hor = null, pid = null;
+    E.addEventListener("pointerdown", e => { if (!ouverte() || !e.target.closest || !e.target.closest(".md .md-liste") || e.target.closest(".md-regles")) return; x0 = e.clientX; y0 = e.clientY; dx = 0; hor = null; pid = e.pointerId; }, true);
+    E.addEventListener("pointermove", e => { if (x0 == null || e.pointerId !== pid) return; dx = e.clientX - x0; const dy = e.clientY - y0;
+      if (hor == null && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) hor = Math.abs(dx) > Math.abs(dy) * 1.2;
+      if (!hor) return; e.preventDefault(); const sg = z(".md-sg"), bord = (D.wk <= 0 && dx > 0) || (D.wk >= derniere() && dx < 0) ? .3 : 1;
+      if (sg) { sg.style.transition = "none"; sg.style.transform = `translateX(${dx * bord}px)`; } }, { capture: true, passive: false });
+    const fin = e => { if (x0 == null || e.pointerId !== pid) return; const d = dx, h = hor; x0 = null; if (!h) return;
+      glisse = Date.now(); versSemaine(d < -50 ? 1 : d > 50 ? -1 : 0); };
+    E.addEventListener("pointerup", fin, true); E.addEventListener("pointercancel", fin, true); }
+  let glisse = 0;   /* après un glisser, le « clic » qui suit ne choisit pas une heure */
 
   let pasDeux = 0;
   async function noter() {
@@ -222,9 +245,10 @@
     menu(false);
     if (k === "encore") return charge();
     if (k === "envoie") return envoyer();
+    if (k === "story") { const p = D.P[D.p]; if (window.__dispoStory) window.__dispoStory(D.wk, p && p.nom); return; }
     if (k === "noter") return noter();
     if (k === "regles") { regles(); return z(".md-regles").classList.add("on"); }
-    if (k === "choix") { D.p = +b.dataset.i; D.sel.clear(); try { localStorage.setItem(CLE, D.P[D.p].nom); } catch (x) {} if (D.etat === "ok") calcule(); }
+    if (k === "choix") { if (+b.dataset.i === D.p) return; D.p = +b.dataset.i; D.sel.clear(); try { localStorage.setItem(CLE, D.P[D.p].nom); } catch (x) {} if (D.etat === "ok") calcule(); }
     if (k === "filtre") {
       const i = +b.dataset.i; D.f = D.f === i ? 0 : i; D.sel.clear();
       if (D.f === 3) { dessine(); regles(); return z(".md-regles").classList.add("on"); }
@@ -233,8 +257,8 @@
     if (k === "ajout") { D.reg.push(momentNeuf()); regles(); const l = z(".md-rl"); l.scrollTop = l.scrollHeight; return; }
     if (k === "rj") { const r = D.reg[+b.dataset.n], i = +b.dataset.i; r.j = r.j.includes(i) ? r.j.filter(x => x !== i) : r.j.concat(i); return regles(); }
     if (k === "rx") { D.reg.splice(+b.dataset.n, 1); return regles(); }
-    if (k === "sav" || k === "sap") { D.wk = Math.max(0, Math.min(derniere(), D.wk + (k === "sap" ? 1 : -1))); D.sel.clear(); z(".md-liste").scrollTop = 0; }
-    if (k === "heure") {
+    if (k === "sav" || k === "sap") return versSemaine(k === "sap" ? 1 : -1);
+    if (k === "heure") { if (Date.now() - glisse < 350) return;
       const d = D.L[+b.dataset.j].d, t = +b.dataset.t, c = cle(d, t);
       if (D.sel.has(c)) D.sel.delete(c); else { if (D.un) D.sel.clear(); D.sel.set(c, { d, t }); }
     }
@@ -279,6 +303,19 @@
 #E .md-menu button{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;min-height:48px;padding:0 12px;border-radius:12px;font-size:15px;text-align:left}
 #E .md-menu button span{flex:none;color:var(--gris);font-size:13.5px}
 #E .md-menu .on{background:var(--v-rose);font-weight:500}
+#E .md-puces{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin:10px 0 0;padding:2px 20px 4px;scroll-padding:0 20px}
+#E .md-puces::-webkit-scrollbar{display:none}
+#E .md-puces button{flex:none;display:flex;align-items:center;gap:5px;line-height:1;min-height:42px;padding:0 15px!important;border-radius:99px;background:#fff!important;box-shadow:0 0 0 1px rgba(30,28,27,.12);font-size:15px!important;color:var(--v-fonce)!important;white-space:nowrap;transition:background .18s,color .18s,transform .12s}
+#E .md-puces button small{font-size:12.5px;color:var(--gris);transition:color .18s}
+#E .md-puces button.on{background:var(--v-acc)!important;color:#fff!important;box-shadow:none}
+#E .md-puces button.on small{color:rgba(255,255,255,.85)}
+#E .md-puces button:active{transform:scale(.96)}
+#E .md-pt{font-size:15px;color:var(--gris);padding:10px 0}
+#E .md-bl{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+#E .md-bl small{font-size:10.5px;font-weight:400;opacity:.75;line-height:1}
+#E .md-story{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:46px;margin-top:6px;font-size:16px!important;font-weight:500!important;color:var(--v-fonce)!important}
+#E .md-story svg{width:19px;height:19px}
+#E .md-sg{will-change:transform}
 #E .md-filtres{display:flex;gap:22px;margin:4px 20px 0}
 #E .md-filtres button{display:flex;align-items:center;gap:6px;height:44px;font-size:15.5px;color:var(--gris);white-space:nowrap}
 #E .md-filtres svg{width:18px;height:18px;flex:none}
@@ -339,6 +376,7 @@
 #E .md :is(.md-filtres button,.md-envoi,.md-fl,.md-jj button,.md-menu button):active{transform:scale(.96)}
 #E .md :is(.md-filtres button,.md-envoi,.md-fl,.md-menu button){transition:color .15s,background .15s,transform .12s}
 @media (max-height:700px){html.plein #E .feuille.md-f{height:calc(100% - 20px);max-height:calc(100% - env(safe-area-inset-top,0px) - 12px)}html.plein #E .md h3{font-size:26px}html.plein #E .md-presta{min-height:46px}html.plein #E .md-envoi{height:52px}}
+@media (max-height:640px){#E .md-story{min-height:40px;margin-top:2px;font-size:15px!important}#E .md-choisi{min-height:0;margin-bottom:6px;font-size:13px}#E .md-bas{padding-top:8px}#E .md-puces{margin-top:6px}#E .md-puces button{min-height:38px}#E .md-filtres button{height:38px}}
 @media (max-width:360px){#E .md-filtres{gap:14px}#E .md-filtres button{font-size:14.5px}}
 @media (prefers-reduced-motion:reduce){#E .md button,#E .md-regles,#E .md-menu{transition:none!important}}`;
   document.head.appendChild(st);

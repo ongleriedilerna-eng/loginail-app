@@ -33,7 +33,7 @@ label.btn{display:flex!important;align-items:center;justify-content:center}
     [/d[ée]caler|d[ée]placer|changer.*heure/i, "Pour décaler un rendez-vous : touche-le › « Décaler », choisis le jour et l’heure. Dans l’agenda, tu peux aussi rester appuyée dessus et le faire glisser."],
     [/fid[ée]lit[ée]/i, "La carte de fidélité s’allume dans Réglages › Carte de fidélité. Choisis le nombre de visites et le cadeau. Chaque rendez-vous terminé compte une visite."],
     [/sms|rappel/i, "La veille au soir, chaque cliente qui a rendez-vous reçoit un SMS de rappel. Il faut son numéro de portable dans sa fiche. Réglages › Rappel la veille pour voir le message."],
-    [/site|couleur|fond|charm|photo/i, "Pour changer ton site : onglet Mon site › « Personnaliser mon site » (style, couleurs, fond, charms). Tes photos, prix, horaires et adresse sont juste en dessous."],
+    [/site|couleur|fond|charm|photo/i, "Pour changer ton site : onglet Mon site › « Personnaliser mon site » (en-tête, fond, typographie, charms). Tes photos, prix, horaires et adresse sont juste en dessous."],
     [/prix|prestation|tarif/i, "Tes prestations et tes prix : Réglages › Mes prestations. Touche une prestation pour la changer, ou ajoutes-en une."],
   ];
   const repLocale = q => (FAQ.find(f => f[0].test(q)) || [0, "Je n’ai pas encore la réponse à cette question. Écris-nous : Réglages › Besoin d’aide ?, on te répond vite."])[1];

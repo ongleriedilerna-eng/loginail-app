@@ -135,7 +135,9 @@ html.demo-ms .ms2-dots{grid-template-columns:repeat(9,1fr);margin-bottom:4px}
   addEventListener("message",m=>{if(m.origin!==SITEO||!m.data||typeof m.data!=="object")return;
     if(m.data.loginail==="pret"){const f=[...document.querySelectorAll(".ms2-grand iframe")].find(x=>x.contentWindow===m.source);if(f)f.contentWindow.postMessage({loginail:"brouillon",br:lit()},SITEO)}
     if(m.data.loginail==="enregistre"&&m.data.br){ecrit(Object.assign(lit(),m.data.br));document.querySelectorAll(".ecran").forEach(ferme);try{dit("Mon site est à jour ✓")}catch(_){}}});
-  const ferme=e=>{const o=e.querySelector(".ms2-grand");if(o)o.remove();if(DEMO)return;rafraichit();document.querySelectorAll('.vue[data-p="si"]').forEach(vu=>{const y=vu.scrollTop;vu.innerHTML=PAGE();vu.scrollTop=y})};
+  /* 26/11 : on redessine « Mon site » comme l'appli le fait (vernis.js, monsite-haut.js…) : sinon, après Personnaliser, l'ANCIENNE page revenait (« Mon style », gros bouton) */
+  const PAGEV=()=>{try{if(typeof VUES!=="undefined"&&VUES.si)return VUES.si()}catch(_){}return PAGE()};
+  const ferme=e=>{const o=e.querySelector(".ms2-grand");if(o)o.remove();if(DEMO)return;rafraichit();document.querySelectorAll('.vue[data-p="si"]').forEach(vu=>{const y=vu.scrollTop;vu.innerHTML=PAGEV();vu.scrollTop=y})};
   addEventListener("message",m=>{if(m.data==="loginail-site-enregistre"){document.querySelectorAll(".ecran").forEach(ferme);try{dit("Mon site est à jour ✓")}catch(_){}}});
   st.textContent+=`.ms2-grand{position:absolute;inset:0;z-index:95;background:#F6F3EF;animation:monte .3s both}.ms2-grand iframe{width:100%;height:100%;border:0;display:block}
 .ms2-x{position:absolute;top:14px;right:14px;z-index:2;width:38px;height:38px;border-radius:50%;border:0;background:rgba(30,28,27,.82);color:#fff;font-size:22px;line-height:38px;padding:0;cursor:pointer}`;
@@ -151,7 +153,7 @@ html.demo-ms .ms2-dots{grid-template-columns:repeat(9,1fr);margin-bottom:4px}
     rafraichit();
     if(DEMO)try{parent.postMessage({loginailSite:url()},"*")}catch(_){}   /* page d'accueil : le 2e écran (le site) change aussi */
     /* la page Mon site en dessous se met à jour */
-    if(!DEMO)document.querySelectorAll('.vue[data-p="si"]').forEach(vu=>{const y=vu.scrollTop;vu.innerHTML=PAGE();vu.scrollTop=y});
+    if(!DEMO)document.querySelectorAll('.vue[data-p="si"]').forEach(vu=>{const y=vu.scrollTop;vu.innerHTML=PAGEV();vu.scrollTop=y});
     if(k==="univ"){document.querySelectorAll('[data-ms2]').forEach(y=>{const kk=y.dataset.ms2,vv=y.dataset.v;const on=kk==="univ"?vv===v:kk==="style"?+vv===forme(b):kk==="couleur"?vv===b.couleur:kk==="mode"?vv===(b.mode||"jour"):kk==="fond"?vv===(b.fond||""):kk==="police"?vv===b.police:kk==="paillettes"?vv===b.paillettes:kk==="charmsoui"?(vv==="1")===!!(b.charms||[]).length:y.classList.contains("on");y.classList.toggle("on",on)})}
   },true);
 })();

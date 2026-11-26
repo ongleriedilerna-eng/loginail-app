@@ -9,6 +9,22 @@
 (function () {
   let resume = null;   /* le détail du mois, lu dans la page dessinée par vernis.js */
 
+  /* 26/11 : les 4 lignes de « Personnaliser mon site » (les mêmes écritures que monsite.js) */
+  const POLN = { elegante: ["Élégante", "Italiana"], manuscrite: ["Manuscrite", "'Great Vibes'"], ronde: ["Ronde", "'Bagel Fat One'"], retro: ["Rétro", "'Abril Fatface'"], calligraphie: ["Calligraphie", "'Pinyon Script'"], parisienne: ["Parisienne", "Parisienne"], chic: ["Chic", "'Playfair Display'"], luxe: ["Luxe", "Cinzel"], surf: ["Surf", "Pacifico"], seventies: ["Seventies", "Shrikhand"], bulle: ["Bulle", "'Rubik Bubbles'"], bonbon: ["Bonbon", "'Cherry Bomb One'"], y2k: ["Y2K", "Monoton"], gothique: ["Gothique", "UnifrakturMaguntia"], feutre: ["Feutre", "'Permanent Marker'"], moderne: ["Moderne", "Jost"], relief: ["Relief", "'Bungee Shade'"], pixel: ["Pixel", "Silkscreen"], artdeco: ["Art déco", "Fascinate"], graffiti: ["Graffiti", "'Sedgwick Ave Display'"], fondue: ["Fondue", "'Climate Crisis'"], cinema: ["Cinéma", "Limelight"], feminine: ["Féminine", "'Yeseva One'"], pinup: ["Pin-up", "'Lily Script One'"], couture: ["Couture", "Gloock"], arrondie: ["Arrondie", "Righteous"], douce: ["Douce", "Corben"], gala: ["Gala", "Playball"] };
+  const SITEC = "https://loginail.fr/loginail-site/charms/";
+  function perso() {
+    let b = {}; try { b = brouillon() || {}; } catch (e) {}
+    const ph = String((((b.photos || [])[b.principale || 0]) || {}).url || "").replace(/^\.\.\//, "").replace(/'/g, "%27");
+    const pol = POLN[b.police] || POLN.elegante, ch = [...new Set((b.stickers || []).map(c => c && c.n).filter(n => n && n !== "__etoile"))];
+    let rond = ""; try { if (b.fond && window.F100 && F100.idx[b.fond] != null) rond = F100.rond(F100.idx[b.fond]); } catch (e) {}
+    const L = [
+      ["entete", `<span class="v-ico psi-ic psi-e"${ph ? ` style="background-image:url('${ph}')"` : ""}></span>`, "En-tête", "Le haut de ton site, ta photo"],
+      ["fond", `<span class="v-ico psi-ic psi-f">${rond}</span>`, "Fond", b.fond ? esc(b.fond) : "Tes couleurs suivent ton fond"],
+      ["ecriture", `<span class="v-ico psi-ic psi-p" style="font-family:${pol[1]},serif">Aa</span>`, "Typographie", `<span style="font-family:${pol[1]},serif">${pol[0]}</span>`],
+      ["charms", `<span class="v-ico psi-ic psi-c">${ch[0] ? `<img src="${SITEC + esc(ch[0])}.webp" alt="" onerror="this.remove()">` : "✦"}</span>`, "Charms", ch.length ? ch.length + (ch.length > 1 ? " charms posés" : " charm posé") : "Pose-les où tu veux"]];
+    return `<div class="k">Personnaliser mon site</div><div class="liste psi">${L.map(([v, ic, t, s]) => `<div class="ligne" data-ms2="nouveau" data-v="${v}" role="button">${ic}<div class="t">${t}<span>${s}</span></div><span class="fl">›</span></div>`).join("")}</div>`;
+  }
+
   const vSi = VUES.si;
   VUES.si = () => {
     const t = document.createElement("template"); t.innerHTML = vSi();
@@ -25,6 +41,10 @@
     if (ch) ch.remove();
     if (ci) ci.remove();
     if (te && gros != null) te.insertAdjacentHTML("beforeend", `<button class="msh" data-msh aria-label="${esc(gros + " " + petit)} : voir le détail"><b>${esc(gros)}</b><span>${esc(petit)}</span></button>`);
+    /* 4 · 26/11 (Marie) : le gros bouton devient « Personnaliser mon site », rangé comme « Mon contenu » : 4 lignes,
+       chacune ouvre directement SA partie (appli-pont.html ?p=entete|fond|ecriture → le bon onglet de Personnaliser ; charms → la pose des charms) */
+    const gb = f.querySelector('.btn[data-ms2="nouveau"]');
+    if (gb) { const t2 = document.createElement("template"); t2.innerHTML = perso(); gb.replaceWith(t2.content); }
     const d = document.createElement("div"); d.appendChild(f); return d.innerHTML;
   };
 
@@ -61,6 +81,15 @@
 #E .msh span{font-size:11.5px;line-height:1.25;color:var(--gris)}
 #E .msh-detail{margin-top:12px}
 #E .msh-detail .v-chiffres{margin:0 0 10px}
+#E .psi .ligne{gap:12px}
+#E .psi .ligne .t span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#E .psi .ligne .t{min-width:0}
+#E .psi-ic{position:relative;flex:none;width:36px;height:36px;border-radius:10px;overflow:hidden;display:grid;place-items:center;background:var(--v-rose,#F5E6E4) center/cover;color:var(--v-acc);font-size:16px;box-shadow:inset 0 0 0 1px rgba(30,28,27,.06)}
+#E .psi-e:not([style]){background:linear-gradient(160deg,var(--v-h1,#F2D7D6),var(--v-acc,#B5475E))}
+#E .psi-f:empty{background:linear-gradient(160deg,var(--v-h1,#F2D7D6),var(--v-h2,#F7ECEA))}
+#E .psi-f>*{position:absolute!important;inset:0!important;width:auto!important;height:auto!important;border-radius:0!important;transform:none!important}
+#E .psi-p{font-size:17px;line-height:1}
+#E .psi-c img{width:30px;height:30px;object-fit:contain}
 @media (prefers-reduced-motion:reduce){#E .msh{transition:none}}`;
   document.head.appendChild(st);
 })();
