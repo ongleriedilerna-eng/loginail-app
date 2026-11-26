@@ -691,7 +691,9 @@ E.addEventListener("click", async ev => {
     else if (k === "lien2") window.open("https://loginail.fr/confidentialite.html?appli=1", "_blank", "noopener");
     else if (k === "lien3") window.open("https://loginail.fr/conditions-abonnement.html?appli=1", "_blank", "noopener");
     else if (k === "reessayer") { const { data } = await sb.auth.getSession(); S.user = null; demarre(data.session); }
-    else if (k === "deco") { await sb.auth.signOut(); S.user = null; ecranConnexion(); }
+    /* 26/11 (Marie : « se déconnecter, faut un "vous voulez vraiment vous déconnecter ?" ») : on demande d'abord (au « tu », D67) */
+    else if (k === "deco" && S.user && $(".feuille .fc", E)) ouvre(`<h3>Tu veux vraiment te déconnecter ?</h3><div class="sous">Tes rendez-vous et tes clientes restent bien enregistrés.</div><button class="btn" data-a="deco-oui" style="width:100%;margin-top:18px">Me déconnecter</button><button class="btn clair" data-a="fermer" style="width:100%;margin-top:8px">Non, je reste</button>`);
+    else if (k === "deco" || k === "deco-oui") { if (k === "deco-oui") ferme(); await sb.auth.signOut(); S.user = null; ecranConnexion(); }
   } catch (e) { oups(e); }
 });
 

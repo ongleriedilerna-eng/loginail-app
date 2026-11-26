@@ -134,6 +134,31 @@
     const ban = b.closest(".dt-ban"); if (ban) ban.remove(); E.querySelectorAll(".fc [data-dtb]").forEach((y, k) => { y.dataset.dtb = k; });
     rendu(); dit(`${prenom(c)} t’a payé ${eu(+x.m)} ✓`); }, true);
 
+  /* ---------- 26/11 (Marie : « quand elles doivent de l'argent, on l'ait aussi quand on a le truc "C'est fini" ») ----------
+     Dans la barre du bas du rendez-vous ouvert (« C'est fini » / « Encaisser »), toujours visible : « 💸 Elle te doit aussi 25 € » + « Payé ».
+     La barre est redessinée par prestations-rdv.js (petits plus) : on la surveille et on remet la ligne. Toujours PAS ajouté à « Encaisser ». */
+  const st3 = document.createElement("style");
+  st3.textContent = `#E .dt-bas{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:8px 10px 8px 12px;border-radius:14px;background:#F7E9EC;animation:dt-in .22s ease-out}
+#E .dt-bas>span{flex:1;min-width:0;font-size:14px;color:#9A5B62;line-height:1.3}#E .dt-bas>span b{font-weight:500}#E .dt-bas>span small{display:block;font-size:12px;color:#776D64;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#E .dt-bas button{flex:none;min-height:36px;padding:0 14px;border-radius:99px;border:1px solid rgba(30,28,27,.15);background:#fff;color:#4F4643;font:inherit;font-size:13px;cursor:pointer;transition:transform .12s}
+#E .dt-bas button:active{transform:scale(.95)}`;
+  document.head.appendChild(st3);
+  const basDette = () => {
+    const btns = E.querySelector(".fc .fr-btns"); if (!btns) return;
+    const id = (btns.querySelector("[data-id]") || {}).dataset?.id, r = id && ((S.rdv || []).find(x => x.id === id) || (S.cloche || []).find(x => x.id === id));
+    const c = cliDe(r), l = c && r.statut !== "annule" ? dettes(c) : [], ex = E.querySelector(".fc .dt-bas");
+    if (!l.length) { if (ex) ex.remove(); return; }
+    const pour = l.map(d => d.q).filter(Boolean).join(" · "), h = `<span>💸 Elle te doit aussi <b>${esc(eu(total(l)))}</b>${pour ? `<small>${esc(pour)}</small>` : ""}</span><button data-dtall="${esc(c.id)}">Payé</button>`;
+    if (ex) { if (ex._h !== h) { ex.innerHTML = h; ex._h = h; } return; }
+    const d = document.createElement("div"); d.className = "dt-bas"; d.innerHTML = h; d._h = h; btns.parentElement.insertBefore(d, btns);
+  };
+  new MutationObserver(() => { if (E.querySelector(".fc .fr-btns")) basDette(); }).observe(E, { childList: true, subtree: true });
+  document.addEventListener("click", async e => { const b = e.target.closest && e.target.closest("[data-dtall]"); if (!b) return; e.stopPropagation(); e.preventDefault();
+    const c = S.clientes.find(x => x.id === b.dataset.dtall), l = c ? dettes(c) : []; if (!l.length) return; b.disabled = true;
+    if (!(await change(c, () => []))) { b.disabled = false; return; }
+    E.querySelectorAll(".fc .dt-ban, .fc .dt-bas").forEach(x => x.remove());
+    rendu(); dit(`${prenom(c)} t’a payé ${eu(total(l))} ✓`); }, true);
+
   document.addEventListener("input", e => { if (e.target.matches && e.target.matches("[data-dt-m]") && SA) { SA.v = e.target.value; SA.touche = true; } });
   document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches && e.target.matches("[data-dt-m]")) { e.preventDefault(); E.querySelector('[data-dt="ok"]')?.click(); } });
 })();
