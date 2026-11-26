@@ -6,7 +6,8 @@
    RÈGLE : jamais une heure que le site refuserait. Le calcul suit loginail-creer/resa-simu.js (creneaux) et reserver() :
    pas de 30 min depuis l'ouverture, dans ses horaires, hors pause, 1 h de marge aujourd'hui, aucun chevauchement, 84 jours (le site en accepte 92).
    Si l'un des deux change, changer LIBRES ici. En plus, comme « Partager mes dispos » : deux heures proposées ne se chevauchent pas.
-   On ne lit que début, fin et état des rendez-vous : jamais un prénom. */
+   26/11 (Marie : « fais voir aussi les créneaux qui sont pas libres, voir qui y a ») : les rendez-vous pris sont dessinés dans la grille
+   (« Léa D. », comme l'agenda ; « Bloqué » pour un créneau bloqué), pour elle seule : jamais un prénom dans le message ni dans la story. */
 (function () {
   const PAS = 30, MARGE = 60, HORIZON = 84, TRANCHE = 28, CLE = "loginail-dispos-presta", H = 38;
   const JR = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"], JC = ["lun.", "mar.", "mer.", "jeu.", "ven.", "sam.", "dim."];
@@ -43,10 +44,13 @@
   /* par tranches : au-delà de 1 000 lignes, le serveur ne rend pas tout et une heure prise semblerait libre */
   async function lit() {
     const de = new Date(); de.setHours(0, 0, 0, 0);
-    const R = await Promise.all(Array.from({ length: Math.ceil(HORIZON / TRANCHE) }, (_, i) => sb.from("rendez_vous").select("debut,fin,statut")
+    const R = await Promise.all(Array.from({ length: Math.ceil(HORIZON / TRANCHE) }, (_, i) => sb.from("rendez_vous").select("id,debut,fin,statut,titre,cliente_id,clientes(prenom,nom)")
       .lt("debut", plusJours(de, (i + 1) * TRANCHE).toISOString()).gt("fin", plusJours(de, i * TRANCHE).toISOString())));
     if (R.some(r => r.error || !r.data || r.data.length >= 1000)) throw new Error("agenda illisible");
-    return R.flatMap(r => r.data).filter(r => r.statut !== "annule").map(r => [+new Date(r.debut), +new Date(r.fin)]);
+    const L = R.flatMap(r => r.data).filter(r => r.statut !== "annule"), vus = new Set();
+    /* une fois chacun (un rendez-vous à cheval sur deux tranches revient deux fois) */
+    return L.filter(r => { const k = r.id; if (vus.has(k)) return false; vus.add(k); return true; })
+      .map(r => [+new Date(r.debut), +new Date(r.fin), r]);
   }
   /* ce qui est coché et qui n'est plus libre s'en va */
   function verifie() {
@@ -123,6 +127,17 @@
     crayon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>' };
   const FILTRES = [[1, "Matin", IC.sol], [2, "Après-midi", IC.lune], [3, "Sur mesure", IC.crayon]];
   const ab = d => MOISC[d.getMonth()];
+  /* 26/11 : les rendez-vous de ce jour, à leur vraie place, sous les heures libres (qui ne les chevauchent jamais) */
+  const quiC = r => (r.clientes ? (r.clientes.prenom ? r.clientes.prenom + ((r.clientes.nom || "").trim() ? " " + r.clientes.nom.trim()[0].toUpperCase() + "." : "") : nomCli(r.clientes)) : "") || (r.cliente_id ? "Cliente" : (r.titre || "Bloqué"));
+  function pris(d, H0, H1) {
+    const a0 = +d, b0 = a0 + 864e5, A = H0 * 60, B = H1 * 60;
+    return D.occ.filter(o => o[2] && o[0] < b0 && o[1] > a0).map(([a, b, r]) => {
+      const de = Math.max(A, (a - a0) / 6e4), fi = Math.min(B, (b - a0) / 6e4);
+      if (fi <= de) return "";
+      const h = (fi - de) / 60 * H - 2, nom = quiC(r), bloc = !r.cliente_id, court = !bloc && r.clientes && r.clientes.prenom ? r.clientes.prenom : nom;   /* la colonne est étroite : le prénom seul */
+      return `<div class="md-pr${bloc ? " bloc" : ""}${h < 30 ? " bas" : ""}" aria-label="${esc(`Pris : ${nom}, ${hh(Math.round((a - a0) / 6e4))} – ${hh(Math.round((b - a0) / 6e4))}`)}" style="top:${(de / 60 - H0) * H}px;height:${Math.max(h, 15)}px"><b>${esc(court)}</b>${h >= 30 ? `<small>${hh(Math.round((a - a0) / 6e4))}</small>` : ""}</div>`;
+    }).join("");
+  }
   function grille() {
     if (D.etat === "charge" && !D.pret) return '<p class="md-vide" role="status">Je regarde ton agenda…</p>';
     if (D.etat === "erreur") return '<div class="md-vide" role="alert">Je n’arrive pas à lire ton agenda. Vérifie ta connexion.<button class="md-lien" data-md="encore">Réessayer</button></div>';
@@ -134,7 +149,7 @@
     g += C.map(d => {
       const j = jourL(d), ferme = !j || !ouvert(hor[(d.getDay() + 6) % 7]), auj = memeJour(d, D.auj);
       const T = j ? j.t.filter(t => garde(t, d)) : [];
-      return `<div class="md-cj${ferme ? " gris" : ""}"><div class="md-cjt${auj ? " auj" : ""}">${auj ? "auj." : JC[(d.getDay() + 6) % 7]}<b>${d.getDate()}</b></div><div class="md-cjc" style="height:${(H1 - H0) * H}px">${Array.from({ length: H1 - H0 }, (_, i) => `<i style="top:${i * H}px"></i>`).join("")}${T.map(t => {
+      return `<div class="md-cj${ferme ? " gris" : ""}"><div class="md-cjt${auj ? " auj" : ""}">${auj ? "auj." : JC[(d.getDay() + 6) % 7]}<b>${d.getDate()}</b></div><div class="md-cjc" style="height:${(H1 - H0) * H}px">${Array.from({ length: H1 - H0 }, (_, i) => `<i style="top:${i * H}px"></i>`).join("")}${pris(d, H0, H1)}${T.map(t => {
         const on = D.sel.has(cle(j.d, t));
         return `<button data-md="heure" data-j="${j.i}" data-t="${t}" class="md-bl${on ? " on" : ""}" aria-pressed="${on}" aria-label="${nomJour(d)} à ${hh(t)}" style="top:${(t / 60 - H0) * H}px;height:${Math.max(dm, PAS) / 60 * H - 2}px">${hh(t)}${dm >= 60 ? `<small>${duree(dm)}</small>` : ""}</button>`; }).join("")}</div></div>`;
     }).join("") + "</div>";
@@ -345,6 +360,12 @@
 #E .md-cjc i{position:absolute;left:0;right:0;border-top:1px solid rgba(30,28,27,.05)}
 #E .md-cj.gris .md-cjc{background:repeating-linear-gradient(135deg,rgba(30,28,27,.035) 0 6px,transparent 6px 12px)}
 #E .md-bl{position:absolute;left:2px;right:2px;min-height:17px;border-radius:8px;background:var(--v-h1)!important;color:var(--v-acc)!important;font-size:13px!important;font-weight:500!important;font-variant-numeric:tabular-nums;line-height:1;overflow:hidden;transition:background .18s,color .18s,transform .12s}
+#E .md-pr{position:absolute;left:2px;right:2px;display:flex;flex-direction:column;justify-content:center;gap:1px;padding:0 4px;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 1px rgba(30,28,27,.10);color:var(--gris);overflow:hidden;pointer-events:none;line-height:1.05}
+#E .md-pr b{font-size:11.5px;font-weight:500;color:var(--v-fonce);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#E .md-pr small{font-size:10.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+#E .md-pr.bloc{background:repeating-linear-gradient(135deg,rgba(30,28,27,.06) 0 5px,rgba(255,255,255,.7) 5px 10px);box-shadow:none}
+#E .md-pr.bloc b{font-weight:400;color:var(--gris)}
+#E .md-pr.bas{flex-direction:row;align-items:center}
 #E .md-bl.on{background:var(--v-acc)!important;color:#fff!important}
 #E .md-bl:active{transform:scale(.96)}
 #E .md-vide{margin:0;padding:28px 8px 8px;color:var(--gris);font-size:14.5px;line-height:1.45;text-align:center}
