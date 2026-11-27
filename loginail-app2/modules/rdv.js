@@ -84,7 +84,11 @@
 #E .fc .rv-cl-f{position:relative;animation:rvcl .2s ease-out}
 #E .fc .rv-cl-f .champ{font-size:16px;width:100%;box-sizing:border-box;margin:0}
 #E .fc .rv-cl-g{display:block;margin:7px 2px 0 auto;padding:2px 0;border:0;background:none;font:inherit;font-size:12.5px;color:var(--gris,#8A847E);text-decoration:underline;text-underline-offset:3px}
-@keyframes rvcl{from{opacity:0;transform:translateY(3px)}}`; document.head.appendChild(st); }
+@keyframes rvcl{from{opacity:0;transform:translateY(3px)}}
+/* 27/11 (Marie : « je modifie l'heure et le bouton Enregistrer se met en bas, on le voit plus ») : Enregistrer reste collé en bas de la feuille, toujours visible */
+#E .fc .rv-bas{position:sticky;bottom:0;z-index:3;margin:14px -24px 0;padding:10px 24px calc(env(safe-area-inset-bottom,0px) + 22px);background:var(--v-c,#FBF8F5);box-shadow:0 -10px 20px -14px rgba(30,28,27,.25)}
+#E .fc .rv-bas .btn{margin:0!important;width:100%}
+#E .feuille:has(.rv-bas){padding-bottom:0!important}`; document.head.appendChild(st); }
   const iniC = c => ((String(c.prenom || "").replace(/^@+/, ""))[0] || "") + ((c.nom || "")[0] || "");
   const sansA = t => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim().replace(/^@+/, "");
   const cliAvant = () => S.clientes.find(c => c.id === MD.r.cliente_id) || MD.r.clientes || { prenom: nomRdv(MD.r) };
@@ -116,7 +120,7 @@
       <div class="lab2">Horaire</div><div id="rv-hor"></div>
       <div class="lab2">Prix</div><input class="champ" id="rv-prix" inputmode="decimal" value="${r.prix ?? t.prix ?? ""}" style="font-size:16px;width:100%;box-sizing:border-box">
       <div class="lab2">Note <small style="text-transform:none;letter-spacing:0;opacity:.6">facultatif</small></div><textarea class="msg" id="rv-note" style="height:80px" placeholder="Par exemple : veut du rouge, 10 minutes de retard la dernière fois">${esc(r.note || "")}</textarea>
-      <button class="btn" data-rv="ok" style="margin-top:14px">Enregistrer</button>`); cliZone(false); horaire(); };
+      <div class="rv-bas"><button class="btn" data-rv="ok">Enregistrer</button></div>`); cliZone(false); horaire(); };
 
   document.addEventListener("click", async e => { const a = e.target.closest && e.target.closest("[data-rv],[data-rvp]"); if (!a) return; e.stopPropagation();
     if (a.dataset.rvp != null) { const i = +a.dataset.rvp, k = MD.sel.indexOf(i); if (k >= 0) MD.sel.splice(k, 1); else MD.sel.push(i); a.classList.toggle("on", k < 0); const p = document.querySelector("#rv-prix"); if (p && MD.sel.length) p.value = somme(MD.sel).prix; MD.dur = prevue(); horaire(true); return; }
