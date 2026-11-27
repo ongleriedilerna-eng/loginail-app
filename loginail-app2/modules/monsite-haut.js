@@ -11,17 +11,16 @@
 
   /* 26/11 : les 4 lignes de « Personnaliser mon site » (les mêmes écritures que monsite.js) */
   const POLN = { elegante: ["Élégante", "Italiana"], manuscrite: ["Manuscrite", "'Great Vibes'"], ronde: ["Ronde", "'Bagel Fat One'"], retro: ["Rétro", "'Abril Fatface'"], calligraphie: ["Calligraphie", "'Pinyon Script'"], parisienne: ["Parisienne", "Parisienne"], chic: ["Chic", "'Playfair Display'"], luxe: ["Luxe", "Cinzel"], surf: ["Surf", "Pacifico"], seventies: ["Seventies", "Shrikhand"], bulle: ["Bulle", "'Rubik Bubbles'"], bonbon: ["Bonbon", "'Cherry Bomb One'"], y2k: ["Y2K", "Monoton"], gothique: ["Gothique", "UnifrakturMaguntia"], feutre: ["Feutre", "'Permanent Marker'"], moderne: ["Moderne", "Jost"], relief: ["Relief", "'Bungee Shade'"], pixel: ["Pixel", "Silkscreen"], artdeco: ["Art déco", "Fascinate"], graffiti: ["Graffiti", "'Sedgwick Ave Display'"], fondue: ["Fondue", "'Climate Crisis'"], cinema: ["Cinéma", "Limelight"], feminine: ["Féminine", "'Yeseva One'"], pinup: ["Pin-up", "'Lily Script One'"], couture: ["Couture", "Gloock"], arrondie: ["Arrondie", "Righteous"], douce: ["Douce", "Corben"], gala: ["Gala", "Playball"] };
-  const SITEC = "https://loginail.fr/loginail-site/charms/";
   function perso() {
     let b = {}; try { b = brouillon() || {}; } catch (e) {}
-    const ph = String((((b.photos || [])[b.principale || 0]) || {}).url || "").replace(/^\.\.\//, "").replace(/'/g, "%27");
     const pol = POLN[b.police] || POLN.elegante, ch = [...new Set((b.stickers || []).map(c => c && c.n).filter(n => n && n !== "__etoile"))];
-    let rond = ""; try { if (b.fond && window.F100 && F100.idx[b.fond] != null) rond = F100.rond(F100.idx[b.fond]); } catch (e) {}
+    /* 26/11 (Marie, maquettes/icones-perso-2611) : 4 icônes dessinées, du même trait que « Mon contenu » : Vitrine, Pot de peinture, Aa chic, Diamant */
+    const sv = d => `<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
     const L = [
-      ["entete", `<span class="v-ico psi-ic psi-e"${ph ? ` style="background-image:url('${ph}')"` : ""}></span>`, "En-tête", "Le haut de ton site, ta photo"],
-      ["fond", `<span class="v-ico psi-ic psi-f">${rond}</span>`, "Fond", b.fond ? esc(b.fond) : "Tes couleurs suivent ton fond"],
-      ["ecriture", `<span class="v-ico psi-ic psi-p" style="font-family:${pol[1]},serif">Aa</span>`, "Typographie", `<span style="font-family:${pol[1]},serif">${pol[0]}</span>`],
-      ["charms", `<span class="v-ico psi-ic psi-c">${ch[0] ? `<img src="${SITEC + esc(ch[0])}.webp" alt="" onerror="this.remove()">` : "✦"}</span>`, "Charms", ch.length ? ch.length + (ch.length > 1 ? " charms posés" : " charm posé") : "Pose-les où tu veux"]];
+      ["entete", `<span class="v-ico psi-ic">${sv('<path d="M4 9l1.5-5h13L20 9"/><path d="M4 9c0 1.4 1.1 2.5 2.7 2.5S9.3 10.4 9.3 9c0 1.4 1.2 2.5 2.7 2.5s2.7-1.1 2.7-2.5c0 1.4 1.1 2.5 2.6 2.5S20 10.4 20 9"/><path d="M5.5 11.5V20h13v-8.5"/><path d="M10 20v-4.5h4V20"/>')}</span>`, "En-tête", "Le haut de ton site, ta photo"],
+      ["fond", `<span class="v-ico psi-ic">${sv('<path d="M6 10l6-6 6 6-6 6z"/><path d="M19 14c0 1.5-1 2.5-1 3.5a1 1 0 0 0 2 0c0-1-1-2-1-3.5z"/><path d="M4 20h10"/>')}</span>`, "Fond", b.fond ? esc(b.fond) : "Tes couleurs suivent ton fond"],
+      ["ecriture", `<span class="v-ico psi-ic psi-p" aria-hidden="true">Aa</span>`, "Typographie", `<span style="font-family:${pol[1]},serif">${pol[0]}</span>`],
+      ["charms", `<span class="v-ico psi-ic">${sv('<path d="M6.5 4h11L21 9l-9 11L3 9z"/><path d="M3 9h18M9.5 4L8 9l4 11 4-11-1.5-5"/>')}</span>`, "Charms", ch.length ? ch.length + (ch.length > 1 ? " charms posés" : " charm posé") : "Pose-les où tu veux"]];
     return `<div class="k">Personnaliser mon site</div><div class="liste psi">${L.map(([v, ic, t, s]) => `<div class="ligne" data-ms2="nouveau" data-v="${v}" role="button">${ic}<div class="t">${t}<span>${s}</span></div><span class="fl">›</span></div>`).join("")}</div>`;
   }
 
@@ -85,11 +84,7 @@
 #E .psi .ligne .t span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #E .psi .ligne .t{min-width:0}
 #E .psi-ic{position:relative;flex:none;width:36px;height:36px;border-radius:10px;overflow:hidden;display:grid;place-items:center;background:var(--v-rose,#F5E6E4) center/cover;color:var(--v-acc);font-size:16px;box-shadow:inset 0 0 0 1px rgba(30,28,27,.06)}
-#E .psi-e:not([style]){background:linear-gradient(160deg,var(--v-h1,#F2D7D6),var(--v-acc,#B5475E))}
-#E .psi-f:empty{background:linear-gradient(160deg,var(--v-h1,#F2D7D6),var(--v-h2,#F7ECEA))}
-#E .psi-f>*{position:absolute!important;inset:0!important;width:auto!important;height:auto!important;border-radius:0!important;transform:none!important}
-#E .psi-p{font-size:17px;line-height:1}
-#E .psi-c img{width:30px;height:30px;object-fit:contain}
+#E .psi-p{font:italic 500 21px/1 'Cormorant Garamond',Georgia,serif}
 @media (prefers-reduced-motion:reduce){#E .msh{transition:none}}`;
   document.head.appendChild(st);
 })();
