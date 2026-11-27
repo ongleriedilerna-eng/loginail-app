@@ -7,13 +7,24 @@
    du jour (la 1re en rose). Une heure touchée → « Nouveau rendez-vous » habituel sur ce jour, à cette heure ;
    la pastille de la date ramène à « Quand ? ». Toucher une heure vide de l'agenda ne change pas (l'heure est déjà choisie).
    Chargé AVANT agenda-vues.js : sinon, en vue Semaine, son « Quel jour ? » passerait devant.
-   Heures libres : pas de 30 min dans ses horaires, hors pause, place pour 1 h, sans chevauchement ; on ne lit que début, fin, état. */
+   Heures libres : pas de 30 min dans ses horaires, hors pause, place pour 1 h, sans chevauchement ; on ne lit que début, fin, état.
+   27/11 (Marie : « le 28 j'ai quelqu'un de 10h à 13h, ça me met 8h, 8h30, 9h… ; pose américaine c'est 8h30, semi c'est 8h et 9h ») :
+   des puces de prestation en haut (la même que « Mes dispos », retenue), et les heures se COLLENT aux rendez-vous pour sa durée
+   (même calcul que colle() de mes-dispos.js). L'heure touchée ouvre « Nouveau rendez-vous » avec cette prestation déjà choisie. */
 (function () {
   const HORIZON = 92, TRANCHE = 28, PAS = 30, PLACE = 60;
   const JC = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], JL = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
   const MC = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."], ML = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
   const RACC = [["tot", "Le plus tôt"], ["sem", "Cette sem."], ["sam", "Un samedi"], ["s3", "Dans 3 sem."]];
   let Q = null;
+  const CLE_P = "loginail-dispos-presta";
+  /* les prestations, celles qu'elle fait le plus d'abord (comme « Mes dispos ») ; i = sa place dans prestasDispo() */
+  function prestations() {
+    const N = {}, depuis = Date.now() - 120 * 864e5;
+    (S.tous || []).forEach(r => { if (r.cliente_id && r.titre && r.statut !== "annule" && +new Date(r.debut) > depuis) N[r.titre] = (N[r.titre] || 0) + 1; });
+    return (typeof prestasDispo === "function" ? prestasDispo() : []).map((p, i) => ({ i, nom: String(p.nom), duree: +p.duree || 60, n: N[p.nom] || 0 })).sort((a, b) => b.n - a.n || a.i - b.i);
+  }
+  const laPresta = () => Q && Q.P && Q.P[Q.p] || null;
   const enMin = t => { const [h, m] = String(t).split(":").map(Number); return h * 60 + (m || 0); };
   const horaires = () => { try { return ((S.site && S.site.donnees) || (window.brouillon && brouillon()) || {}).horaires || []; } catch (e) { return []; } };
   const hx = m => Math.floor(m / 60) + ":" + String(m % 60).padStart(2, "0");
@@ -31,6 +42,14 @@
     const d0 = h && h.d ? enMin(h.d) : 9 * 60, f = h && h.f ? enMin(h.f) : 19 * 60;
     const pd = h && h.pd && h.pf ? enMin(h.pd) : null, pf = pd != null ? enMin(h.pf) : null;
     const now = new Date(), deja = memeJour(jour, now) ? now.getHours() * 60 + now.getMinutes() : -1, out = [];
+    /* 27/11 : avec une prestation, les heures se collent aux rendez-vous (8h30 avant un 10h pour 1h30 ; 8h et 9h pour 1h) */
+    const p = laPresta();
+    if (p && window.colleDispos) {
+      const murs = [], occ = (Q.occ || []).map(z => [(z[0] - jour) / 60000, (z[1] - jour) / 60000]);
+      if (pd != null) murs.push([pd, pf]);
+      if (deja > d0) murs.push([d0, deja]);
+      return window.colleDispos(d0, f, Math.max(PAS, p.duree), murs, occ);
+    }
     for (let t = d0; t + PLACE <= f; t += PAS) {
       if (pd != null && t < pf && t + PLACE > pd) continue;
       if (t < deja) continue;
@@ -80,13 +99,16 @@
   }
   function dessine() {
     const y = (E.querySelector(".feuille") || {}).scrollTop || 0;
-    ouvre(`<div class="pq"><h3>Quand ?</h3><div class="pq-racc">${RACC.map(([k, t]) => `<button data-pq-rc="${k}"${Q.rc === k ? ' class="on"' : ""}>${t}</button>`).join("")}</div>
+    const pr = Q.P.length ? `<div class="pq-pr" role="tablist" aria-label="Pour quelle prestation ?">${Q.P.map((p, k) => `<button role="tab" data-pq-p="${k}"${k === Q.p ? ' class="on" aria-selected="true"' : ' aria-selected="false"'}>${esc(p.nom)}<small>${duree(p.duree)}</small></button>`).join("")}</div>` : "";
+    ouvre(`<div class="pq"><h3>Quand ?</h3>${pr}<div class="pq-racc">${RACC.map(([k, t]) => `<button data-pq-rc="${k}"${Q.rc === k ? ' class="on"' : ""}>${t}</button>`).join("")}</div>
       <div class="pq-phrase">${phrase()}</div>${calendrier()}<div id="pq-hz">${heures()}</div></div>`);
     const f = E.querySelector(".feuille"); if (f) f.scrollTop = y;
+    const on = E.querySelector(".pq-pr .on"); if (on) { const r = on.parentElement; r.scrollLeft = on.offsetLeft - (r.clientWidth - on.offsetWidth) / 2; }   /* de côté seulement : la feuille ne bouge pas */
   }
   async function ouvrir(depart) {
     const a = auj0(); let d = new Date(depart || S.jour || a); d.setHours(0, 0, 0, 0); if (d < a) d = a;
-    Q = { jour: d, mois: new Date(d.getFullYear(), d.getMonth(), 1), occ: null, rc: null, h: null };
+    const P = prestations(); let g = ""; try { g = localStorage.getItem(CLE_P) || ""; } catch (e) {}
+    Q = { jour: d, mois: new Date(d.getFullYear(), d.getMonth(), 1), occ: null, rc: null, h: null, P, p: Math.max(0, P.findIndex(p => p.nom === g)) };
     dessine();
     Q.occ = await lit();
     if (!E.querySelector(".pq")) return;
@@ -99,7 +121,10 @@
     /* l'agenda se met sur ce jour (la semaine est relue : « déjà pris » et l'agenda après « Enregistrer » sont justes) */
     S.jour = new Date(jour); S.lundi = lundiDe(S.jour);
     try { await chargeSemaine(); rendu(); } catch (e) {}
+    const p = laPresta();
     feuilleNouveau(m);
+    /* 27/11 : la prestation choisie dans « Quand ? » est déjà cochée */
+    if (p) setTimeout(() => { const b = E.querySelector(`.fc .chips [data-np="${p.i}"], .fc .pr-z [data-np="${p.i}"]`); if (b && !b.classList.contains("on")) b.click(); }, 0);
   }
   /* la pastille de la date de « Nouveau rendez-vous » : un vrai bouton, qui ramène à « Quand ? » */
   const obs = new MutationObserver(() => {
@@ -120,6 +145,11 @@
     }
     if (t.closest("[data-pq-date]")) { stop(e); ouvrir(N && N.jour); return; }
     if (!Q || !t.closest(".pq")) return;
+    const pp = t.closest("[data-pq-p]");
+    if (pp) { stop(e); const k = +pp.dataset.pqP; if (k === Q.p) return; Q.p = k; try { localStorage.setItem(CLE_P, Q.P[k].nom); } catch (x) {}
+      if (Q.occ) { const L = libres(Q.jour); if (!(L && L.length)) { const d = cherche(Q.jour, () => true); if (d) { Q.jour = d; Q.mois = new Date(d.getFullYear(), d.getMonth(), 1); } }
+        Q.h = (libres(Q.jour) || [])[0] ?? null; }
+      dessine(); return; }
     const rc = t.closest("[data-pq-rc]");
     if (rc) {
       stop(e); if (!Q.occ) return; const k = rc.dataset.pqRc; Q.rc = Q.rc === k ? null : k;
@@ -144,6 +174,13 @@
 
   const st = document.createElement("style"); st.textContent = `
 .pq h3{text-align:left;margin:0 44px 10px 0;font-size:26px}
+.pq-pr{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 10px;padding:2px 16px 4px;scroll-padding:0 16px}
+.pq-pr::-webkit-scrollbar{display:none}
+.pq-pr button{flex:none;display:flex;align-items:center;gap:5px;line-height:1;min-height:40px;padding:0 14px;border:0;border-radius:999px;background:#fff;box-shadow:0 0 0 1px rgba(30,28,27,.12);font:inherit;font-size:14px;color:var(--v-fonce,#1E1C1B);cursor:pointer;transition:background .18s,color .18s,transform .12s}
+.pq-pr button small{font-size:12px;color:var(--gris);transition:color .18s}
+.pq-pr button.on{background:var(--v-acc,#B5475E);color:#fff;box-shadow:none}
+.pq-pr button.on small{color:rgba(255,255,255,.85)}
+.pq-pr button:active{transform:scale(.96)}
 .pq-racc{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -24px 10px;padding:0 24px}
 .pq-racc::-webkit-scrollbar{display:none}
 @media (max-width:359px){.pq-racc{flex-wrap:wrap;overflow:visible}}

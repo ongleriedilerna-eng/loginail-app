@@ -37,6 +37,7 @@
     if (fin > cur) range(cur, fin, g, 0);
     return out;
   }
+  window.colleDispos = colle;   /* 27/11 : le « + » › « Quand ? » (plus-quand.js) colle ses heures de la même façon */
   function LIBRES(jour, dur, occ, hor, now) {
     const h = hor[(jour.getDay() + 6) % 7];
     if (!ouvert(h)) return [];
