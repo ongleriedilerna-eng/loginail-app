@@ -42,6 +42,22 @@
   }
   const laPresta = () => { const P = prestas(), g = lit(CLE_P, ""); return P.find(p => p.nom === g) || P[0] || null; };
   const dureeTxt = m => m >= 60 ? Math.floor(m / 60) + "h" + (m % 60 ? String(m % 60).padStart(2, "0") : "") : m + " min";
+  /* 27/11 (Marie : « 10h-midi pris, pose américaine 1h30 : ça met 8h au lieu de 8h30 ») : les heures se collent aux rendez-vous.
+     Copie exacte de colle() dans mes-dispos.js : si l'une change, changer l'autre. */
+  function colle(ouv, fin, dur, murs, rdv) {
+    const B = murs.map(z => [z[0], z[1], 0]).concat(rdv.map(z => [z[0], z[1], 1])).filter(z => z[1] > ouv && z[0] < fin).sort((x, y) => x[0] - y[0]);
+    const pas = Math.ceil(dur / PAS) * PAS, out = [];
+    const range = (a, b, g, d) => {
+      const s0 = ouv + Math.ceil((a - ouv) / PAS) * PAS, sN = ouv + Math.floor((b - dur - ouv) / PAS) * PAS;
+      if (sN < s0) return;
+      const n = Math.floor((sN - s0) / pas) + 1;
+      for (let k = 0; k < n; k++) out.push(d && !g ? sN - (n - 1 - k) * pas : s0 + k * pas);
+    };
+    let cur = ouv, g = 0;
+    B.forEach(z => { if (z[0] > cur) range(cur, z[0], g, z[2]); if (z[1] > cur) { cur = z[1]; g = z[2]; } else if (z[1] === cur && z[2]) g = 1; });
+    if (fin > cur) range(cur, fin, g, 0);
+    return out;
+  }
   /* une période (une semaine ou un mois) : pour chaque jour, ouvert ou fermé, et ses places libres */
   async function periode(de, a, dur0) {
     /* on ne demande que l'heure de début, de fin, l'état et s'il y a une cliente (pour reconnaître les congés) : jamais le nom ni la prestation */
@@ -58,15 +74,12 @@
       const occ = pris.map(r => [(new Date(r.debut) - d) / 60000, (new Date(r.fin) - d) / 60000, !r.cliente_id]);   /* en minutes depuis minuit de ce jour (marche aussi pour les congés de plusieurs jours) */
       /* congés : un moment bloqué (sans cliente) couvre toute la journée → comme fermé */
       if (occ.some(z => z[2] && z[0] <= debut && z[1] >= finJ)) { jours.push({ d, i, ferme: true, conges: true, libres: [] }); continue; }
-      const libres = [];
-      if (!passe) for (let t = debut; t + dur <= finJ; t += PAS) {
-        if (pd != null && pf != null && t < pf && t + dur > pd) continue;
-        if (t < deja) continue;
-        if (occ.some(z => t < z[1] && t + dur > z[0])) continue;
-        /* deux places proposées ne se chevauchent jamais (sinon 9h, 9h30, 10h… pour une seule cliente) */
-        if (libres.length && t < libres[libres.length - 1] + Math.ceil(dur / PAS) * PAS) continue;
-        libres.push(t);
-      }
+      /* deux places proposées ne se chevauchent jamais (sinon 9h, 9h30, 10h… pour une seule cliente)
+         et (27/11) elles se collent aux rendez-vous pris : même calcul que colle() dans mes-dispos.js */
+      const murs = [];
+      if (pd != null && pf != null) murs.push([pd, pf]);
+      if (deja > debut) murs.push([debut, deja]);
+      const libres = passe ? [] : colle(debut, finJ, dur, murs, occ.map(z => [z[0], z[1]]));
       jours.push({ d, i, passe, libres });
     }
     return jours;

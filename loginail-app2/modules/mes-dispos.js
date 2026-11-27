@@ -5,7 +5,8 @@
    UN bouton « Envoyer toute la semaine » ou « Envoyer N heures » → menu Partager du téléphone (SMS, WhatsApp, Instagram).
    RÈGLE : jamais une heure que le site refuserait. Le calcul suit loginail-creer/resa-simu.js (creneaux) et reserver() :
    pas de 30 min depuis l'ouverture, dans ses horaires, hors pause, 1 h de marge aujourd'hui, aucun chevauchement, 84 jours (le site en accepte 92).
-   Si l'un des deux change, changer LIBRES ici. En plus, comme « Partager mes dispos » : deux heures proposées ne se chevauchent pas.
+   Si l'un des deux change, changer LIBRES ici. En plus, comme « Partager mes dispos » : deux heures proposées ne se chevauchent pas,
+   et (27/11) elles se collent aux rendez-vous déjà pris (voir colle).
    26/11 (Marie : « fais voir aussi les créneaux qui sont pas libres, voir qui y a ») : les rendez-vous pris sont dessinés dans la grille
    (« Léa D. », comme l'agenda ; « Bloqué » pour un créneau bloqué), pour elle seule : jamais un prénom dans le message ni dans la story. */
 (function () {
@@ -17,21 +18,34 @@
   const enMin = t => { const [h, m] = String(t).split(":").map(Number); return h * 60 + (m || 0); };
   const horaires = () => ((S.site && S.site.donnees) || brouillon() || {}).horaires || [];
   const ouvert = h => !!(h && h.d && h.f);
+  /* 27/11 (Marie : « quelqu'un de 10h à midi, pose américaine 1h30 : ça me met 8h, alors que le mieux c'est 8h30 ») :
+     les heures libres se COLLENT aux rendez-vous, pour ne pas laisser de trou. Dans chaque moment libre :
+     un rendez-vous juste APRÈS (et rien de pris juste avant) → les heures finissent pile quand il commence (8h30 → 10h) ;
+     sinon → elles commencent pile à la fin de ce qui précède (12h → 13h30). Toujours sur le pas de 30 min depuis l'ouverture :
+     le site accepte donc chaque heure. Même calcul dans dispos.js (la story) : si l'un change, changer l'autre. */
+  function colle(ouv, fin, dur, murs, rdv) {
+    const B = murs.map(z => [z[0], z[1], 0]).concat(rdv.map(z => [z[0], z[1], 1])).filter(z => z[1] > ouv && z[0] < fin).sort((x, y) => x[0] - y[0]);
+    const pas = Math.ceil(dur / PAS) * PAS, out = [];
+    const range = (a, b, g, d) => {
+      const s0 = ouv + Math.ceil((a - ouv) / PAS) * PAS, sN = ouv + Math.floor((b - dur - ouv) / PAS) * PAS;
+      if (sN < s0) return;
+      const n = Math.floor((sN - s0) / pas) + 1;
+      for (let k = 0; k < n; k++) out.push(d && !g ? sN - (n - 1 - k) * pas : s0 + k * pas);
+    };
+    let cur = ouv, g = 0;
+    B.forEach(z => { if (z[0] > cur) range(cur, z[0], g, z[2]); if (z[1] > cur) { cur = z[1]; g = z[2]; } else if (z[1] === cur && z[2]) g = 1; });
+    if (fin > cur) range(cur, fin, g, 0);
+    return out;
+  }
   function LIBRES(jour, dur, occ, hor, now) {
     const h = hor[(jour.getDay() + 6) % 7];
     if (!ouvert(h)) return [];
-    const fin = enMin(h.f), pd = h.pd && h.pf ? enMin(h.pd) : null, pf = pd != null ? enMin(h.pf) : null;
-    const deja = memeJour(jour, now) ? now.getHours() * 60 + now.getMinutes() + MARGE : -1, out = [];
-    let apres = -1;
-    for (let t = enMin(h.d); t + dur <= fin; t += PAS) {
-      if (pd != null && t < pf && t + dur > pd) continue;
-      if (t < deja || t < apres) continue;
-      const a = new Date(jour); a.setHours(0, t, 0, 0);
-      const b = +a + dur * 60000;
-      if (occ.some(z => +a < z[1] && b > z[0])) continue;
-      out.push(t); apres = t + dur;
-    }
-    return out;
+    const ouv = enMin(h.d), fin = enMin(h.f), pd = h.pd && h.pf ? enMin(h.pd) : null, pf = pd != null ? enMin(h.pf) : null;
+    const deja = memeJour(jour, now) ? now.getHours() * 60 + now.getMinutes() + MARGE : -1;
+    const murs = [];
+    if (pd != null) murs.push([pd, pf]);
+    if (deja > ouv) murs.push([ouv, deja]);
+    return colle(ouv, fin, dur, murs, occ.map(z => [(z[0] - +jour) / 60000, (z[1] - +jour) / 60000]));
   }
   const dur = () => { const p = D.P[D.p]; return (p && p.duree) || 60; };
   function calcule() {
