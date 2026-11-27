@@ -82,7 +82,7 @@
       if (D !== d || n !== d.lecture) return;
       d.occ = occ; d.etat = "ok"; calcule(); verifie();
       /* à l'ouverture : si plus rien de libre cette semaine, on montre la suivante */
-      if (!d.pret) { d.pret = true; if (!semaine().length && d.L.some(j => j.i >= 7 - (d.auj.getDay() + 6) % 7 && j.t.length)) d.wk = 1; }
+      if (!d.pret) { d.pret = true; if (!d.cible && !semaine().length && d.L.some(j => j.i >= 7 - (d.auj.getDay() + 6) % 7 && j.t.length)) d.wk = 1; }
     } catch (e) {
       if (D !== d || n !== d.lecture) return;
       console.error(e); d.etat = "erreur";   /* sans agenda à jour, on ne propose rien */
@@ -198,10 +198,12 @@
   }
   /* 23/11 : aussi depuis la fiche d'une cliente (fiche.js, bouton « Prendre un rendez-vous ») : UNE heure (toucher une autre la remplace), « Noter le RDV » */
   window.mesDispos = un => { ouvrir(); if (un && D) D.un = true; };
-  function ouvrir() {
+  function ouvrir(cible) {
     const P = prestations();
     let garde0 = null; try { garde0 = localStorage.getItem(CLE); } catch (e) {}
     D = { P, p: P.length ? Math.max(0, P.findIndex(p => p.nom === garde0)) : -1, f: 0, reg: [momentNeuf()], wk: 0, sel: new Map(), L: [], occ: [], auj: new Date(new Date().setHours(0, 0, 0, 0)), etat: "charge", pret: false, lecture: 0 };
+    /* 27/11 : la semaine regardée dans l'Agenda (pas avant cette semaine, pas après les 84 jours) ; sinon, cette semaine */
+    if (cible) { D.wk = Math.max(0, Math.min(derniere(), Math.round((+lundiDe(new Date(cible)) - +lundi0()) / (7 * 864e5)))); D.cible = true; }
     ouvre(`<div class="md"><h3>Mes dispos</h3>
       <div class="md-puces" role="tablist" aria-label="Pour quelle prestation ?"></div>
       <div class="md-filtres"></div><div class="md-resume"></div>
@@ -269,7 +271,7 @@
     const k = b.dataset.md;
     if (k === "ouvre" && E.querySelector(".vue.on .calm,.av-menu")) return;   /* toucher ailleurs ferme d'abord le calendrier ou le menu */
     e.preventDefault(); e.stopPropagation();
-    if (k === "ouvre") return ouvrir();
+    if (k === "ouvre") return ouvrir(S.jour || S.lundi);   /* 27/11 (Marie) : depuis l'Agenda, Mes dispos ouvre LA semaine qu'elle regarde */
     if (!ouverte()) return;
     if (k === "presta") return menu(!z(".md-menu.on"));
     menu(false);
