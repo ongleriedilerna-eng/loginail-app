@@ -10,9 +10,12 @@
    Heures libres : pas de 30 min dans ses horaires, hors pause, place pour 1 h, sans chevauchement ; on ne lit que début, fin, état.
    27/11 (Marie : « le 28 j'ai quelqu'un de 10h à 13h, ça me met 8h, 8h30, 9h… ; pose américaine c'est 8h30, semi c'est 8h et 9h ») :
    des puces de prestation en haut (la même que « Mes dispos », retenue), et les heures se COLLENT aux rendez-vous pour sa durée
-   (même calcul que colle() de mes-dispos.js). L'heure touchée ouvre « Nouveau rendez-vous » avec cette prestation déjà choisie. */
+   (même calcul que colle() de mes-dispos.js). L'heure touchée ouvre « Nouveau rendez-vous » avec cette prestation déjà choisie.
+   27/11 (Marie : « j'arrive pas à aller plus loin que février 2027 ») : 12 mois au lieu de 92 jours. On lit d'abord 92 jours
+   (ou jusqu'au mois de départ), puis chaque mois quand elle y arrive avec « › » (et le suivant, à l'avance). Un jour pas encore lu
+   reste gris : il n'est jamais montré libre par erreur. */
 (function () {
-  const HORIZON = 92, TRANCHE = 28, PAS = 30, PLACE = 60;
+  const HORIZON = 366, D_ABORD = 92, TRANCHE = 28, PAS = 30, PLACE = 60;
   const JC = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."], JL = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
   const MC = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."], ML = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
   const RACC = [["tot", "Le plus tôt"], ["sem", "Cette sem."], ["sam", "Un samedi"], ["s3", "Dans 3 sem."]];
@@ -36,7 +39,7 @@
 
   /* null = fermé ou passé ; [] = complet */
   function libres(jour) {
-    if (jour < auj0() || jour >= fin()) return null;
+    if (jour < auj0() || jour >= fin() || !Q || !Q.lu || jour >= Q.lu) return null;   /* pas encore lu = pas montré */
     const hor = horaires(), h = hor[(jour.getDay() + 6) % 7];
     if (hor.length && !(h && h.d && h.f)) return null;
     const d0 = h && h.d ? enMin(h.d) : 9 * 60, f = h && h.f ? enMin(h.f) : 19 * 60;
@@ -60,14 +63,24 @@
     return out;
   }
   /* par tranches, comme « Mes dispos » : au-delà de 1 000 lignes le serveur ne rend pas tout */
-  async function lit() {
-    const de = auj0();
-    try {
-      const R = await Promise.all(Array.from({ length: Math.ceil(HORIZON / TRANCHE) }, (_, i) => sb.from("rendez_vous").select("debut,fin,statut")
-        .lt("debut", plusJours(de, (i + 1) * TRANCHE).toISOString()).gt("fin", plusJours(de, i * TRANCHE).toISOString())));
-      if (R.some(r => r.error || !r.data)) throw new Error("agenda illisible");
-      return R.flatMap(r => r.data).filter(r => r.statut !== "annule").map(r => [+new Date(r.debut), +new Date(r.fin)]);
-    } catch (e) { return (S.rdv || []).filter(r => r.statut !== "annule").map(r => [+new Date(r.debut), +new Date(r.fin)]); }
+  const nbJours = (de, a) => Math.round((a - de) / 864e5);
+  const finMois = m => { const f = new Date(m.getFullYear(), m.getMonth() + 1, 1); return f > fin() ? fin() : f; };
+  async function lit(de, a) {
+    const R = await Promise.all(Array.from({ length: Math.ceil(nbJours(de, a) / TRANCHE) }, (_, i) => { const t1 = plusJours(de, (i + 1) * TRANCHE);
+      return sb.from("rendez_vous").select("debut,fin,statut").lt("debut", (t1 > a ? a : t1).toISOString()).gt("fin", plusJours(de, i * TRANCHE).toISOString()); }));
+    if (R.some(r => r.error || !r.data)) throw new Error("agenda illisible");
+    return R.flatMap(r => r.data).filter(r => r.statut !== "annule").map(r => [+new Date(r.debut), +new Date(r.fin)]);
+  }
+  /* lit la suite de l'agenda jusqu'à « a » (une lecture à la fois ; rien si la fenêtre a été refermée ou rouverte) */
+  async function etend(a) {
+    const q = Q; if (!q || !q.lu) return;
+    if (a > fin()) a = fin();
+    while (q.charge) await q.charge;
+    if (a <= q.lu || Q !== q) return;
+    const de = q.lu;
+    q.charge = lit(de, a).then(o => { q.occ = q.occ.concat(o); q.lu = a; }, () => { if (Q === q && E.querySelector(".pq")) dit("Pas de connexion : réessaie"); });
+    try { await q.charge; } finally { q.charge = null; }
+    if (Q === q && E.querySelector(".pq")) dessine();
   }
   const finSemaine = () => plusJours(auj0(), 7 - (auj0().getDay() + 6) % 7);
   function garde(d) {
@@ -110,8 +123,10 @@
     const P = prestations(); let g = ""; try { g = localStorage.getItem(CLE_P) || ""; } catch (e) {}
     Q = { jour: d, mois: new Date(d.getFullYear(), d.getMonth(), 1), occ: null, rc: null, h: null, P, p: Math.max(0, P.findIndex(p => p.nom === g)) };
     dessine();
-    Q.occ = await lit();
-    if (!E.querySelector(".pq")) return;
+    const q = Q, a0 = plusJours(a, D_ABORD), a1 = finMois(Q.mois), jusqua = a1 > a0 ? a1 : a0;
+    try { q.occ = await lit(a, jusqua); q.lu = jusqua; }
+    catch (e) { q.occ = (S.rdv || []).filter(r => r.statut !== "annule").map(r => [+new Date(r.debut), +new Date(r.fin)]); q.lu = plusJours(a, 7); }   /* sans connexion : seulement la semaine déjà en mémoire */
+    if (Q !== q || !E.querySelector(".pq")) return;
     const L = libres(Q.jour); if (!(L && L.length)) Q.jour = cherche(Q.jour, () => true) || Q.jour;
     Q.mois = new Date(Q.jour.getFullYear(), Q.jour.getMonth(), 1); Q.h = (libres(Q.jour) || [])[0] ?? null;
     dessine();
@@ -159,7 +174,9 @@
       dessine(); return;
     }
     const mo = t.closest("[data-pq-m]");
-    if (mo) { stop(e); if (mo.disabled) return; Q.mois = new Date(Q.mois.getFullYear(), Q.mois.getMonth() + +mo.dataset.pqM, 1); dessine(); return; }
+    if (mo) { stop(e); if (mo.disabled) return; Q.mois = new Date(Q.mois.getFullYear(), Q.mois.getMonth() + +mo.dataset.pqM, 1); dessine();
+      if (Q.occ) etend(finMois(new Date(Q.mois.getFullYear(), Q.mois.getMonth() + 1, 1)));   /* ce mois-ci + le suivant, à l'avance */
+      return; }
     const j = t.closest("[data-pq-d]");
     if (j) { stop(e); if (j.disabled) return; Q.jour = new Date(+j.dataset.pqD); Q.h = null; dessine();
       const z = E.querySelector("#pq-hz"); if (z) z.scrollIntoView({ behavior: "smooth", block: "nearest" }); return; }
