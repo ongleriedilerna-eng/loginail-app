@@ -90,9 +90,11 @@
     return { lun, p, jours: (await periode(lun, plusJours(lun, 7), p && p.duree)).filter(j => !j.ferme && !j.passe) };
   }
   /* le mois suivant : tous les jours (le calendrier montre aussi les jours fermés, très effacés) */
-  async function mois() {
-    const n = new Date(), de = new Date(n.getFullYear(), n.getMonth() + 1, 1), a = new Date(n.getFullYear(), n.getMonth() + 2, 1);
-    return { mois: de.getMonth(), an: de.getFullYear(), jours: await periode(de, a) };
+  /* 27/11 (Marie : « partager mes dispos du mois, ou celles du mois prochain ») : un mois au choix (0 = ce mois-ci), pour la prestation choisie ;
+     les jours déjà passés sont pâles, comme les jours fermés */
+  async function mois(n, p) {
+    const t = new Date(), de = new Date(t.getFullYear(), t.getMonth() + (n || 0), 1), a = new Date(t.getFullYear(), t.getMonth() + (n || 0) + 1, 1);
+    return { mois: de.getMonth(), an: de.getFullYear(), p, jours: await periode(de, a, p && p.duree) };
   }
 
   /* ---------- 2 · le site de la pro : fond, écriture du nom, couleur, charms ---------- */
@@ -229,7 +231,7 @@
     ["L", "M", "M", "J", "V", "S", "D"].forEach((l, i) => cx.fillText(l, xc(i) + cw / 2, y + 6 * K * k)); cx.globalAlpha = 1; y += 14 * K * k;
     const MAXH = () => Math.max(largeurFixe(cx, "10H00").w, ...per.jours.flatMap(j => j.libres.slice(0, 4).map(m => largeurFixe(cx, hMois(m)).w)));
     per.jours.forEach((j, n) => { const p = dec + n, cl = p % 7, rg = Math.floor(p / 7), x = xc(cl), yy = y + rg * (ch + 4 * K * k), mx = x + cw / 2, nb = j.libres.length;
-      if (j.ferme) { cx.globalAlpha = .18; cx.fillStyle = t; cx.font = `400 ${15 * K * k}px Jost, sans-serif`; cx.fillText(String(j.d.getDate()), mx, yy + 11 * K * k); cx.globalAlpha = 1; return; }
+      if (j.ferme || j.passe) { cx.globalAlpha = .18; cx.fillStyle = t; cx.font = `400 ${15 * K * k}px Jost, sans-serif`; cx.fillText(String(j.d.getDate()), mx, yy + 11 * K * k); cx.globalAlpha = 1; return; }
       if (!nb) { cx.globalAlpha = .35; cx.fillStyle = t; cx.font = `400 ${15 * K * k}px Jost, sans-serif`; cx.fillText(String(j.d.getDate()), mx, yy + 11 * K * k);
         cx.font = `400 ${9 * K * k}px Jost, sans-serif`; cx.fillText("complet", mx, yy + 28 * K * k); cx.globalAlpha = 1; return; }
       cx.fillStyle = pil; rond(cx, x, yy, cw, ch, 12 * K * k); cx.fill();
@@ -244,7 +246,7 @@
       hs.forEach((h, i) => ecritFixe(cx, h, x1, yy + (25.5 + i * 13) * K * k, "left")); cx.textAlign = "center"; });
     y += rangs * (ch + 4 * K * k) - 4 * K * k + 12 * K * k;
     /* la légende et la petite phrase */
-    cx.fillStyle = t; cx.globalAlpha = .7; cx.font = `400 ${11 * K * k}px Jost, sans-serif`; cx.fillText("en couleur = les heures encore libres   ·   pâle = complet", W / 2, y + 7 * K * k); cx.globalAlpha = 1; y += (13 + 8) * K * k;
+    cx.fillStyle = t; cx.globalAlpha = .7; cx.font = `400 ${11 * K * k}px Jost, sans-serif`; cx.fillText(per.p ? `en couleur = les heures libres pour ${dureeTxt(per.p.vraie)}   ·   pâle = complet` : "en couleur = les heures encore libres   ·   pâle = complet", W / 2, y + 7 * K * k); cx.globalAlpha = 1; y += (13 + 8) * K * k;
     /* 21/11 nuit (Marie) : plus de « les fêtes partent vite » : à la place, juste « loginail.fr » (et plus de signature en bas) */
     cx.globalAlpha = .55; cx.font = `400 ${11 * K * k}px Jost, sans-serif`; cx.fillText("loginail.fr", W / 2, y + 9 * K * k); cx.globalAlpha = 1;
     /* les 2 charms (en haut, de chaque côté) ; sans charm, des étoiles ✦ */
@@ -409,69 +411,87 @@
   /* ---------- 5 · la feuille d'aperçu ---------- */
   const lien = () => S.site && S.site.en_ligne && S.site.slug ? lienDuSite(S.site) : "";
   const copie = () => { const u = lien(); if (!u) return Promise.resolve(false); try { return navigator.clipboard.writeText(u).then(() => true, () => false); } catch (e) { return Promise.resolve(false); } };
-  let ETAT = { n: 0, p: null, blob: null, url: "", jeton: 0 };
+  /* 27/11 (Marie : « il n'y a plus semaine ou mois », version B choisie) : « Semaine | Mois », puis ‹ › (ou glisser l'image)
+     pour changer de semaine ou de mois. Ce qu'on montre = q : { t: "sem", n } (0 = cette semaine) ou { t: "mois", n } (0 = ce mois-ci). */
+  let ETAT = { q: { t: "sem", n: 0 }, p: null, blob: null, url: "", jeton: 0 };
   /* 19/11 (Marie : « le carré met du temps à s'afficher », « à chaque onglet ça se ferme, ça se rouvre ») :
-     les 3 images (cette semaine, la suivante, le mois) sont préparées À L'AVANCE pendant qu'elle est sur l'Accueil.
+     les images sont préparées À L'AVANCE pendant qu'elle est sur l'Accueil.
      À l'ouverture et à chaque onglet, l'image est déjà là : tout s'affiche d'un coup, sans rond qui tourne.
      En même temps on relit ses rendez-vous : si une place a changé, l'image est redessinée et remplacée sans clignoter. */
   const CACHE = {}, EN_COURS = {};
-  /* 26/11 (Marie) : les semaines se glissent (comme le rond « Mes dispos » : 12 semaines, ce que le site accepte) ; plus d'onglet du mois */
-  const NSEM = 12;
-  const cleC = (n, p) => n + "|" + (p ? p.nom + "|" + p.duree : "");
+  const NSEM = 12, NMOIS = 2;   /* 12 semaines : ce que le site accepte ; donc 3 mois au plus (ce mois-ci, le suivant, celui d'après) */
+  const cap = x => x.charAt(0).toUpperCase() + x.slice(1);
+  const nomMois = n => { const d = new Date(); return MOIS[new Date(d.getFullYear(), d.getMonth() + n, 1).getMonth()]; };
+  /* « Mois » ouvre ce mois-ci, ou le suivant si celui-ci finit dans moins de 7 jours */
+  const moisA = () => { const d = new Date(), fin = new Date(d.getFullYear(), d.getMonth() + 1, 1), auj = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    return Math.round((fin - auj) / 864e5) < 7 ? 1 : 0; };
+  const memeQ = (a, b) => !!a && !!b && a.t === b.t && (a.n || 0) === (b.n || 0);
+  const cleC = (q, p) => q.t + (q.n || 0) + "|" + (p ? p.nom + "|" + p.duree : "");
+  const charge = (q, p) => q.t === "mois" ? mois(q.n, p) : semaine(q.n, p);
   const signe = sem => JSON.stringify(sem.jours.map(j => [+j.d, j.ferme ? 1 : 0, j.libres])) + "|" + RESA() + "|" + JSON.stringify(donnees());
-  async function fabrique(n, p) { const k = cleC(n, p), sem = await semaine(n, p), s = signe(sem), avant = CACHE[k];
+  async function fabrique(q, p) { const k = cleC(q, p), sem = await charge(q, p), s = signe(sem), avant = CACHE[k];
     if (avant && avant.sig === s) return avant;
     const c = await dessine(sem), blob = await new Promise((ok, ko) => { try { c.toBlob(b => b ? ok(b) : ko(new Error("vide")), "image/jpeg", .93); } catch (e) { ko(e); } });
     const v = { blob, url: URL.createObjectURL(blob), sig: s };
     if (avant) setTimeout(() => URL.revokeObjectURL(avant.url), 20000);
     return (CACHE[k] = v); }
-  const obtenir = (n, p) => { const k = cleC(n, p); return EN_COURS[k] || (EN_COURS[k] = fabrique(n, p).finally(() => { delete EN_COURS[k]; })); };
+  const obtenir = (q, p) => { const k = cleC(q, p); return EN_COURS[k] || (EN_COURS[k] = fabrique(q, p).finally(() => { delete EN_COURS[k]; })); };
+  /* la vue d'à côté (glisser l'image, ou ‹ ›) ; null au bout */
+  const voisin = (q, d) => {
+    const n = (q.n || 0) + d, max = q.t === "sem" ? NSEM - 1 : NMOIS; return n < 0 || n > max ? null : { t: q.t, n }; };
   let dernierPrechauffe = 0;
-  /* l'image de cette semaine et de la suivante, pour la prestation choisie, se préparent pendant qu'elle regarde l'Accueil */
+  /* l'image affichée et ses voisines, pour la prestation choisie, se préparent pendant qu'elle regarde l'Accueil */
   const prechauffe = (force, p0) => { if (!S.user || (!force && Date.now() - dernierPrechauffe < 60000)) return; dernierPrechauffe = Date.now();
-    const p = p0 === undefined ? laPresta() : p0, n0 = ETAT.n || 0;
-    obtenir(n0, p).catch(() => {}).then(() => obtenir(Math.min(NSEM - 1, n0 + 1), p)).catch(() => {}).then(() => n0 > 0 && obtenir(n0 - 1, p)).catch(() => {}); };
+    const p = p0 === undefined ? laPresta() : p0, q0 = ETAT.q, L = [q0, voisin(q0, 1), voisin(q0, -1)].filter(Boolean);
+    L.reduce((pr, q) => pr.then(() => obtenir(q, p)).catch(() => {}), Promise.resolve()); };
   const peutPartager = () => { try { return !!(navigator.canShare && navigator.canShare({ files: [new File([""], "a.jpg", { type: "image/jpeg" })] })); } catch (e) { return false; } };
   /* 19/11 : dans l'appli iPhone, l'image va DIRECTEMENT dans Photos (outil @capacitor-community/media) ; sinon le menu Partager */
   const MEDIA = () => { try { return Capacitor.isNativePlatform() && Capacitor.Plugins.Media && Capacitor.Plugins.Media.savePhoto ? Capacitor.Plugins.Media : null; } catch (e) { return null; } };
   const enDataUrl = blob => new Promise((ok, ko) => { const f = new FileReader(); f.onload = () => ok(f.result); f.onerror = ko; f.readAsDataURL(blob); });
   const apercuHtml = v => `<img src="${v.url}" alt="Aperçu de ma story : mes dispos" draggable="false">`;
-  async function prepare(n) {
-    const j = ++ETAT.jeton, p = ETAT.p, deja = CACHE[cleC(n, p)];
+  async function prepare(q) {
+    const j = ++ETAT.jeton, p = ETAT.p, deja = CACHE[cleC(q, p)];
     const montre = v => { ETAT.blob = v.blob; ETAT.url = v.url; const zz = E.querySelector(".dsp-apercu"); if (zz) { const im = zz.querySelector("img");
         if (im) { if (im.getAttribute("src") !== v.url) im.src = v.url; } else zz.innerHTML = apercuHtml(v); zz.classList.remove("charge"); }
       const b = E.querySelector('[data-dsp="partage"]'); if (b) b.disabled = false; };
     if (deja) montre(deja); else { const z = E.querySelector(".dsp-apercu"); if (z) z.classList.add("charge"); const b = E.querySelector('[data-dsp="partage"]'); if (b) b.disabled = true; }
-    try { const v = await obtenir(n, p); if (j === ETAT.jeton) montre(v); }
+    try { const v = await obtenir(q, p); if (j === ETAT.jeton) montre(v); }
     catch (e) { console.error(e); if (j === ETAT.jeton && !deja) { const zz = E.querySelector(".dsp-apercu"); if (zz) { zz.classList.remove("charge"); zz.innerHTML = '<span class="dsp-oups">Oups, l’image n’a pas pu se faire.<br>Réessaie.</span>'; } } } }
   const copieTxt = u => RESA() === "insta" ? "<i></i>Tes clientes t’écriront en message privé" : u ? "<i></i>Ton lien de réservation est copié" : "Mets ton site en ligne pour avoir ton lien de réservation";
-  /* le nom de la semaine : « cette semaine · 23 – 29 novembre » */
+  /* le nom de ce qu'on montre : « 23 – 29 novembre · cette semaine », « Décembre · le mois prochain » */
   const nomSem = n => { const l = plusJours(lundiDe(new Date()), 7 * n), f = plusJours(l, 6);
     const t = l.getMonth() === f.getMonth() ? `${l.getDate()} – ${f.getDate()} ${MOIS[f.getMonth()]}` : `${l.getDate()} ${MOISC[l.getMonth()]} – ${f.getDate()} ${MOISC[f.getMonth()]}`;
     return `<b>${t}</b><small>${n === 0 ? "cette semaine" : n === 1 ? "semaine prochaine" : "dans " + n + " semaines"}</small>`; };
-  const majSem = () => { const s = E.querySelector(".dsp-sem"); if (!s) return; s.querySelector("div").innerHTML = nomSem(ETAT.n);
-    s.querySelector('[data-dsp="sav"]').disabled = ETAT.n <= 0; s.querySelector('[data-dsp="sap"]').disabled = ETAT.n >= NSEM - 1; };
+  const nomQ = q => q.t === "sem" ? nomSem(q.n || 0) : q.t === "mois" ? `<b>${cap(nomMois(q.n))}</b><small>${q.n === 0 ? "ce mois-ci" : q.n === 1 ? "le mois prochain" : "dans 2 mois"}</small>` : "";
+  const enTete = () => `<div class="dsp-bascule dsp-vues" role="tablist" aria-label="Semaine ou mois ?"><button role="tab" data-dsp="mode" data-m="sem">Semaine</button><button role="tab" data-dsp="mode" data-m="mois">Mois</button></div>
+      <div class="dsp-sem"><button data-dsp="sav" aria-label="Avant">‹</button><div></div><button data-dsp="sap" aria-label="Après">›</button></div>`;
+  const majSem = () => { const q = ETAT.q;
+    E.querySelectorAll('.dsp-vues [data-dsp="mode"]').forEach(b => { const on = b.dataset.m === (q.t === "mois" ? "mois" : "sem"); b.classList.toggle("on", on); b.setAttribute("aria-selected", on); });
+    const s = E.querySelector(".dsp-sem"); if (!s) return; s.querySelector("div").innerHTML = nomQ(q);
+    s.querySelector('[data-dsp="sav"]').disabled = !voisin(q, -1); s.querySelector('[data-dsp="sap"]').disabled = !voisin(q, 1); };
   const puces = () => { const P = prestas(); if (!P.length) return "";
     return `<div class="dsp-puces" role="tablist" aria-label="Pour quelle prestation ?">${P.map(p => `<button role="tab" data-dsp="presta" data-nom="${esc(p.nom)}" class="${ETAT.p && ETAT.p.nom === p.nom ? "on" : ""}" aria-selected="${!!(ETAT.p && ETAT.p.nom === p.nom)}">${esc(p.nom)}<small>${duree(p.vraie)}</small></button>`).join("")}</div>`; };
-  /* changer de semaine : l'image part du côté du doigt, la nouvelle arrive de l'autre côté */
-  function versSemaine(n, sens) {
-    n = Math.max(0, Math.min(NSEM - 1, n)); const im = E.querySelector(".dsp-apercu img");
-    if (n === ETAT.n) { if (im) { im.style.transition = "transform .25s cubic-bezier(.2,.8,.2,1)"; im.style.transform = ""; } return; }
-    ETAT.n = n; majSem();
-    const go = () => { prepare(n).then(() => prechauffe(true, ETAT.p)); const i2 = E.querySelector(".dsp-apercu img"); if (!i2) return;
+  /* changer de vue : l'image part du côté du doigt, la nouvelle arrive de l'autre côté */
+  function versVue(q, sens) {
+    const im = E.querySelector(".dsp-apercu img");
+    if (!q || memeQ(q, ETAT.q)) { if (im) { im.style.transition = "transform .25s cubic-bezier(.2,.8,.2,1)"; im.style.transform = ""; } return; }
+    ETAT.q = q; majSem();
+    const go = () => { prepare(q).then(() => prechauffe(true, ETAT.p)); const i2 = E.querySelector(".dsp-apercu img"); if (!i2) return;
       i2.style.transition = "none"; i2.style.transform = `translateX(${sens * 70}%)`; i2.style.opacity = "0"; i2.getBoundingClientRect();
       i2.style.transition = "transform .28s cubic-bezier(.2,.8,.2,1),opacity .2s"; i2.style.transform = ""; i2.style.opacity = ""; };
-    if (!im || matchMedia("(prefers-reduced-motion:reduce)").matches) return go();
+    if (!im || !sens || matchMedia("(prefers-reduced-motion:reduce)").matches) return go();
     im.style.transition = "transform .16s ease-in,opacity .16s"; im.style.transform = `translateX(${-sens * 70}%)`; im.style.opacity = "0";
     setTimeout(go, 150); }
   function feuille(o) {
-    o = o || {}; ecrit("loginail-dispos-vu", "1"); ETAT.n = Math.max(0, Math.min(NSEM - 1, o.n || 0)); ETAT.blob = null;
+    o = o || {}; ecrit("loginail-dispos-vu", "1"); ETAT.blob = null;
+    /* depuis le rond « Mes dispos » de l'Agenda : SA semaine */
+    ETAT.q = { t: "sem", n: Math.max(0, Math.min(NSEM - 1, o.n || 0)) };
     ETAT.p = (o.nom && prestas().find(p => p.nom === o.nom)) || laPresta();
-    const u = lien(), c0 = CACHE[cleC(ETAT.n, ETAT.p)];
+    const u = lien(), c0 = CACHE[cleC(ETAT.q, ETAT.p)];
     ouvre(`<div class="dsp"><h3>Mes dispos</h3>
       ${puces()}
-      <div class="dsp-sem"><button data-dsp="sav" aria-label="Semaine d’avant">‹</button><div></div><button data-dsp="sap" aria-label="Semaine d’après">›</button></div>
-      <div class="dsp-apercu${c0 ? "" : " charge"}" aria-label="Glisse à gauche ou à droite pour changer de semaine">${c0 ? apercuHtml(c0) : ""}</div>
+      ${enTete()}
+      <div class="dsp-apercu${c0 ? "" : " charge"}" aria-label="Glisse à gauche ou à droite pour changer">${c0 ? apercuHtml(c0) : ""}</div>
       <div class="dsp-resa"><span>Elles réservent</span><div class="dsp-bascule dsp-petit">${[["ligne", "En ligne"], ["insta", "Par Insta"]].map(([m, t]) => `<button data-dsp="resa" data-m="${m}" class="${RESA() === m ? "on" : ""}">${t}</button>`).join("")}</div></div>
       <button class="btn dsp-btn" data-dsp="partage"${c0 ? "" : " disabled"}><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/><path d="M6 12v6.5A1.5 1.5 0 0 0 7.5 20h9a1.5 1.5 0 0 0 1.5-1.5V12"/></svg>Partager en story</button>
       ${!MEDIA() && peutPartager() ? `<div class="dsp-astuce">Puis touche « Enregistrer l’image »</div>` : ""}
@@ -479,40 +499,44 @@
     E.querySelector(".feuille").classList.add("dsp-f"); majSem();
     { const on = E.querySelector(".dsp-puces .on"); if (on) on.scrollIntoView({ block: "nearest", inline: "center" }); }
     if (u && RESA() === "ligne") copie().then(ok => { const m = E.querySelector(".dsp-copie"); if (m && !ok) { m.classList.add("attend"); m.innerHTML = "<i></i>Ton lien sera copié quand tu partageras"; } });
-    prepare(ETAT.n).then(() => prechauffe(true, ETAT.p)); }
+    prepare(ETAT.q).then(() => prechauffe(true, ETAT.p)); }
   /* 26/11 : le rond « Mes dispos » (mes-dispos.js) ouvre la story sur SA semaine et SA prestation */
-  window.__dispoStory = (n, nom) => feuille({ n, nom });
+  window.__dispoStory = (n, nom) => feuille({ n: n || 0, nom });
   /* 19/11 : « ?dispos=1 » ouvre directement « Mes dispos » (pour montrer les versions à Marie) */
   if (/[?&]dispos=1/.test(location.search)) document.addEventListener("loginail-pret", () => setTimeout(() => { try { feuille(); } catch (e) {} }, 1500), { once: true });
   /* l'appli ferme la feuille : on enlève notre marque */
   new MutationObserver(() => { if (!E.classList.contains("fe")) { const f = E.querySelector(".feuille.dsp-f"); if (f) f.classList.remove("dsp-f"); } }).observe(E, { attributes: true, attributeFilter: ["class"] });
-  /* glisser l'image à gauche / à droite = la semaine d'après / d'avant (l'image suit le doigt) */
+  /* glisser l'image à gauche / à droite = la vue d'après / d'avant (l'image suit le doigt) */
   { let x0 = null, y0 = 0, dx = 0, hor = null, pid = null;
     const im = () => E.querySelector(".dsp-apercu img");
     E.addEventListener("pointerdown", e => { const z = e.target.closest && e.target.closest(".dsp-apercu"); if (!z || !im()) return; x0 = e.clientX; y0 = e.clientY; dx = 0; hor = null; pid = e.pointerId; }, true);
     E.addEventListener("pointermove", e => { if (x0 == null || e.pointerId !== pid) return; dx = e.clientX - x0; const dy = e.clientY - y0;
       if (hor == null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) hor = Math.abs(dx) > Math.abs(dy);
-      if (!hor) return; e.preventDefault(); const bord = (ETAT.n <= 0 && dx > 0) || (ETAT.n >= NSEM - 1 && dx < 0) ? .3 : 1, i = im();
+      if (!hor) return; e.preventDefault(); const bord = !voisin(ETAT.q, dx > 0 ? -1 : 1) ? .3 : 1, i = im();
       if (i) { i.style.transition = "none"; i.style.transform = `translateX(${dx * bord}px) rotate(${dx * bord / 60}deg)`; } }, { capture: true, passive: false });
     const fin = e => { if (x0 == null || (e && e.pointerId !== pid)) return; const d = dx, h = hor; x0 = null;
-      if (!h) return; if (d < -50) versSemaine(ETAT.n + 1, 1); else if (d > 50) versSemaine(ETAT.n - 1, -1); else versSemaine(ETAT.n, 0); };
+      if (!h) return; if (d < -50) versVue(voisin(ETAT.q, 1), 1); else if (d > 50) versVue(voisin(ETAT.q, -1), -1); else versVue(null, 0); };
     E.addEventListener("pointerup", fin, true); E.addEventListener("pointercancel", fin, true); }
   document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-dsp]"); if (!b) return; e.stopPropagation(); const k = b.dataset.dsp;
     if (k === "ouvre") return feuille();
-    if (k === "sav" || k === "sap") return versSemaine(ETAT.n + (k === "sap" ? 1 : -1), k === "sap" ? 1 : -1);
+    if (k === "sav" || k === "sap") { const d = k === "sap" ? 1 : -1; return versVue(voisin(ETAT.q, d), d); }
+    if (k === "mode") { const m = b.dataset.m; if (m === (ETAT.q.t === "mois" ? "mois" : "sem")) return;
+      /* Mois → ce mois-ci (ou le suivant si celui-ci finit dans moins de 7 jours) ; Semaine → cette semaine */
+      return versVue(m === "mois" ? { t: "mois", n: moisA() } : { t: "sem", n: 0 }, m === "mois" ? 1 : -1); }
     if (k === "presta") { const p = prestas().find(x => x.nom === b.dataset.nom); if (!p || (ETAT.p && ETAT.p.nom === p.nom)) return; ETAT.p = p; ecrit(CLE_P, p.nom);
       b.parentElement.querySelectorAll("button").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-selected", x === b); });
       b.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-      return prepare(ETAT.n).then(() => prechauffe(true, p)); }
+      return prepare(ETAT.q).then(() => prechauffe(true, p)); }
     if (k === "resa") { const m = b.dataset.m; if (m === RESA()) return; ecrit("loginail-dispos-resa", m); b.parentElement.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
       const c = E.querySelector(".dsp-copie"), u = lien(); if (c) { c.classList.toggle("non", !u && m === "ligne"); c.classList.remove("attend"); c.innerHTML = copieTxt(u); }
       if (m === "ligne" && u) copie();
-      prepare(ETAT.n); setTimeout(() => prechauffe(true, ETAT.p), 1500); return; }
+      prepare(ETAT.q); setTimeout(() => prechauffe(true, ETAT.p), 1500); return; }
     if (k === "partage") { if (!ETAT.blob) return;
       /* le lien d'abord (pendant que le toucher compte encore), puis le menu Partager du téléphone avec l'image */
       if (RESA() === "ligne") copie().then(ok => { const m = E.querySelector(".dsp-copie"); if (m && ok) { m.classList.remove("attend"); m.innerHTML = "<i></i>Ton lien de réservation est copié"; } });
-      const d = plusJours(lundiDe(new Date()), 7 * ETAT.n), nomF = `${d.getDate()}-${MOIS[d.getMonth()]}` + (ETAT.p ? "-" + ETAT.p.nom.toLowerCase().replace(/[^a-zà-ÿ0-9]+/g, "-").replace(/^-|-$/g, "") : "");
-      const nom = `mes-dispos-${nomF.normalize("NFD").replace(/[\u0300-\u036f]/g, "")}.jpg`, M = MEDIA();
+      const q = ETAT.q, d = q.t === "sem" ? plusJours(lundiDe(new Date()), 7 * (q.n || 0)) : new Date();
+      const nomF = (q.t === "mois" ? nomMois(q.n) : `${d.getDate()}-${MOIS[d.getMonth()]}`) + (ETAT.p ? "-" + ETAT.p.nom.toLowerCase().replace(/[^a-zà-ÿ0-9]+/g, "-").replace(/^-|-$/g, "") : "");
+      const nom = `mes-dispos-${nomF.normalize("NFD").replace(/[̀-ͯ]/g, "")}.jpg`, M = MEDIA();
       if (!M) return partageFichier(ETAT.blob, nom, "Image enregistrée ✓");
       b.disabled = true;
       enDataUrl(ETAT.blob).then(u => M.savePhoto({ path: u, fileName: nom.replace(/\.jpg$/, "") }))
@@ -527,7 +551,7 @@
   VUES.acc = () => { const h = vAcc(); setTimeout(() => prechauffe(false), 1200);   /* 19/11 : les images se préparent pendant qu'elle regarde l'Accueil */
     const neuf = lit("loginail-dispos-vu", "") !== "1", s = (() => { try { return site(); } catch (e) { return { fond: null }; } })();
     const vig = s.fond ? `<span class="dsp-vig f100" aria-hidden="true">${s.fond.base === SITE ? s.fond.html.replace(/url\((?!['"]?(data:|https?:))(['"]?)/g, "url($2" + SITE) : s.fond.html}<i></i></span>` : '<span class="dsp-vig" aria-hidden="true"><i></i></span>';
-    return h + `<button class="dsp-ouvre" data-dsp="ouvre">${neuf ? '<span class="dsp-neuf">nouveau</span>' : ""}${vig}<span class="dsp-t"><b>Partager mes dispos</b><small>Ta story de la semaine, prête en 1 clic</small></span><span class="dsp-fl" aria-hidden="true">›</span></button>`; };
+    return h + `<button class="dsp-ouvre" data-dsp="ouvre">${neuf ? '<span class="dsp-neuf">nouveau</span>' : ""}${vig}<span class="dsp-t"><b>Partager mes dispos</b><small>Ta story de la semaine ou du mois, en 1 clic</small></span><span class="dsp-fl" aria-hidden="true">›</span></button>`; };
   /* la vignette montre son fond : on charge les fonds une fois, puis on redessine l'accueil s'il est ouvert */
   chargeFonds().then(() => { if (S.onglet === "acc" && E.querySelector(".ong") && !E.classList.contains("fe")) try { rendu(); } catch (e) {} });
 
@@ -577,6 +601,7 @@
 #E .dsp-sem small{color:var(--v-acc);font-size:12.5px}
 #E .dsp-sem button{width:44px;height:44px;border:0;border-radius:50%;background:none;font:inherit;font-size:26px;line-height:1;color:var(--v-fonce);cursor:pointer;transition:opacity .2s,transform .12s}
 #E .dsp-sem button:disabled{opacity:.22;cursor:default}
+#E .dsp-vues{margin:10px 0 6px}
 #E .dsp-apercu{touch-action:pan-y;cursor:grab;-webkit-user-select:none;user-select:none}
 #E .dsp-apercu img{-webkit-user-drag:none;will-change:transform}
 @media (max-height:780px){#E .dsp-apercu{width:min(178px,46vw);margin-bottom:12px}#E .dsp h3{font-size:27px}#E .dsp-puces{margin-top:8px}}
