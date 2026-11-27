@@ -21,7 +21,7 @@
       ["fond", `<span class="v-ico psi-ic">${sv('<path d="M6 10l6-6 6 6-6 6z"/><path d="M19 14c0 1.5-1 2.5-1 3.5a1 1 0 0 0 2 0c0-1-1-2-1-3.5z"/><path d="M4 20h10"/>')}</span>`, "Fond", b.fond ? esc(b.fond) : "Tes couleurs suivent ton fond"],
       ["ecriture", `<span class="v-ico psi-ic psi-p" aria-hidden="true">Aa</span>`, "Typographie", `<span style="font-family:${pol[1]},serif">${pol[0]}</span>`],
       ["charms", `<span class="v-ico psi-ic">${sv('<path d="M6.5 4h11L21 9l-9 11L3 9z"/><path d="M3 9h18M9.5 4L8 9l4 11 4-11-1.5-5"/>')}</span>`, "Charms", ch.length ? ch.length + (ch.length > 1 ? " charms posés" : " charm posé") : "Pose-les où tu veux"]];
-    return `<div class="k">Personnaliser mon site</div><div class="liste psi">${L.map(([v, ic, t, s]) => `<div class="ligne" data-ms2="nouveau" data-v="${v}" role="button">${ic}<div class="t">${t}<span>${s}</span></div><span class="fl">›</span></div>`).join("")}</div>`;
+    return `<div class="k psi-k">Personnaliser mon site</div><div class="liste psi">${L.map(([v, ic, t, s]) => `<div class="ligne" data-ms2="nouveau" data-v="${v}" role="button">${ic}<div class="t">${t}<span>${s}</span></div><span class="fl">›</span></div>`).join("")}</div>`;
   }
 
   const vSi = VUES.si;
@@ -80,6 +80,7 @@
 #E .msh span{font-size:11.5px;line-height:1.25;color:var(--gris)}
 #E .msh-detail{margin-top:12px}
 #E .msh-detail .v-chiffres{margin:0 0 10px}
+#E .k.psi-k{margin-top:14px}   /* 27/11 (Marie) : « Charms » entier au-dessus de la barre du bas, même avec le fond en haut */
 #E .psi .ligne{gap:12px}
 #E .psi .ligne .t span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #E .psi .ligne .t{min-width:0}

@@ -364,7 +364,7 @@
 #E .hors:not(.on){visibility:hidden}
 #E .v-et{position:absolute;color:var(--v-acc);opacity:.55;line-height:1;pointer-events:none;z-index:0}
 #E .v-haut>*:not(.v-et){position:relative;z-index:1}
-#E .v-ban{position:absolute;left:0;right:0;top:0;height:calc(max(62px,env(safe-area-inset-top) + 40px) + 96px);overflow:hidden;z-index:0;pointer-events:none;-webkit-mask-image:linear-gradient(180deg,#000 62%,transparent);mask-image:linear-gradient(180deg,#000 62%,transparent)}
+#E .v-ban{position:absolute;left:0;right:0;top:0;height:calc(max(42px,env(safe-area-inset-top) + 20px) + 96px);overflow:hidden;z-index:0;pointer-events:none;-webkit-mask-image:linear-gradient(180deg,#000 62%,transparent);mask-image:linear-gradient(180deg,#000 62%,transparent)}
 #E .v-ban .f100,#E .v-ban .tuile{position:absolute!important;inset:0;width:100%!important;height:100%!important;border-radius:0!important}
 #E .v-avecban>*:not(.v-ban){position:relative;z-index:1}
 #E .v-avecban>.v-haut{z-index:5}   /* 18/11 (bug de Marie) : avec le fond en haut, le mois et le menu de tri passaient sous la liste des heures */
@@ -421,7 +421,7 @@
 #E .v-ronds{display:flex;gap:8px;position:relative;flex:none}
 #E .ai-b{width:42px;height:42px;box-shadow:0 6px 16px -10px rgba(120,40,55,.5);color:var(--v-fonce)}
 /* la barre du bas : collée en bas, fond flouté, l'onglet choisi en brun foncé */
-#E .ong.o1{left:0!important;right:0!important;bottom:0!important;height:auto;min-height:84px;border-radius:0;padding:8px max(6px,calc((100% - 560px)/2)) max(24px,env(safe-area-inset-bottom));background:color-mix(in srgb,var(--v-c) 88%,transparent)!important;-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);box-shadow:none;border-top:1px solid var(--v-trait);transform:none!important;opacity:1!important;align-items:flex-start}
+#E .ong.o1{left:0!important;right:0!important;bottom:0!important;height:auto;min-height:84px;border-radius:0;padding:3px max(6px,calc((100% - 560px)/2)) calc(max(24px,env(safe-area-inset-bottom)) + 5px);background:color-mix(in srgb,var(--v-c) 88%,transparent)!important;-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);box-shadow:none;border-top:1px solid var(--v-trait);transform:none!important;opacity:1!important;align-items:flex-start}
 #E .ong.o1 button{height:52px;border-radius:12px;background:none!important;color:var(--gris);font-size:10.5px;letter-spacing:0;gap:4px;transition:color .2s}
 #E .ong.o1 button.on{color:var(--v-fonce)}
 #E .ong.o1 svg{width:24px;height:24px;stroke-width:1.5}
