@@ -26,7 +26,10 @@
 .sv-l>div{flex:1;min-width:0;font-size:14.5px}.sv-l>div span{display:block;font-size:12.5px;color:#8A847E;margin-top:1px}.sv-l>div span.v{color:var(--v-acc,#B5475E)}
 .sv-l button{flex:none;border:0;border-radius:999px;padding:9px 16px;background:#1E1C1B;color:#fff;font:inherit;font-size:13px;cursor:pointer;transition:transform .12s,opacity .15s}
 .sv-l button:active{transform:scale(.95)}.sv-l button:disabled{opacity:.5}
-@media (prefers-reduced-motion:reduce){.sv-o,.sv-b,.sv-fl,.sv-l button{transition:none}}`;
+.sv-ok{display:flex;align-items:center;gap:10px;margin-top:8px;border-radius:18px;background:#E6F1E7;color:#2F6B3A;padding:12px 14px;font-size:14px;text-align:left;animation:sv-pop .28s cubic-bezier(.2,.8,.2,1)}
+.sv-ok button{margin-left:auto;flex:none;border:0;background:none;padding:4px 0 4px 8px;font:inherit;font-size:13px;color:#8A847E;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+@keyframes sv-pop{from{opacity:0;transform:scale(.96)}}
+@media (prefers-reduced-motion:reduce){.sv-ok{animation:none}.sv-o,.sv-b,.sv-fl,.sv-l button{transition:none}}`;
   document.head.appendChild(st);
 
   const IC = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2.05-4.95M19 4.5V8h-3.5"/></svg>';
@@ -66,10 +69,16 @@
     const now = new Date().toISOString(), proch = (rdvs || []).filter(r => r.statut === "prevu" && r.fin >= now).sort((a, b) => a.debut.localeCompare(b.debut));
     if (!proch.length) return "";
     if (ETAT.id !== c.id) ETAT = { id: c.id, ouvert: false, sem: null };
+    if (ETAT.fait) return `<div id="sv-bloc"><div class="sv-ok">✓ Noté : ${court(ETAT.fait.d)} à ${hh(ETAT.fait.d)}<button data-sv="annule">Annuler</button></div></div>`;
     BASE = proch[proch.length - 1]; RY = rythme(rdvs);   /* on compte depuis son DERNIER rendez-vous prévu */
     const sem = ETAT.sem || RY.sem, d0 = new Date(BASE.debut), cs = creneaux(BASE, sem), c1 = cs[0];
-    const pareil = x => x.getDay() === d0.getDay() && x.getHours() === d0.getHours() && x.getMinutes() === d0.getMinutes();
-    const pourquoi = x => { if (pareil(x)) return ""; const ideal = jourPlus(d0, sem * 7); return memeJ(x, ideal) ? `${hh(d0)} est déjà pris` : `le ${JL[d0.getDay()]} est complet`; };
+    const ideal = jourPlus(d0, sem * 7), pareil = x => memeJ(x, ideal) && x.getHours() === d0.getHours() && x.getMinutes() === d0.getMinutes(), libreIdeal = cs.some(pareil);
+    /* pourquoi pas le même jour à la même heure : on dit la vraie raison (férié, fermé, pause, horaires, déjà pris) */
+    const raison = (() => { if (libreIdeal) return ""; const f = window.jourFerie && window.jourFerie(ideal), o = ouvert(ideal), mn = d0.getHours() * 60 + d0.getMinutes(), fm = mn + (new Date(BASE.fin) - d0) / 60000;
+      if (f) return `le ${ideal.getDate() === 1 ? "1er" : ideal.getDate()} ${M3[ideal.getMonth()]}, c’est ${f}`; if (!o) return `tu es fermée le ${JL[ideal.getDay()]}`;
+      if (o[2] != null && mn < o[3] && fm > o[2]) return `${hh(d0)} tombe sur ta pause`; if (mn < o[0] || fm > o[1]) return `${hh(d0)} est hors de tes horaires`;
+      return cs.some(x => memeJ(x, ideal)) ? `${hh(d0)} est déjà pris` : `le ${JL[ideal.getDay()]} est complet`; })();
+    const pourquoi = x => pareil(x) ? "" : raison || (memeJ(x, ideal) ? "autre heure" : "autre jour");
     const sous = `${sem} semaine${sem > 1 ? "s" : ""} après le ${d0.getDate() === 1 ? "1er" : d0.getDate()} ${M3[d0.getMonth()]}${sem === RY.sem && RY.sur ? " · son rythme" : ""}`;
     const titre = c1 ? `Le suivant : ${court(c1)} · ${hh(c1)}` : `Le suivant dans ${sem} semaine${sem > 1 ? "s" : ""}`;
     const s2 = c1 ? (pourquoi(c1) ? " · " + pourquoi(c1) : "") : " · rien de libre, touche pour changer";
@@ -91,6 +100,9 @@
     else z.replaceWith(n); };
   const w0 = window.__suivantFiche; window.__suivantFiche = (c, rdvs) => { RDVS = rdvs; return w0(c, rdvs); };
 
+  /* la fiche rouverte par elle (pas par nous juste après « Noter ») repart à zéro : plus de « ✓ Noté » */
+  let GARDE = false; const fc0 = feuilleCliente;
+  feuilleCliente = function (id) { if (!GARDE) ETAT = { id: null, ouvert: false, sem: null }; GARDE = false; return fc0.apply(this, arguments); };
   document.addEventListener("click", async e => { const a = e.target.closest && e.target.closest("[data-sv]"); if (!a) return; e.stopPropagation(); const k = a.dataset.sv;
     if (k === "ouvre") { ETAT.ouvert = !ETAT.ouvert; redessine(); }
     else if (k === "sem") { ETAT.sem = +a.dataset.n; redessine(); }
@@ -99,11 +111,19 @@
       /* on revérifie au dernier moment (une réservation en ligne a pu arriver entre-temps) */
       const { data: g } = await sb.from("rendez_vous").select("id").neq("statut", "annule").lt("debut", fin.toISOString()).gt("fin", deb.toISOString()).limit(1);
       if (g && g.length) { dit("Ce créneau vient d’être pris : choisis-en un autre"); if (window.chargeVisites) await chargeVisites(); return redessine(); }
-      const { error } = await sb.from("rendez_vous").insert({ cliente_id: r.cliente_id, prestation_id: r.prestation_id || null, titre: r.titre || null, debut: deb.toISOString(), fin: fin.toISOString(), prix: r.prix ?? null });
+      const { data: n, error } = await sb.from("rendez_vous").insert({ cliente_id: r.cliente_id, prestation_id: r.prestation_id || null, titre: r.titre || null, debut: deb.toISOString(), fin: fin.toISOString(), prix: r.prix ?? null }).select().single();
       if (error) { E.querySelectorAll('[data-sv="note"]').forEach(b => b.disabled = false); a.textContent = "Noter"; return dit("Oups, ça n’a pas marché. Réessaie."); }
-      ETAT = { id: null, ouvert: false, sem: null };
+      ETAT = { id, ouvert: false, sem: null, fait: { id: n && n.id, d: deb } };
       try { await chargeSemaine(); await chargeVisites(); } catch (x) {}
-      if (E.classList.contains("fe") && window.__ficheId && window.__ficheId() === id) feuilleCliente(id);   /* la fiche se recharge : « Et aussi : … » */
+      if (E.classList.contains("fe") && window.__ficheId && window.__ficheId() === id) { GARDE = true; feuilleCliente(id); }   /* la fiche se recharge : « Et aussi : … » */
       rendu(); dit(`Rendez-vous noté ✓ · ${court(deb)} à ${hh(deb)}`); }
+    /* « Annuler » juste après : on efface ce rendez-vous (il vient d'être noté, la cliente n'a encore rien reçu) */
+    else if (k === "annule" && ETAT.fait) { const id = ETAT.id, f = ETAT.fait; a.disabled = true;
+      const { error } = f.id ? await sb.from("rendez_vous").delete().eq("id", f.id) : { error: 1 };
+      if (error) { a.disabled = false; return dit("Oups, ça n’a pas marché. Réessaie."); }
+      ETAT = { id, ouvert: false, sem: null }; if (S.tous) S.tous = S.tous.filter(x => x.id !== f.id);
+      try { await chargeSemaine(); await chargeVisites(); } catch (x) {}
+      if (E.classList.contains("fe") && window.__ficheId && window.__ficheId() === id) feuilleCliente(id);
+      rendu(); dit("Rendez-vous enlevé"); }
   }, true);
 })();
