@@ -539,13 +539,41 @@ function feuilleCaisse() {
     <button class="btn" data-a="livre" style="margin-top:12px">Télécharger mon livre des recettes</button>
     <div class="k">Aujourd’hui</div>${auj.length ? `<div class="liste">${auj.map(t => `<div class="ligne" data-a="qr-voir" data-t="${t.id}"><div class="t">${esc(t.details?.cliente || "")}<span>${esc((t.details?.lignes || [])[0]?.nom || "")} · ${NOM_MOYEN[t.moyen] || ""}</span></div><em>${euros(t.total)}</em><span class="fl">›</span></div>`).join("")}</div>` : '<div class="blanche vide"><b>Rien encaissé aujourd’hui</b><span>Les tickets apparaissent ici.</span></div>'}`);
 }
-function livreDesRecettes() {
-  const m = new Date(), L = duMois().slice().reverse();
+/* 27/11 (Marie : « ça oui ») : le livre des recettes d'UN MOIS au choix ou de TOUTE L'ANNÉE (avant : le mois en cours seulement,
+   alors qu'il faut le garder et que le comptable le demande en janvier). Lu sur le serveur (S.tickets ne garde que 2 mois). */
+const LIVRE = { an: new Date().getFullYear() };
+function feuilleLivre() {
+  const auj = new Date(), an = LIVRE.an, ans = [auj.getFullYear() - 1, auj.getFullYear()];
+  ouvre(`<h3>Mon livre des recettes</h3><div class="sous">Tout ce que tu as encaissé avec « Encaisser », jour par jour : le fichier que ton comptable te demande.</div>
+    <div class="lv-ans" role="tablist">${ans.map(y => `<button role="tab" data-a="livre-an" data-y="${y}" class="${y === an ? "on" : ""}" aria-selected="${y === an}">${y}</button>`).join("")}</div>
+    <button class="btn" data-a="livre-dl" data-y="${an}" style="width:100%;margin-top:4px">Toute l’année ${an}</button>
+    <div class="k" style="margin-top:16px">Ou un seul mois</div>
+    <div class="lv-mois">${MOIS.map((m, i) => { const futur = an > auj.getFullYear() || (an === auj.getFullYear() && i > auj.getMonth());
+      return `<button data-a="livre-dl" data-y="${an}" data-m="${i}"${futur ? " disabled" : ""}>${m.charAt(0).toUpperCase() + m.slice(1)}</button>`; }).join("")}</div>`);
+}
+async function livreDesRecettes(an, mois /* null = toute l'année */) {
+  const de = new Date(an, mois == null ? 0 : mois, 1), a = mois == null ? new Date(an + 1, 0, 1) : new Date(an, mois + 1, 1);
+  const nomP = mois == null ? "l’année " + an : MOIS[mois] + " " + an;
+  dit("Un instant…");
+  const { data, error } = await sb.from("tickets").select("*").gte("cree_le", de.toISOString()).lt("cree_le", a.toISOString()).order("cree_le", { ascending: true });
+  if (error) return oups(error);
+  const L = (data || []).slice().sort((x, y) => new Date(x.cree_le) - new Date(y.cree_le));
+  if (!L.length) return dit(`Rien d’encaissé pour ${nomP}`);
   const q = v => '"' + String(v ?? "").replace(/"/g, '""') + '"', n = v => String(Math.round((+v || 0) * 100) / 100).replace(".", ",");
   const lignes = [["Date", "Ticket", "Cliente", "Prestation", "Montant", "Mode de règlement"].map(q).join(";")]
-    .concat(L.map(t => [new Date(t.cree_le).toLocaleDateString("fr-FR"), t.numero, t.details?.cliente, (t.details?.lignes || []).map(l => l.nom).join(" + "), n(t.total), (NOM_MOYEN[t.moyen] || "") + (+t.acompte_deduit ? " (dont acompte en ligne " + n(t.acompte_deduit) + ")" : "")].map(q).join(";")));
-  partageFichier(new Blob(["﻿" + lignes.join("\r\n")], { type: "text/csv;charset=utf-8" }), `livre-des-recettes-${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, "0")}.csv`, "Livre des recettes téléchargé ✓");
+    .concat(L.map(t => [new Date(t.cree_le).toLocaleDateString("fr-FR"), t.numero, t.details?.cliente, (t.details?.lignes || []).map(l => l.nom).join(" + "), n(t.total), (NOM_MOYEN[t.moyen] || "") + (+t.acompte_deduit ? " (dont acompte en ligne " + n(t.acompte_deduit) + ")" : "")].map(q).join(";")))
+    .concat([["", "", "", "Total", n(L.reduce((s, t) => s + (+t.total || 0), 0)), ""].map(q).join(";")]);
+  const nom = `livre-des-recettes-${an}${mois == null ? "" : "-" + String(mois + 1).padStart(2, "0")}.csv`;
+  partageFichier(new Blob(["﻿" + lignes.join("\r\n")], { type: "text/csv;charset=utf-8" }), nom, `Livre des recettes de ${nomP} téléchargé ✓`);
 }
+(() => { const st = document.createElement("style");
+  st.textContent = `#E .lv-ans{display:flex;background:color-mix(in srgb,var(--v-rose,#F5E6E4) 70%,#E9E2DC);border-radius:99px;padding:3px;margin:14px 0 10px}
+#E .lv-ans button{flex:1;height:36px;border:0;border-radius:99px;background:none;font:inherit;font-size:14px;color:var(--gris,#776D64);cursor:pointer;transition:background .2s,color .2s}
+#E .lv-ans button.on{background:#fff;color:var(--v-fonce,#1E1C1B);box-shadow:0 2px 8px -4px rgba(0,0,0,.3)}
+#E .lv-mois{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+#E .lv-mois button{min-height:44px;border-radius:14px;border:1px solid rgba(30,28,27,.12);background:#fff;font:inherit;font-size:14px;color:inherit;cursor:pointer;transition:transform .12s}
+#E .lv-mois button:active{transform:scale(.96)}#E .lv-mois button:disabled{opacity:.35;cursor:default}`;
+  document.head.appendChild(st); })();
 
 /* ---------- Photos de mes ongles (réalisations) : ajouter, enlever ---------- */
 MSF["ms-photos"] = () => { const b = brouillon() || {}, L = (b.photos || []).map((p, i) => [p, i]).filter(x => x[1] !== b.salon);
@@ -675,7 +703,9 @@ E.addEventListener("click", async ev => {
     else if (k === "qr-voir") { const t = (S.tickets || []).find(x => x.id === a.dataset.t); if (t) montreQR(t); }
     else if (k === "caisse") feuilleCaisse();
     else if (k === "caisse-sw") { const on = !CAISSE(); const { data, error } = await sb.from("profils").update({ caisse_active: on }).eq("id", S.user.id).select().single(); if (error) return oups(error); S.profil = data; feuilleCaisse(); rendu(); dit(on ? "Caisse activée" : "Caisse arrêtée · tes tickets sont gardés"); }
-    else if (k === "livre") livreDesRecettes();
+    else if (k === "livre") feuilleLivre();
+    else if (k === "livre-an") { LIVRE.an = +a.dataset.y; feuilleLivre(); }
+    else if (k === "livre-dl") livreDesRecettes(+a.dataset.y, a.dataset.m == null ? null : +a.dataset.m);
     else if (k === "ph-ajout") $("#ph-in", E).click();
     else if (k === "ph-x") { const b = brouillon() || {}, i = +a.dataset.i; b.photos.splice(i, 1); if (b.salon != null && b.salon > i) b.salon--; if (b.principale != null && b.principale >= b.photos.length) b.principale = 0;
       localStorage.setItem("loginail-brouillon", JSON.stringify(b)); ouvre(MSF["ms-photos"]()); rendu(); dit("Photo enlevée"); }
