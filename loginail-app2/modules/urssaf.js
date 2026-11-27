@@ -39,6 +39,8 @@
   const fait = (r, p) => lit(cleFait(r, p), "") === "1";
   const cleOff = () => "loginail-urssaf-off-" + uid();
   const OFF = () => lit(cleOff(), "") === "1";
+  /* 27/11 (Marie : « une croix et ça lui enlève et basta ») : la croix cache la carte de l'Accueil jusqu'à la prochaine déclaration */
+  const cleCache = p => `loginail-urssaf-cache-${uid()}-${p.r}-${p.de.getFullYear()}-${p.de.getMonth() + 1}`;
   /* ce qu'on montre : la période finie tant qu'elle n'est pas déclarée, sinon celle en cours */
   const laPeriode = () => { const r = RYTHME(), d = AUJ(), f = finie(r, d), mois = r === "mois";
     return (mois ? !fait(r, f) : f.fenetre && !fait(r, f)) ? Object.assign(f, { r }) : Object.assign(enCours(r, d), { r }); };
@@ -66,12 +68,13 @@
   const OEIL = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></svg>';
   const CADENAS = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>';
   /* D131 : aucun montant sur la carte, juste la date */
-  const carte = (p, rappel) => `<button class="urs${rappel ? " rappel" : ""}" data-urs="ouvre"><span class="ic">${IC}</span><span class="t"><b>Ta déclaration URSSAF</b><small>${p.enCours ? nomP(p) + " · en cours" : "À faire avant le " + jourM(p.limite)}</small></span><span class="fl" aria-hidden="true">›</span></button>`;
+  const carte = (p, rappel) => { const c = `<button class="urs${rappel ? " rappel" : ""}" data-urs="ouvre"><span class="ic">${IC}</span><span class="t"><b>Ta déclaration URSSAF</b><small>${p.enCours ? nomP(p) + " · en cours" : "À faire avant le " + jourM(p.limite)}</small></span>${rappel ? "" : '<span class="fl" aria-hidden="true">›</span>'}</button>`;
+    return rappel ? `<div class="urs-w">${c}<button class="urs-x" data-urs="cache" aria-label="Cacher jusqu’à la prochaine déclaration">×</button></div>` : c; };
 
   /* ---------- 1 · l'Accueil : seulement avant la date limite ---------- */
   const acc0 = VUES.acc;
   VUES.acc = () => { const h = acc0(); if (!S.user || OFF()) return h;
-    const p = laPeriode(); if (p.enCours || !finie(p.r, AUJ()).fenetre) return h;
+    const p = laPeriode(); if (p.enCours || !finie(p.r, AUJ()).fenetre || lit(cleCache(p), "") === "1") return h;
     const f = document.createElement("div"); f.innerHTML = h; const haut = f.querySelector(".v-haut");
     if (haut) haut.insertAdjacentHTML("afterend", carte(p, true)); else f.insertAdjacentHTML("afterbegin", carte(p, true));
     return f.innerHTML; };
@@ -101,6 +104,9 @@
   document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-urs]"); if (!b) return; e.preventDefault(); e.stopPropagation(); const k = b.dataset.urs;
     if (k === "ouvre") return detail();
     if (k === "voir") return voir();
+    if (k === "cache") { ecrit(cleCache(laPeriode()), "1"); const w = b.closest(".urs-w");
+      const fin = () => { rendu(); dit("Cachée jusqu’à la prochaine déclaration"); };
+      if (w && w.animate && !matchMedia("(prefers-reduced-motion: reduce)").matches) { const a = w.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "scale(.96)" }], { duration: 200, easing: "ease-in" }); a.onfinish = fin; } else fin(); return; }
     if (k === "stop") { ecrit(cleOff(), "1"); ferme(); rendu(); return dit("C’est fait. Tu peux le remettre dans Réglages › Rappel URSSAF"); }
     if (k === "re-sw") { const off = !OFF(); ecrit(cleOff(), off ? "1" : ""); rendu(); return dit(off ? "Rappel URSSAF éteint" : "Rappel URSSAF allumé : la date, quelques jours avant"); }
     if (k === "rythme") { if (b.dataset.r === RYTHME()) return; ecrit("loginail-urssaf-rythme-" + uid(), b.dataset.r); rendu(); return detail(); }
@@ -122,7 +128,10 @@
 #E .urs .ic{flex:none;width:38px;height:38px;border-radius:12px;background:var(--v-rose,#F5E6E4);color:var(--v-acc,#B5475E);display:grid;place-items:center}
 #E .urs .t{flex:1;min-width:0}#E .urs .t b{display:block;font-weight:500;font-size:15px}#E .urs .t small{display:block;font-size:12.5px;color:var(--gris,#776D64);margin-top:1px}
 #E .urs .fl{flex:none;color:#B9AEA6;font-size:20px;line-height:1}
-#E .urs.rappel{animation:urs-in .3s ease-out}
+#E .urs.rappel{animation:urs-in .3s ease-out;padding-right:48px}
+#E .urs-w{position:relative}
+#E .urs-x{position:absolute;top:50%;right:6px;transform:translateY(-50%);width:44px;height:44px;border:0;border-radius:50%;background:none;color:#A39890;font:300 24px/1 Jost,sans-serif;cursor:pointer;display:grid;place-items:center}
+#E .urs-x:active{background:rgba(30,28,27,.06)}
 #E .urs-k{font-size:13px;color:var(--gris,#8A817A);margin:18px 2px 0}
 #E .urs-bas{display:flex;background:color-mix(in srgb,var(--v-rose,#F5E6E4) 70%,#E9E2DC);border-radius:99px;padding:3px;margin:12px 0 4px}
 #E .urs-bas button{flex:1;height:36px;border:0;border-radius:99px;background:none;font:inherit;font-size:13.5px;color:var(--gris);cursor:pointer;transition:background .2s,color .2s}
