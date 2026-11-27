@@ -158,6 +158,7 @@
     else h += `<div class="fi-carte"><div class="fi-lg"><div>Pas de rendez-vous prévu<span>${venues.length ? "Sa dernière visite : " + jourCourt(venues[0].debut) : "Elle n’est pas encore venue"}</span></div></div></div>`;
     if (proch.length > 1) h += `<div class="sous" style="text-align:left;margin:8px 2px 0">Et aussi : ${proch.slice(1, 3).map(r => jj(r.debut) + " à " + hm(d(r.debut))).join(" · ")}</div>`;
     h += `<button class="fi-prdv" data-fi="prdv"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4M12 12.5v5M9.5 15h5"/></svg>Prendre un rendez-vous</button>`;
+    if (window.__suivantFiche) h += window.__suivantFiche(c, RDV);   /* 27/11 (Marie, version A) : « Le suivant » sous « Prendre un rendez-vous » (modules/le-suivant.js) */
     if (window.__detteFiche) h += window.__detteFiche(c);   /* 24/11 soir (Marie) : « Elle me doit » sous « Prendre un rendez-vous » */
     h += `<div class="fi-t3"><div><small>Visites</small><b>${venues.length}</b></div>${e.f.on ? `<div><small>Fidélité</small><b>${e.fait} <em>/ ${e.f.n}</em></b></div>` : ""}<div><small>Dernière</small><b>${venues.length ? jourCourt(venues[0].debut) : "—"}</b></div></div>`;
     if (window.__annulFiche) h += window.__annulFiche(c, RDV);   /* 24/11 : annulations au dernier moment (modules/annulations.js) */
