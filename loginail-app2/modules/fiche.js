@@ -152,11 +152,13 @@
     const now = new Date().toISOString(), ok = RDV.filter(r => r.statut !== "annule"), proch = ok.filter(r => r.fin >= now && r.statut === "prevu").sort((a, b) => a.debut.localeCompare(b.debut)), hist = ok.filter(r => r.fin < now || r.statut === "fini" || r.statut === "absente");
     const venues = hist.filter(r => r.statut !== "absente"), e = etatFid(venues.length + litNotes(c).fp), d = x => new Date(x), jj = x => `${JOURS3[d(x).getDay()]} ${jourCourt(x)}`;
     let h = "";
-    if (proch[0]) { const x = d(proch[0].debut), pn = (proch[0].prestations && proch[0].prestations.nom) || proch[0].titre;
+    /* 27/11 (Marie, version A) : plusieurs rendez-vous = cartes qu'on glisse + « Envoyer ses rendez-vous » (modules/fiche-plusieurs.js) */
+    if (proch[0] && window.__prochFiche) h += window.__prochFiche(c, proch);
+    else if (proch[0]) { const x = d(proch[0].debut), pn = (proch[0].prestations && proch[0].prestations.nom) || proch[0].titre;
       h += `<div class="fi-noire"><small>Prochain rendez-vous</small><b class="fi-jour">${JOURS[(x.getDay() + 6) % 7]} ${x.getDate()} ${MOIS[x.getMonth()]}</b><span class="fi-h">à ${x.getHours()}h${String(x.getMinutes()).padStart(2, "0")}${pn ? " · " + esc(pn) : ""}</span>
         <div class="fi-bts"><button data-a="decaler" data-id="${proch[0].id}">Déplacer</button><button data-rdv="${proch[0].id}">Voir</button></div></div>`; }
     else h += `<div class="fi-carte"><div class="fi-lg"><div>Pas de rendez-vous prévu<span>${venues.length ? "Sa dernière visite : " + jourCourt(venues[0].debut) : "Elle n’est pas encore venue"}</span></div></div></div>`;
-    if (proch.length > 1) h += `<div class="sous" style="text-align:left;margin:8px 2px 0">Et aussi : ${proch.slice(1, 3).map(r => jj(r.debut) + " à " + hm(d(r.debut))).join(" · ")}</div>`;
+    if (proch.length > 1 && !window.__prochFiche) h += `<div class="sous" style="text-align:left;margin:8px 2px 0">Et aussi : ${proch.slice(1, 3).map(r => jj(r.debut) + " à " + hm(d(r.debut))).join(" · ")}</div>`;
     h += `<button class="fi-prdv" data-fi="prdv"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4M12 12.5v5M9.5 15h5"/></svg>Prendre un rendez-vous</button>`;
     if (window.__suivantFiche) h += window.__suivantFiche(c, RDV);   /* 27/11 (Marie, version A) : « Le suivant » sous « Prendre un rendez-vous » (modules/le-suivant.js) */
     if (window.__detteFiche) h += window.__detteFiche(c);   /* 24/11 soir (Marie) : « Elle me doit » sous « Prendre un rendez-vous » */
