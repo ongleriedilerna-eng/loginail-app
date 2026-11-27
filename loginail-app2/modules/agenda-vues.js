@@ -7,6 +7,12 @@
   const CLE = "loginail-agenda-vue", MODES = [["jour", "Jour"], ["semaine", "Semaine"], ["mois", "Mois"]];
   let mode = localStorage.getItem(CLE); if (!MODES.some(m => m[0] === mode)) mode = "jour";
   let moisVu = null, jourVu = "", entre = "", occupe = false, avale = 0;
+  /* 27/11 (Marie choisit A) : en Semaine, le mois en grand entre les flèches, les dates dessous */
+  { const s2 = document.createElement("style");
+    s2.textContent = `#E .nav-sem.av-ng span{text-align:center;line-height:1.1}
+#E .nav-sem.av-ng b{display:block;font:400 30px/1.05 Italiana,'Cormorant Garamond',Georgia,serif;color:var(--v-acc,#B5475E);letter-spacing:.01em}
+#E .nav-sem.av-ng small{display:block;margin-top:2px;font-size:13px;font-weight:500;color:var(--v-fonce,#1E1C1B)}`;
+    document.head.appendChild(s2); }
 
   const st = document.createElement("style");
   st.textContent = `#E .av-titre{display:inline-grid;grid-template-columns:auto auto;align-items:center;justify-items:start;column-gap:5px;text-align:left;min-height:44px;margin:0;padding:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer}
@@ -155,7 +161,13 @@
     const k = [...f.querySelectorAll(".k")].find(x => /rendez-vous/.test(x.textContent)), nav = f.querySelector(".nav-sem");
     if (mode === "semaine") {
       const fin = plusJours(S.lundi, 7), n = S.rdv.filter(r => r.cliente_id && r.statut !== "annule" && new Date(r.debut) >= S.lundi && new Date(r.debut) < fin).length;
-      if (k) k.textContent = `Ma semaine · ${n} rendez-vous`;
+      /* 27/11 (Marie : « j'avais pas capté que c'est la semaine de décembre », « il faut écrire le mois en grand, pas ma semaine ») :
+         le mois de la semaine (celui du jeudi : 30 nov. → 6 déc. = décembre) écrit en grand entre les flèches, les dates dessous. */
+      const L = S.lundi, F = plusJours(L, 6), J = plusJours(L, 3), nomM = MOIS[J.getMonth()].replace(/^./, c => c.toUpperCase());
+      const dates = L.getMonth() === F.getMonth() ? `${L.getDate()} – ${F.getDate()} ${MOISC[F.getMonth()]}` : `${L.getDate()} ${MOISC[L.getMonth()]} – ${F.getDate()} ${MOISC[F.getMonth()]}`;
+      const sm = t.querySelector("small"); if (sm && !sm.classList.contains("av-mode")) sm.textContent = nomM + " " + J.getFullYear();
+      if (k) k.textContent = n ? `${n} rendez-vous cette semaine` : "Aucun rendez-vous cette semaine";
+      if (nav) { nav.classList.add("av-ng"); nav.querySelector("span").innerHTML = `<b>${nomM}</b><small>${dates}</small>`; }
       pap.outerHTML = grille();
     } else {
       pap.outerHTML = calendrier();
