@@ -11,7 +11,17 @@
   { const s2 = document.createElement("style");
     s2.textContent = `#E .nav-sem.av-ng span{text-align:center;line-height:1.1}
 #E .nav-sem.av-ng b{display:block;font:400 30px/1.05 Italiana,'Cormorant Garamond',Georgia,serif;color:var(--v-acc,#B5475E);letter-spacing:.01em}
-#E .nav-sem.av-ng small{display:block;margin-top:2px;font-size:13px;font-weight:500;color:var(--v-fonce,#1E1C1B)}`;
+#E .nav-sem.av-ng small{display:block;margin-top:2px;font-size:13px;font-weight:500;color:var(--v-fonce,#1E1C1B)}
+#E .vue[data-p="ag"] .nav-sem>span{cursor:pointer;-webkit-user-select:none;user-select:none;transition:opacity .12s}
+#E .vue[data-p="ag"] .nav-sem>span:active{opacity:.55}
+#E .vue[data-p="ag"] .nav-sem.av-ng>span>b::after,#E .vue[data-p="ag"] .nav-sem:not(.av-ng)>span::after{content:"";display:inline-block;width:11px;height:11px;margin-left:5px;vertical-align:middle;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M2 5l5 5 5-5' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M2 5l5 5 5-5' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
+#E .vue[data-p="ag"] .nav-sem.av-ng>span>b::after{width:12px;height:12px;margin-left:6px;vertical-align:.12em}
+#E .av-mois-an{margin:16px 0 8px;font-size:12px;font-weight:500;letter-spacing:.04em;color:#7A716B}
+#E .av-mois-l{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#E .av-mois-l button{min-height:50px;padding:0 4px;border:1px solid rgba(30,28,27,.1);border-radius:25px;background:#fff;color:inherit;font:inherit;font-size:15px;cursor:pointer;transition:transform .1s}
+#E .av-mois-l button:active{transform:scale(.96)}
+#E .av-mois-l button.auj{border-color:var(--v-acc,#B5475E);color:var(--v-acc,#B5475E);font-weight:500}
+#E .av-mois-l button.on{background:var(--v-fonce,#1E1C1B);border-color:var(--v-fonce,#1E1C1B);color:#fff}`;
     document.head.appendChild(s2); }
 
   const st = document.createElement("style");
@@ -155,6 +165,7 @@
     t.classList.add("av-tete");
     /* 22/11 (Marie) : en tout petit sous « Agenda », la vue où elle est */
     h1.innerHTML = '<button class="av-titre" data-av="menu" aria-haspopup="menu" aria-expanded="false"><span>Agenda</span><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' + `<small class="av-mode">${MODES.find(m => m[0] === mode)[1]}</small></button>`;
+    const ns = f.querySelector(".nav-sem>span"); if (ns) { ns.setAttribute("role", "button"); ns.setAttribute("aria-haspopup", "dialog"); ns.title = "Choisir un mois"; }   /* 28/11 : toucher = tous les mois */
     const pap = f.querySelector(".pap"); if (mode === "jour" || !pap) return f.innerHTML;
     f.querySelector(".semaine")?.classList.add("av-cache");
     f.querySelector(".nav-sem .v-ferme")?.remove();   /* en semaine et en mois, ça ne parle pas d'un seul jour */
@@ -275,6 +286,37 @@
     va(plusJours(S.jour, 7 * d));
   }
 
+  /* 28/11 (Marie : « je suis le 23/29 novembre et je dois aller jusqu'en février, ça fait loin ») :
+     toucher le mois écrit au milieu (« ‹ Novembre › », ou les dates en Jour et en Mois) ouvre tous les mois ; un mois touché = on y est.
+     2 touches au lieu de 10. Maquette : maquettes/agenda-sauter-mois-2811. */
+  const NOM_M = d => MOIS[d.getMonth()].replace(/^./, c => c.toUpperCase());
+  function moisRegarde() {
+    if (mode === "mois") return leMois();
+    if (mode === "semaine") { const J = plusJours(S.lundi, 3); return new Date(J.getFullYear(), J.getMonth(), 1); }   /* le mois du jeudi, comme le titre */
+    return new Date(S.jour.getFullYear(), S.jour.getMonth(), 1);
+  }
+  function listeMois() {
+    const auj = new Date(), vu = moisRegarde();
+    let h = "", an = null;
+    for (let i = -3; i <= 12; i++) {
+      const m = new Date(auj.getFullYear(), auj.getMonth() + i, 1);
+      if (m.getFullYear() !== an) { if (an !== null) h += "</div>"; an = m.getFullYear(); h += `<div class="av-mois-an">${an}</div><div class="av-mois-l">`; }
+      const on = m.getFullYear() === vu.getFullYear() && m.getMonth() === vu.getMonth(), ce = i === 0;
+      h += `<button data-av-aller="${m.getFullYear()}-${m.getMonth()}" class="${on ? "on" : ce ? "auj" : ""}"${on ? ' aria-current="true"' : ""}>${NOM_M(m)}</button>`;
+    }
+    ouvre(`<h3>Aller à…</h3><div class="sous">Touche un mois</div>${h}</div>`);
+  }
+  function allerAuMois(an, mo) {
+    const auj = new Date(), ici = an === auj.getFullYear() && mo === auj.getMonth();
+    entre = " av-arrive";
+    if (mode === "mois") { moisVu = new Date(an, mo, 1); return rendu(); }
+    /* ce mois-ci : on revient à aujourd'hui. Sinon le 1er du mois ; en Semaine, si le 1er tombe un vendredi, samedi ou dimanche,
+       sa semaine porterait le nom du mois d'avant : on prend le lundi d'après (le titre dit bien le mois choisi). */
+    let j = ici ? auj : new Date(an, mo, 1);
+    if (!ici && mode === "semaine" && [5, 6, 0].includes(j.getDay())) j = plusJours(lundiDe(j), 7);
+    S.papY = null; va(j);
+  }
+
   /* 22/11 (Marie : « j'appuie à 15 h, ça me remet sur Jour ») : l'heure touchée dans une colonne de la semaine.
      Les heures n'ont pas toutes la même hauteur (repartit) : on lit la place réelle des traits. Le chiffre est à cheval
      sur son trait, donc toucher juste au-dessus compte pour cette heure. Si l'heure commence par un rendez-vous, on propose sa fin. */
@@ -322,6 +364,9 @@
       stop(); S.jour = new Date(t.closest("[data-av-choisi]").dataset.avChoisi); return feuilleNouveau(null);
     }
     const m = t.closest("[data-av-mois]"); if (m) { stop(); return tourne(+m.dataset.avMois); }
+    const al = t.closest("[data-av-aller]");
+    if (al) { stop(); ferme(); const [an, mo] = al.dataset.avAller.split("-").map(Number); return allerAuMois(an, mo); }
+    if (t.closest('.vue.on[data-p="ag"] .nav-sem>span')) { stop(); return listeMois(); }
     /* une heure vide de la semaine : on ajoute, sans quitter la semaine (la date en haut ouvre toujours la journée) */
     const touche = colonneTouchee(e);
     if (touche) {
