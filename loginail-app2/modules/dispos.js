@@ -201,17 +201,13 @@
 
   /* ---------- 4 · la story « Carnet » ---------- */
   /* 27/11 (Marie : « quand c'est complet, j'aime pas la manière dont c'est écrit ») : avant, « complet » en italique pâle, perdu dans la case.
-     2 versions à choisir (« loginail-dispos-complet ») : A = étiquette pleine couleur du site, B = tampon de travers.
-     x = centre (al « c ») ou bord gauche (al « g ») ; z = échelle ; a = couleur du site ; fg = texte sur l'étiquette */
-  const COMPLET = () => lit("loginail-dispos-complet", "A") === "B" ? "B" : "A";
+     28/11 : Marie choisit A (contre un tampon de travers) : une étiquette pleine, couleur du site, « COMPLET » en capitales espacées.
+     x = centre (al « c ») ou bord gauche (al « g ») ; z = échelle ; a = couleur du site ; fg = texte sur l'étiquette ; max = largeur de la case */
   const complet = (cx, x, y, z, a, fg, al, max) => { cx.save(); cx.textAlign = "center"; cx.textBaseline = "middle"; const ls = "letterSpacing" in cx, mot = "COMPLET";
-    /* une case étroite (le mois) : l'étiquette rétrécit pour tenir dedans */
-    if (max) { const larg = q => { cx.font = `600 ${11 * q}px Jost, sans-serif`; if (ls) cx.letterSpacing = `${2 * q}px`; return cx.measureText(mot).width + 20 * q; }; while (z > .5 && larg(z) > max) z *= .94; }
-    if (COMPLET() === "B") { cx.font = `600 ${11 * z}px Jost, sans-serif`; if (ls) cx.letterSpacing = `${2 * z}px`; const w = cx.measureText(mot).width + 16 * z, h = 25 * z;
-      cx.translate(al === "g" ? x + w / 2 : x, y); cx.rotate(-9 * Math.PI / 180); cx.strokeStyle = a; cx.lineWidth = 1.8 * z; rond(cx, -w / 2, -h / 2, w, h, 5 * z); cx.stroke();
-      cx.fillStyle = a; cx.fillText(mot, ls ? z : 0, 1); }
-    else { cx.font = `500 ${10.5 * z}px Jost, sans-serif`; if (ls) cx.letterSpacing = `${1.4 * z}px`; const w = cx.measureText(mot).width + 20 * z, h = 24 * z, x0 = al === "g" ? x : x - w / 2;
-      cx.fillStyle = a; rond(cx, x0, y - h / 2, w, h, h / 2); cx.fill(); cx.fillStyle = fg; cx.fillText(mot, x0 + w / 2 + (ls ? .7 * z : 0), y + 1); }
+    const larg = q => { cx.font = `500 ${10.5 * q}px Jost, sans-serif`; if (ls) cx.letterSpacing = `${1.4 * q}px`; return cx.measureText(mot).width + 20 * q; };
+    if (max) while (z > .5 && larg(z) > max) z *= .94;   /* une case étroite (le mois) : l'étiquette rétrécit pour tenir dedans */
+    const w = larg(z), h = 24 * z, x0 = al === "g" ? x : x - w / 2;
+    cx.fillStyle = a; rond(cx, x0, y - h / 2, w, h, h / 2); cx.fill(); cx.fillStyle = fg; cx.fillText(mot, x0 + w / 2 + (ls ? .7 * z : 0), y + 1);
     if (ls) cx.letterSpacing = "0px"; cx.restore(); };
   const rond = (cx, x, y, w, h, r) => { cx.beginPath(); cx.moveTo(x + r, y); cx.arcTo(x + w, y, x + w, y + h, r); cx.arcTo(x + w, y + h, x, y + h, r); cx.arcTo(x, y + h, x, y, r); cx.arcTo(x, y, x + w, y, r); cx.closePath(); };
   const pilule = (cx, txt, cxm, y, gras, t0 = 12, fondA = .58) => { const q = t0 / 12; cx.font = `400 ${t0 * K}px Jost, sans-serif`; let w = 0; txt.forEach((t, i) => { cx.font = `${i === txt.length - 1 && gras ? 500 : 400} ${t0 * K}px Jost, sans-serif`; w += cx.measureText(t).width; });
