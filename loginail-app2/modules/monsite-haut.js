@@ -21,7 +21,11 @@
       ["fond", `<span class="v-ico psi-ic">${sv('<path d="M6 10l6-6 6 6-6 6z"/><path d="M19 14c0 1.5-1 2.5-1 3.5a1 1 0 0 0 2 0c0-1-1-2-1-3.5z"/><path d="M4 20h10"/>')}</span>`, "Fond", b.fond ? esc(b.fond) : "Tes couleurs suivent ton fond"],
       ["ecriture", `<span class="v-ico psi-ic psi-p" aria-hidden="true">Aa</span>`, "Typographie", `<span style="font-family:${pol[1]},serif">${pol[0]}</span>`],
       ["charms", `<span class="v-ico psi-ic">${sv('<path d="M6.5 4h11L21 9l-9 11L3 9z"/><path d="M3 9h18M9.5 4L8 9l4 11 4-11-1.5-5"/>')}</span>`, "Charms", ch.length ? ch.length + (ch.length > 1 ? " charms posés" : " charm posé") : "Pose-les où tu veux"]];
-    return `<div class="k psi-k">Personnaliser mon site</div><div class="liste psi">${L.map(([v, ic, t, s]) => `<div class="ligne" data-ms2="nouveau" data-v="${v}" role="button">${ic}<div class="t">${t}<span>${s}</span></div><span class="fl">›</span></div>`).join("")}</div>`;
+    /* 28/11 (Marie choisit la version C, maquette appli-verre/mon-site-4.html : « juste un bouton en grand Personnaliser mon site, c'est mieux ») :
+       en Safari ou sur un petit iPhone, « Charms » était caché sous la barre du bas. Un seul grand bouton, les 4 icônes dedans :
+       il ouvre Personnaliser (les 4 onglets sont en haut), puis la pose des charms après « Enregistrer » (comme D107). */
+    const ics = L.map(([, ic]) => ic.replace('class="v-ico psi-ic psi-p"', 'class="psi-mi psi-p"').replace('class="v-ico psi-ic"', 'class="psi-mi"').replace(/width="21" height="21"/, 'width="13" height="13"')).join("");
+    return `<button class="psi-gros" data-ms2="nouveau" data-v="perso"><span class="psi-ics" aria-hidden="true">${ics}</span><span class="psi-gt"><b>Personnaliser mon site</b><small>En-tête · Fond · Typographie · Charms</small></span><span class="psi-fl" aria-hidden="true">›</span></button>`;
   }
 
   const vSi = VUES.si;
@@ -80,6 +84,16 @@
 #E .msh span{font-size:11.5px;line-height:1.25;color:var(--gris)}
 #E .msh-detail{margin-top:12px}
 #E .msh-detail .v-chiffres{margin:0 0 10px}
+#E .psi-gros{display:flex;align-items:center;gap:14px;width:100%;margin:16px 0 0;border:0;border-radius:24px;padding:18px;background:var(--v-fonce,#2A1F1F);color:#fff;text-align:left;font:inherit;cursor:pointer;box-shadow:0 18px 34px -20px rgba(60,20,30,.6);transition:transform .12s;-webkit-tap-highlight-color:transparent}
+#E .psi-gros:active{transform:scale(.97)}
+#E .psi-ics{flex:none;display:grid;grid-template-columns:repeat(2,22px);gap:4px}
+#E .psi-mi{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;background:rgba(255,255,255,.14);color:#fff}
+#E .psi-mi.psi-p{font:italic 500 13px/1 'Cormorant Garamond',Georgia,serif}
+#E .psi-gt{min-width:0}
+#E .psi-gt b{display:block;font:500 17px/1.2 Jost,sans-serif}
+#E .psi-gt small{display:block;margin-top:3px;font-size:12.5px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#E .psi-fl{margin-left:auto;font-size:22px;opacity:.8}
+@media (max-width:340px){#E .psi-gros{gap:10px;padding:16px 14px}#E .psi-gt b{font-size:16px}#E .psi-gt small{font-size:11.5px;white-space:normal}}
 #E .k.psi-k{margin-top:14px}   /* 27/11 (Marie) : « Charms » entier au-dessus de la barre du bas, même avec le fond en haut */
 #E .psi .ligne{gap:12px}
 #E .psi .ligne .t span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
