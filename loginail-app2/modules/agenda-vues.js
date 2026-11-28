@@ -16,12 +16,25 @@
 #E .vue[data-p="ag"] .nav-sem>span:active{opacity:.55}
 #E .vue[data-p="ag"] .nav-sem.av-ng>span>b::after,#E .vue[data-p="ag"] .nav-sem:not(.av-ng)>span::after{content:"";display:inline-block;width:11px;height:11px;margin-left:5px;vertical-align:middle;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M2 5l5 5 5-5' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M2 5l5 5 5-5' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
 #E .vue[data-p="ag"] .nav-sem.av-ng>span>b::after{width:12px;height:12px;margin-left:6px;vertical-align:.12em}
-#E .av-mois-an{margin:16px 0 8px;font-size:12px;font-weight:500;letter-spacing:.04em;color:#7A716B}
-#E .av-mois-l{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-#E .av-mois-l button{min-height:50px;padding:0 4px;border:1px solid rgba(30,28,27,.1);border-radius:25px;background:#fff;color:inherit;font:inherit;font-size:15px;cursor:pointer;transition:transform .1s}
-#E .av-mois-l button:active{transform:scale(.96)}
-#E .av-mois-l button.auj{border-color:var(--v-acc,#B5475E);color:var(--v-acc,#B5475E);font-weight:500}
-#E .av-mois-l button.on{background:var(--v-fonce,#1E1C1B);border-color:var(--v-fonce,#1E1C1B);color:#fff}`;
+#E .av-voile{position:absolute;inset:0;z-index:78;background:rgba(246,238,236,.6);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);animation:av-voile .2s ease-out both}
+#E .av-verre{position:absolute;z-index:79;box-sizing:border-box;padding:14px 12px 12px;border-radius:28px;background:#FFFDFC;-webkit-backdrop-filter:blur(22px) saturate(1.4);backdrop-filter:blur(22px) saturate(1.4);border:1px solid rgba(255,255,255,.95);box-shadow:0 30px 60px -28px rgba(80,30,40,.45);transform-origin:50% 0;animation:av-verre .22s cubic-bezier(.2,.9,.25,1) both}
+#E .av-verre-an{display:flex;align-items:center;justify-content:space-between;margin:0 2px 6px}
+#E .av-verre-an b{font:500 15px Jost,sans-serif;letter-spacing:.08em}
+#E .av-verre-an button{width:40px;height:40px;padding:0;border:0;border-radius:50%;background:rgba(30,28,27,.05);color:var(--v-fonce,#1E1C1B);font-size:18px;cursor:pointer}
+#E .av-verre-an button:disabled{opacity:.25;cursor:default}
+#E .av-verre-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+#E .av-verre-g button{position:relative;min-width:0;height:60px;padding:0 2px;border:0;border-radius:20px;background:none;color:var(--v-fonce,#1E1C1B);font:500 12.5px/1 Jost,sans-serif;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;cursor:pointer;transition:background .15s,transform .1s}
+#E .av-verre-g button:active{transform:scale(.95)}
+#E .av-verre-g button small{display:block;height:12px;margin-top:7px;font:400 10.5px/12px Jost,sans-serif;letter-spacing:.02em;text-transform:none;color:#7A716B}
+#E .av-verre-g button.passe{color:#B9B0AA}
+#E .av-verre-g button.on{background:var(--v-h2,#F6E1E5);color:var(--v-acc,#B5475E)}
+#E .av-verre-g button.on small{color:var(--v-acc,#B5475E)}
+#E .av-verre-g button.auj:not(.on):after{content:"";position:absolute;left:50%;top:9px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--v-acc,#B5475E)}
+@media (max-width:350px){#E .av-verre-g button{font-size:11px;letter-spacing:.1em}}
+@media (max-height:700px){#E .av-verre-g button{height:50px}#E .av-verre-g button small{margin-top:5px}#E .av-verre{padding-top:10px}}
+@keyframes av-voile{from{opacity:0}}
+@keyframes av-verre{from{opacity:0;transform:translateY(-8px) scale(.96)}}
+@media (prefers-reduced-motion:reduce){#E .av-voile,#E .av-verre{animation:none}}`;
     document.head.appendChild(s2); }
 
   const st = document.createElement("style");
@@ -295,17 +308,30 @@
     if (mode === "semaine") { const J = plusJours(S.lundi, 3); return new Date(J.getFullYear(), J.getMonth(), 1); }   /* le mois du jeudi, comme le titre */
     return new Date(S.jour.getFullYear(), S.jour.getMonth(), 1);
   }
-  function listeMois() {
-    const auj = new Date(), vu = moisRegarde();
-    let h = "", an = null;
-    for (let i = -3; i <= 12; i++) {
-      const m = new Date(auj.getFullYear(), auj.getMonth() + i, 1);
-      if (m.getFullYear() !== an) { if (an !== null) h += "</div>"; an = m.getFullYear(); h += `<div class="av-mois-an">${an}</div><div class="av-mois-l">`; }
-      const on = m.getFullYear() === vu.getFullYear() && m.getMonth() === vu.getMonth(), ce = i === 0;
-      h += `<button data-av-aller="${m.getFullYear()}-${m.getMonth()}" class="${on ? "on" : ce ? "auj" : ""}"${on ? ' aria-current="true"' : ""}>${NOM_M(m)}</button>`;
-    }
-    ouvre(`<h3>Aller à…</h3><div class="sous">Touche un mois</div>${h}</div>`);
+  /* 28/11 (Marie choisit « le verre », écriture 2 · Majuscules ; maquette maquettes/agenda-sauter-mois-2811/ecriture) :
+     un panneau de verre sous le mois, l'année entière d'un coup d'œil, ‹ › pour changer d'année, le nombre de rendez-vous sous chaque mois. */
+  let anP = 0;
+  function rdvParMois(an) {
+    const par = new Map(), N = {};
+    (S.tous || []).concat(S.rdv || []).forEach(r => par.set(r.id, r));
+    par.forEach(r => { if (!r.cliente_id || r.statut === "annule") return; const d = new Date(r.debut); if (d.getFullYear() === an) N[d.getMonth()] = (N[d.getMonth()] || 0) + 1; });
+    return N;
   }
+  function panneau(ouvrir) {
+    E.querySelectorAll(".av-verre,.av-voile").forEach(x => x.remove());
+    const nav = E.querySelector('.vue.on[data-p="ag"] .nav-sem'); if (!ouvrir || !nav) return;
+    if (ouvrir === true) anP = moisRegarde().getFullYear();
+    const auj = new Date(), vu = moisRegarde(), N = rdvParMois(anP), A = auj.getFullYear();
+    const r = nav.getBoundingClientRect(), e = E.getBoundingClientRect(), ech = e.width / E.offsetWidth || 1;
+    const g = MOIS.map((x, m) => {
+      const passe = anP < A || (anP === A && m < auj.getMonth()), on = anP === vu.getFullYear() && m === vu.getMonth(), ce = anP === A && m === auj.getMonth();
+      return `<button data-av-aller="${anP}-${m}" class="${passe ? "passe" : ""}${on ? " on" : ""}${ce ? " auj" : ""}"${on ? ' aria-current="true"' : ""}>${esc(x)}<small>${N[m] ? N[m] + " rdv" : ""}</small></button>`;
+    }).join("");
+    E.insertAdjacentHTML("beforeend", `<div class="av-voile" data-av-voile></div><div class="av-verre" role="dialog" aria-label="Choisir un mois" style="left:${(r.left - e.left) / ech}px;width:${r.width / ech}px;top:${(r.bottom - e.top) / ech + 4}px"><div class="av-verre-an"><button data-av-an="-1" aria-label="Année d’avant"${anP <= A - 1 ? " disabled" : ""}>‹</button><b>${anP}</b><button data-av-an="1" aria-label="Année d’après"${anP >= A + 2 ? " disabled" : ""}>›</button></div><div class="av-verre-g">${g}</div></div>`);
+  }
+  addEventListener("scroll", () => { if (E.querySelector(".av-verre")) panneau(false); }, true);
+  addEventListener("resize", () => panneau(false));
+  addEventListener("keydown", e => { if (e.key === "Escape" && E.querySelector(".av-verre")) panneau(false); });
   function allerAuMois(an, mo) {
     const auj = new Date(), ici = an === auj.getFullYear() && mo === auj.getMonth();
     entre = " av-arrive";
@@ -351,6 +377,7 @@
     const t = e.target; if (!t.closest) return;
     const ouvert = E.querySelector(".av-menu");
     if (ouvert && !t.closest(".av-menu")) { e.preventDefault(); e.stopPropagation(); return menu(false); }
+    if (E.querySelector(".av-verre") && !t.closest(".av-verre,[data-av-voile]")) panneau(false);   /* un autre onglet, un autre bouton : le verre se range */
     if (S.onglet !== "ag") return;
     if (Date.now() - avale < 400 && t.closest("[data-av-z],.nav-sem")) { e.preventDefault(); e.stopPropagation(); return; }
     const stop = () => { e.preventDefault(); e.stopPropagation(); };
@@ -365,8 +392,11 @@
     }
     const m = t.closest("[data-av-mois]"); if (m) { stop(); return tourne(+m.dataset.avMois); }
     const al = t.closest("[data-av-aller]");
-    if (al) { stop(); ferme(); const [an, mo] = al.dataset.avAller.split("-").map(Number); return allerAuMois(an, mo); }
-    if (t.closest('.vue.on[data-p="ag"] .nav-sem>span')) { stop(); return listeMois(); }
+    if (al) { stop(); panneau(false); const [an, mo] = al.dataset.avAller.split("-").map(Number); return allerAuMois(an, mo); }
+    const y = t.closest("[data-av-an]"); if (y) { stop(); if (!y.disabled) { anP += +y.dataset.avAn; panneau("annee"); } return; }
+    if (t.closest("[data-av-voile]")) { stop(); return panneau(false); }
+    if (t.closest(".av-verre")) { stop(); return; }
+    if (t.closest('.vue.on[data-p="ag"] .nav-sem>span')) { stop(); return panneau(!E.querySelector(".av-verre")); }
     /* une heure vide de la semaine : on ajoute, sans quitter la semaine (la date en haut ouvre toujours la journée) */
     const touche = colonneTouchee(e);
     if (touche) {
