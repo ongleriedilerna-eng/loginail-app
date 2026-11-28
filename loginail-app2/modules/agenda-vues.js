@@ -440,7 +440,9 @@
     avale = Date.now();
     const oui = e.type !== "touchcancel" && (Math.abs(g.dx) > 55 || (Math.abs(g.dx) > 18 && Date.now() - g.t < 250));
     if (g.z) { g.z.style.transition = "transform .2s ease-out,opacity .2s"; g.z.style.transform = oui ? `translateX(${g.dx < 0 ? -60 : 60}px)` : ""; g.z.style.opacity = oui ? ".25" : ""; }
-    if (oui) tourne(g.dx < 0 ? 1 : -1);
+    /* 28/11 (Marie : « je veux que le mois, il glisse comme semaine ») : en Semaine, on voit l'ancienne semaine partir, puis la nouvelle arriver
+       (le temps de la charger). En Mois, le mois d'après coupait le départ : on laisse partir l'ancien mois (0,2 s) avant d'afficher le suivant. */
+    if (oui) { const d = g.dx < 0 ? 1 : -1; if (mode === "mois") { occupe = true; setTimeout(() => { occupe = false; tourne(d); }, 200); } else tourne(d); }
   };
   document.addEventListener("touchend", lache, true);
   document.addEventListener("touchcancel", lache, true);

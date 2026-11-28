@@ -98,14 +98,18 @@
     if (!nBouge) { if (Math.abs(dx) < 8) return; if (Math.abs(dy) > Math.abs(dx)) { nx = null; return; } nBouge = true; }
     if (e.cancelable) e.preventDefault();
     const i = ONG.findIndex(o => o[0] === S.onglet), bout = (dx > 0 && i <= 0) || (dx < 0 && i >= ONG.length - 1), v = vueOn();
-    if (v) { v.style.transition = "none"; v.style.transform = `translateX(${Math.max(-24, Math.min(24, dx * (bout ? .05 : .14)))}px)`; } }, { passive: false });
+    /* 28/11 (Marie : « quand je swipe agenda, cliente, mon site, ça fait un petit bug ») : « translate » et non « transform » :
+       l'animation d'arrivée de la page (entre) tient « transform », la page ne suivait donc pas le pouce. */
+    if (v) { v.style.transition = "none"; v.style.translate = `${Math.max(-24, Math.min(24, dx * (bout ? .05 : .14)))}px 0`; } }, { passive: false });
   const nFin = e => { if (nx == null) return; const bouge = nBouge, dx = e.changedTouches[0].clientX - nx, dt = Date.now() - nt; nx = null; nBouge = false; if (!bouge) return; window.__ongAvale = Date.now();
     const v = vueOn(), i = ONG.findIndex(o => o[0] === S.onglet), d = dx < 0 ? 1 : -1, j = i + d;
     const ok = e.type !== "touchcancel" && (Math.abs(dx) > 40 || (Math.abs(dx) > 16 && dt < 250)) && j >= 0 && j < ONG.length;
-    if (!ok) { if (v) { v.style.transition = "transform .3s cubic-bezier(.22,1,.36,1)"; v.style.transform = ""; setTimeout(() => { v.style.transition = ""; }, 320); } return; }
-    if (v) { v.style.transition = ""; v.style.transform = ""; }
+    if (!ok) { if (v) { v.style.transition = "translate .3s cubic-bezier(.22,1,.36,1)"; v.style.translate = ""; setTimeout(() => { v.style.transition = ""; }, 320); } return; }
+    if (v) { v.style.transition = ""; v.style.translate = ""; }
     const b = E.querySelector(`.ong [data-go="${ONG[j][0]}"]`); if (b) b.click();
-    const n = vueOn(); if (n) { n.classList.remove("ong-d", "ong-g"); void n.offsetWidth; n.classList.add(d > 0 ? "ong-d" : "ong-g"); setTimeout(() => n.classList.remove("ong-d", "ong-g"), 320); } };
+    /* 28/11 : avant, une classe (ong-d / ong-g) remplaçait l'animation d'arrivée ; en l'enlevant 0,3 s plus tard, l'arrivée repartait de zéro :
+       la page disparaissait puis revenait en fondu. Maintenant le glissé s'ajoute par-dessus, sans rien remplacer. */
+    const n = vueOn(); if (n && n.animate && !matchMedia("(prefers-reduced-motion: reduce)").matches) n.animate([{ translate: `${d > 0 ? 22 : -22}px 0` }, { translate: "0 0" }], { duration: 300, easing: "cubic-bezier(.22,1,.36,1)" }); };
   E.addEventListener("touchend", nFin, { passive: true }); E.addEventListener("touchcancel", nFin, { passive: true });
   /* le doigt a glissé sur la barre : on n'ouvre pas en plus l'onglet où il s'est posé */
   document.addEventListener("click", e => { if (e.isTrusted && Date.now() - (window.__ongAvale || 0) < 450 && e.target.closest && e.target.closest(".ong")) { e.stopPropagation(); e.preventDefault(); } }, true);
